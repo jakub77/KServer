@@ -164,14 +164,6 @@ namespace KServer
         [DataMember]
         public User user { get; set; }
     }
-    
-
-    [DataContract]
-    public class Session
-    {
-        [DataMember]
-        public int sessionID { get; set; }
-    }
 
     [DataContract]
     public class Credentials
