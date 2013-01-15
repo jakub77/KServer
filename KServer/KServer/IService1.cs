@@ -10,9 +10,8 @@ namespace KServer
 {
     public interface IService1Callback
     {
-        [OperationContract(IsOneWay = true)]
+        [OperationContract(IsOneWay = false)]
         Response DJQueueChanged(List<queueSinger> queue);
-
     }
 
     [ServiceContract(SessionMode = SessionMode.Required, CallbackContract = typeof(IService1Callback))]
@@ -21,7 +20,7 @@ namespace KServer
         // DJ STUFF
         // Log in etc
         [OperationContract]
-        LogInResponse DJSignUp(string userName, string password);
+        Response DJSignUp(string userName, string password);
         [OperationContract]
         LogInResponse DJSignIn(string userName, string password);
         [OperationContract]
@@ -52,7 +51,7 @@ namespace KServer
         // CLIENT STUFF
         // Log in etc
         [OperationContract]
-        LogInResponse ClientSignUp(string userName, string password);
+        Response ClientSignUp(string userName, string password);
         [OperationContract]
         LogInResponse ClientSignIn(string userName, string password);
         [OperationContract]
