@@ -14,7 +14,7 @@ namespace KServer
         Response DJQueueChanged(List<queueSinger> queue);
     }
 
-    [ServiceContract(SessionMode = SessionMode.Required, CallbackContract = typeof(IService1Callback))]
+    [ServiceContract(SessionMode = SessionMode.Allowed, CallbackContract = typeof(IService1Callback))]
     public interface IService1
     {
         // DJ STUFF

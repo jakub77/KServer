@@ -1,0 +1,2 @@
+http://dotnetstories.wordpress.com/2012/03/03/hosting-wcf-services-in-iis/
+http://debugmode.net/2010/09/07/walkthrough-on-creating-wcf-4-0-service-and-hosting-in-iis-7-5/
