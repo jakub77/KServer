@@ -246,6 +246,9 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                if (r.message.Trim() == string.Empty)
+                    return r;
+
                 string[] songLines = r.message.Trim().Split('\n');
                 foreach (string songLine in songLines)
                 {

@@ -9,11 +9,18 @@ using System.Text;
 namespace KServer
 {
     // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IMobile" in both code and config file together.
-    [ServiceContract()]
+    [ServiceContract]
     public interface IMobile
     {
         [OperationContract]
-        [WebGet(UriTemplate = "test/{param1}", ResponseFormat = WebMessageFormat.Json)]
-        string test(string param1);
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/{strSessionString}/activityStatus")]
+        MResponse test(string strSessionString);
     }
+
+    public class MResponse
+    {
+        public bool successful { get; set; }
+        public string comment { get; set; }
+    }
+
 }
