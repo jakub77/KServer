@@ -64,26 +64,24 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Mobile.svc" />
-    <Content Include="Service1.svc" />
-    <Content Include="Web.config">
-      <SubType>Designer</SubType>
-    </Content>
-    <Content Include="Web.Debug.config">
+    <Content Include="DJ.svc" />
+    <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
-    </Content>
-    <Content Include="Web.Release.config">
+    </None>
+    <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
-    </Content>
+    </None>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DatabaseConnectivity.cs" />
     <Compile Include="IMobile.cs" />
     <Compile Include="Mobile.svc.cs">
       <DependentUpon>Mobile.svc</DependentUpon>
     </Compile>
-    <Compile Include="Service1.svc.cs">
-      <DependentUpon>Service1.svc</DependentUpon>
+    <Compile Include="DJ.svc.cs">
+      <DependentUpon>DJ.svc</DependentUpon>
     </Compile>
-    <Compile Include="IService1.cs" />
+    <Compile Include="IDJ.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +89,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Properties\PublishProfiles\Sunny.pubxml" />
+    <None Include="Properties\PublishProfiles\SunnyTest.pubxml" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

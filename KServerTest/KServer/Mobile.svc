@@ -1,0 +1,1 @@
+﻿<%@ ServiceHost Language="C#" Debug="true" Service="KServer.Mobile" CodeBehind="Mobile.svc.cs" %>
