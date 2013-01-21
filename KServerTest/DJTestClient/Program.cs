@@ -46,6 +46,7 @@ namespace DJTestClient
                     {
                         r = proxy.DJSignUp("list", String.Empty);
                         Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
                     }
                     catch (Exception e)
@@ -65,6 +66,7 @@ namespace DJTestClient
                     {
                         r = proxy.DJSignUp(username, password);
                         Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
                     }
                     catch (Exception e)
@@ -84,6 +86,7 @@ namespace DJTestClient
                     {
                         r = proxy.DJSignIn(username, password);
                         Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
                         DJKey = r.userKey;
                     }
@@ -99,6 +102,7 @@ namespace DJTestClient
                     {
                         r = proxy.DJSignOut(DJKey);
                         Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
                     }
                     catch (Exception e)
@@ -126,6 +130,7 @@ namespace DJTestClient
                         songs.Add(s);
                         r = proxy.DJAddSongs(songs.ToArray(), DJKey);
                         Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
                     }
                     catch (Exception e)
@@ -153,8 +158,8 @@ namespace DJTestClient
                         songs.Add(s);
                         r = proxy.DJRemoveSongs(songs.ToArray(), DJKey);
                         Console.WriteLine("Error: " + r.error);
-                        Console.WriteLine("Message:\n" + r.message);
                         Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
                     }
                     catch (Exception e)
                     {
@@ -168,11 +173,12 @@ namespace DJTestClient
                         Song[] songs;
                         Response r = proxy.DJListSongs(DJKey, out songs);
                         Console.WriteLine("Error: " + r.error);
-                        Console.WriteLine("Message:\n" + r.message);
                         Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
                         Console.WriteLine("Songs: ");
-                        foreach (Song s in songs)
-                            Console.WriteLine(s.title + ", " + s.artist + ", " + s.pathOnDisk);
+                        if (!r.error)
+                            foreach (Song s in songs)
+                                Console.WriteLine(s.title + ", " + s.artist + ", " + s.pathOnDisk);
                     }
                     catch (Exception e)
                     {

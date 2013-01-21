@@ -12,6 +12,7 @@
     <xs:sequence>
       <xs:element minOccurs="0" name="error" type="xs:boolean" />
       <xs:element minOccurs="0" name="message" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="result" type="xs:int" />
       <xs:element minOccurs="0" name="user" nillable="true" type="tns:User" />
       <xs:element minOccurs="0" name="userKey" type="xs:long" />
     </xs:sequence>

@@ -144,6 +144,7 @@ namespace KServer
             message = string.Empty;
             userKey = -1;
             user = null;
+            result = -1;
         }
 
         public LogInResponse(Response r)
@@ -152,6 +153,7 @@ namespace KServer
             message = r.message;
             userKey = -1;
             user = null;
+            result = r.result;
         }
 
         [DataMember]
@@ -162,6 +164,8 @@ namespace KServer
         public long userKey { get; set; }
         [DataMember]
         public User user { get; set; }
+        [DataMember]
+        public int result { get; set; }
     }
 
     [DataContract]

@@ -7,7 +7,7 @@ using System.Web;
 
 namespace KServer
 {
-    public class DatabaseConnectivity
+    public class DatabaseConnectivity : IDisposable
     {
         private string SQLServerAddress = "localhost";
         private string DBUsername = "karaoke";
@@ -17,7 +17,10 @@ namespace KServer
 
         SqlConnection DBConnection = null;
 
-        // Open a connection to the databse server using the information defined above.
+        /// <summary>
+        /// Open a connection to the DB.
+        /// </summary>
+        /// <returns></returns>
         public Response OpenConnection()
         {
             Response r = new Response();
@@ -35,15 +38,18 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.message = "OpenConnection_Error\n" + e.Message;
                 r.error = true;
+                r.message = "Exception SQL: Could not open a connection to the DB\n" + e.Message;
                 return r;
             }
         }
 
-        // Execute the given command as a NonQuery to the database
-        // If an error occurs, it is stored in reponse.
-        // Response.result contains the number of rows effected by the command.
+        /// <summary>
+        /// Execute the command as a NonQuery.
+        /// If successful, Response.result contains the number of rows effected.
+        /// </summary>
+        /// <param name="command">The command to execute.</param>
+        /// <returns>Outcome of attempt.</returns>
         private Response DBNonQuery(string command)
         {
             Response r = new Response();
@@ -57,7 +63,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.message = "SQL_Non_Query_Error\n" + command + "\n" + e.Message;
+                r.message = "Exception SQL_NON_QUERY\n" + e.Message;
                 r.error = true;
                 return r;
             }
@@ -65,16 +71,26 @@ namespace KServer
 
         // Execute the given command a a query to the database.
         // Return the values for any valid given columns.
+
+        /// <summary>
+        /// Execute the command as a Query.
+        /// </summary>
+        /// <param name="command">The command to execute.</param>
+        /// <param name="columns">The columns of information to return.</param>
+        /// <returns>Outcome of attempt. If successful, the result is stored in response.message. 
+        /// Newlines separates rows. Commas separate fields. Response.result stores the number of row.</returns>
         private Response DBQuery(string command, string[] columns)
         {
             Response r = new Response();
             try
             {
+                r.result = 0;
                 SqlDataReader reader = null;
                 SqlCommand c = new SqlCommand(command, DBConnection);
                 reader = c.ExecuteReader();
                 while (reader.Read())
                 {
+                    r.result++;
                     for (int i = 0; i < columns.Length - 1; i++)
                         r.message += reader[columns[i]].ToString().Trim() + ",";
                     if (columns.Length > 0)
@@ -86,7 +102,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.message = "SQL_Query_Error\n" + command + "\n" + e.Message;
+                r.message = "Exception SQL_Query\n" + e.Message;
                 r.error = true;
                 return r;
             }
@@ -98,7 +114,7 @@ namespace KServer
         {
             string command;
             command = "select * from DJUsers;";
-            string[] columns = new string[5] { "ID", "Username", "Password", "SongListID", "Status" };
+            string[] columns = new string[4] { "ID", "Username", "Password", "Status" };
             return DBQuery(command, columns);
         }
 
@@ -177,10 +193,19 @@ namespace KServer
             return DBNonQuery(command);
         }
 
-        // Add songs to a DJ's library.
+        /// <summary>
+        /// Add songs to a DJ's library. If a song already exists in that library, it is not added.
+        /// Returns the number of songs actually added in Response.result.
+        /// </summary>
+        /// <param name="songs">Songs to add</param>
+        /// <param name="DJID">DJ's ID.</param>
+        /// <returns></returns>
         public Response DJAddSongsIgnoringDuplicates(List<Song> songs, int DJID)
         {
+            bool songAlreadyExisted = false;
+            int songsAdded = 0;
             Response r = new Response();
+            r.result = 0;
             foreach (Song s in songs)
             {
                 string command;
@@ -196,7 +221,10 @@ namespace KServer
                     return r;
 
                 if (r.message.Trim() != string.Empty)
-                    continue;                
+                {
+                    songAlreadyExisted = true;
+                    continue;
+                }
 
                 command = "insert into DJSongs (DJListID, Title, Artist, PathOnDisk) Values (";
                 command += "'" + DJID.ToString() + "',";
@@ -207,13 +235,19 @@ namespace KServer
                 r = DBNonQuery(command);
                 if (r.error)
                     return r;
+                songsAdded++;
             }
+            if (songAlreadyExisted)
+                r.message = "Warning: Song(s) were not added since they already existed";
+            r.result = songsAdded;
             return r;
         }
 
         // Remove songs form a DJ's library.
         public Response DJRemoveSongs(List<Song> songs, int DJID)
         {
+            bool songNotFound = false;
+            int songsRemoved = 0;
             Response r = new Response();
             foreach (Song s in songs)
             {
@@ -227,7 +261,14 @@ namespace KServer
                 r = DBNonQuery(command);
                 if (r.error)
                     return r;
+                if (r.result == 0)
+                    songNotFound = true;
+                else
+                    songsRemoved++;
             }
+            if(songNotFound)
+                r.message = "Warning: Song(s) in the list were not found";
+            r.result = songsRemoved;
             return r;
         }
 
@@ -270,21 +311,17 @@ namespace KServer
                 return r;
             }
         }
-        
-        public Response Close()
+
+        /// <summary>
+        /// Dispose resources.
+        /// </summary>
+        void IDisposable.Dispose()
         {
-            Response r = new Response();
             try
             {
                 DBConnection.Close();
-                return r;
             }
-            catch (Exception e)
-            {
-                r.message = "Close_Error\n" + e.Message;
-                r.error = true;
-                return r;
-            }
+            catch (Exception) { }
         }
     }
 }

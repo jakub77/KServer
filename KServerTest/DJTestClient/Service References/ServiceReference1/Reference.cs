@@ -106,6 +106,9 @@ namespace DJTestClient.ServiceReference1 {
         private string messageField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private int resultField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
         private DJTestClient.ServiceReference1.User userField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
@@ -143,6 +146,19 @@ namespace DJTestClient.ServiceReference1 {
                 if ((object.ReferenceEquals(this.messageField, value) != true)) {
                     this.messageField = value;
                     this.RaisePropertyChanged("message");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int result {
+            get {
+                return this.resultField;
+            }
+            set {
+                if ((this.resultField.Equals(value) != true)) {
+                    this.resultField = value;
+                    this.RaisePropertyChanged("result");
                 }
             }
         }
