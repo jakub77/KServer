@@ -178,7 +178,7 @@ namespace DJTestClient
                         Console.WriteLine("Songs: ");
                         if (!r.error)
                             foreach (Song s in songs)
-                                Console.WriteLine(s.title + ", " + s.artist + ", " + s.pathOnDisk);
+                                Console.WriteLine(s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk);
                     }
                     catch (Exception e)
                     {

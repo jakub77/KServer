@@ -39,8 +39,6 @@ namespace KServer
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongRequest/?songID={songID}&userKey={userKey}")]
         Response MobileSongRequest(int songID, long userKey);
-
-
     }
 
 

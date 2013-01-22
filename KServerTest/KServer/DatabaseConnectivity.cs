@@ -102,11 +102,16 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.message = "Exception SQL_Query\n" + e.Message;
+                r.message = "Exception SQL_Query\n" + e.Message + "\n" + command;
                 r.error = true;
                 return r;
             }
         }
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // DJ STUFF
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         // List all DJ's and all direct information associated with them.
         // Returns the information in a response if no errors occured.
@@ -282,7 +287,7 @@ namespace KServer
                 string command;
                 command = "select * from DJSongs where ";
                 command += "DJListID = '" + DJID.ToString() + "';";
-                string[] columns = new string[3] { "Title", "Artist", "PathOnDisk" };
+                string[] columns = new string[4] { "SongID", "Title", "Artist", "PathOnDisk" };
                 r = DBQuery(command, columns);
                 if (r.error)
                     return r;
@@ -295,9 +300,17 @@ namespace KServer
                 {
                     string[] songParts = songLine.Split(',');
                     Song song = new Song();
-                    song.title = songParts[0];
-                    song.artist = songParts[1];
-                    song.pathOnDisk = songParts[2];
+                    int id;
+                    if (!int.TryParse(songParts[0], out id))
+                    {
+                        r.error = true;
+                        r.message = "Exception in SongListSQL: could not parse song id";
+                        return r;
+                    }
+                    song.ID = id;
+                    song.title = songParts[1];
+                    song.artist = songParts[2];
+                    song.pathOnDisk = songParts[3];
                     songs.Add(song);
                 }
                 r.message = "";
@@ -311,6 +324,14 @@ namespace KServer
                 return r;
             }
         }
+
+
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // CLIENT STUFF
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         /// <summary>
         /// Dispose resources.

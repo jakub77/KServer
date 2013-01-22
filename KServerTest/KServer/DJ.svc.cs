@@ -172,7 +172,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJKey">The Unique DJKey that describes the DJ.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response DJSignOut(long DJKey) 
+        public Response DJSignOut(long DJKey)
         {
             int DJID, DJStatus;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -365,11 +365,41 @@ namespace KServer
         }
 
         // Queue management
-        public Response DJAddQueue(SongRequest sr, int queueIndex, int sessionID, long DJKey) { return null; }
-        public Response DJRemoveSongRequest(SongRequest sr, int sessionID, long DJKey) { return null; }
-        public Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey) { return null; }
-        public Response DJRemoveUser(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey) { return null; }
-        public Response DJMoveUser(int userID, int sessionID, long DJKey) { return null; }
+        public Response DJAddQueue(SongRequest sr, int queueIndex, int sessionID, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJAddQueue is not yet implemented";
+            return r;
+        }
+        public Response DJRemoveSongRequest(SongRequest sr, int sessionID, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJRemoveSongRequest is not yet implemented";
+            return r;
+        }
+        public Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJChangeSongRequest is not yet implemented";
+            return r;
+        }
+        public Response DJRemoveUser(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJRemoveUser is not yet implemented";
+            return r;
+        }
+        public Response DJMoveUser(int userID, int sessionID, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJMoveUser is not yet implemented";
+            return r;
+        }
 
         /// <summary>
         /// Convert a DJKey to a DJID.
