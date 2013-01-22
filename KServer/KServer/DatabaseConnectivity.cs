@@ -45,6 +45,18 @@ namespace KServer
         }
 
         /// <summary>
+        /// Dispose resources.
+        /// </summary>
+        void IDisposable.Dispose()
+        {
+            try
+            {
+                DBConnection.Close();
+            }
+            catch (Exception) { }
+        }
+
+        /// <summary>
         /// Execute the command as a NonQuery.
         /// If successful, Response.result contains the number of rows effected.
         /// </summary>
@@ -107,6 +119,8 @@ namespace KServer
                 return r;
             }
         }
+
+        #region DJStuff
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         // DJ STUFF
@@ -325,7 +339,8 @@ namespace KServer
             }
         }
 
-
+        #endregion
+        #region mobileStuff
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -333,16 +348,91 @@ namespace KServer
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        /// <summary>
-        /// Dispose resources.
-        /// </summary>
-        void IDisposable.Dispose()
+        // List all DJ's and all direct information associated with them.
+        // Returns the information in a response if no errors occured.
+        public Response MobileListMembers()
         {
-            try
-            {
-                DBConnection.Close();
-            }
-            catch (Exception) { }
+            string command;
+            command = "select * from MobileUsers;";
+            string[] columns = new string[4] { "ID", "Username", "Password", "Status" };
+            return DBQuery(command, columns);
         }
+
+        // Check to see if a mobile username is valid.
+        // If username is valid, returns the unique DJID in message.
+        public Response MobileValidateUsername(string username)
+        {
+            string command;
+            command = "select ID from MobileUsers where ";
+            command += "Username = '" + username.Trim() + "';";
+            string[] columns = new string[1] { "ID" };
+            return DBQuery(command, columns);
+        }
+
+        // Check to see if a DJ's username and password are valid.
+        // If credentials are valid, returns the unique DJID in message.
+        public Response MobileValidateUsernamePassword(string username, string password)
+        {
+            string command;
+            command = "select ID from MobileUsers where ";
+            command += "Username = '" + username.Trim() + "' and ";
+            command += "Password = '" + password.Trim() + "';";
+            string[] columns = new string[1] { "ID" };
+            return DBQuery(command, columns);
+        }
+
+        public Response MobileValidateID(int MobileID)
+        {
+            string command;
+            command = "select Status from MobileUsers where ";
+            command += "ID = '" + MobileID.ToString() + "';";
+            string[] columns = new string[1] { "Status" };
+            return DBQuery(command, columns);
+        }
+
+        // Get the current status of the given mobile client.
+        public Response MobileGetStatus(int MobileID)
+        {
+            string command;
+            command = "select Status from MobileUsers where ";
+            command += "ID = '" + MobileID.ToString() + "';";
+            string[] columns = new string[1] { "Status" };
+            return DBQuery(command, columns);
+
+        }
+
+        // Adds a new mobile client user to the DB.
+        // Returns whether it occured successfully.
+        public Response MobileSignUp(string username, string password)
+        {
+            string command;
+            command = "insert into MobileUsers (Username, Password, Status) Values (";
+            command += "'" + username.Trim() + "',";
+            command += "'" + password.Trim() + "',";
+            command += "'" + "0" + "'";
+            command += ");";
+            return DBNonQuery(command);
+        }
+
+        // Signs a mobile client into the system. Return whether it occured successfully.
+        public Response MobileSignIn(int MobileID)
+        {
+            string command;
+            command = "update MobileUsers set Status = '1' where ";
+            command += "ID = '" + MobileID.ToString() + "';";
+            return DBNonQuery(command);
+        }
+
+        // Sign a DJ out of the system. Return whether successful.
+        public Response MobileSignOut(int MobileID)
+        {
+            string command;
+            command = "update MobileUsers set Status = '0' where ";
+            command += "ID = '" + MobileID.ToString() + "';";
+            return DBNonQuery(command);
+        }
+
+
+        #endregion
     }
 }
