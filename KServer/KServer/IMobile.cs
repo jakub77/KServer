@@ -34,7 +34,7 @@ namespace KServer
 
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongBrowse/?firstLetter={firstLetter}&isArtist={isArtist}&start={start}&count={count}&venueID={venueID}")]
-        List<Song> MobileSongBrowse(char firstLetter, bool isArtist, int start, int count, int venueID);
+        List<Song> MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID);
 
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongRequest/?songID={songID}&userKey={userKey}")]

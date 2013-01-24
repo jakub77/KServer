@@ -200,26 +200,76 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// Currently returns 
+        /// </summary>
+        /// <param name="title"></param>
+        /// <param name="artist"></param>
+        /// <param name="venueID"></param>
+        /// <returns></returns>
         public List<Song> MobileSongSearch(string title, string artist, int venueID)
         {
-            List<Song> s = new List<Song>();
-            return s;
+            venueID = 1;
+            int venueStatus;
+            List<Song> songs;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return null;
+
+                // Get the current status of the DJ
+                r = db.DJGetStatus(venueID);
+                if (r.error)
+                    return null;
+
+                // Try to parse the status of the DJ.
+                if (!int.TryParse(r.message.Trim(), out venueStatus))
+                    return null;
+
+                r = db.MobileSearchSongs(out songs, title.Trim(), artist.Trim(), venueID);
+                if (r.error)
+                    return null;
+
+                return songs;
+            }
         }
-        public List<Song> MobileSongBrowse(char firstLetter, bool isArtist, int start, int count, int venueID)
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="firstLetter"></param>
+        /// <param name="isArtist"></param>
+        /// <param name="start"></param>
+        /// <param name="count"></param>
+        /// <param name="venueID"></param>
+        /// <returns></returns>
+        public List<Song> MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID)
         {
-            List<Song> s = new List<Song>();
-            Song song = new Song();
-            song.artist = "Glitch Mob";
-            song.title = "Fortune Days";
-            song.pathOnDisk = "C:\\Songs\\Fortune Days";
-            s.Add(song);
-            Song song2 = new Song();
-            song.artist = "Rammstein";
-            song.title = "Du Hast";
-            song.pathOnDisk = "C:\\Songs\\Du Hast";
-            s.Add(song2);
-            return s;
+            venueID = 1;
+            int venueStatus;
+            List<Song> s;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return null;
+
+                // Get the current status of the DJ
+                r = db.DJGetStatus(venueID);
+                if (r.error)
+                    return null;
+
+                // Try to parse the status of the DJ.
+                if (!int.TryParse(r.message.Trim(), out venueStatus))
+                    return null;
+
+                r = db.MobileBrowseSongs(out s, firstLetter, isArtist, start, count, venueID);
+                if (r.error)
+                    return null;
+
+                return s;
+            }
         }
         public Response MobileSongRequest(int songID, long userKey)
         {

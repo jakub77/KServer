@@ -432,6 +432,143 @@ namespace KServer
             return DBNonQuery(command);
         }
 
+        public Response MobileSearchSongs(out List<Song> songs, string title, string artist, int DJID)
+        {
+            Response r = new Response();
+            songs = null;
+            try
+            {
+                songs = new List<Song>();
+                string command;
+                command = "select * from DJSongs where ";
+                command += "DJListID = '" + DJID.ToString() + "'";
+
+                if (title.Length > 0)
+                    command += "and Title = '" + title + "'";
+                if (artist.Length > 0)
+                    command += "and Artist = '" + artist + "'";
+                command += ";";
+
+                string[] columns = new string[3] { "SongID", "Title", "Artist" };
+                r = DBQuery(command, columns);
+                
+                if (r.error)
+                    return r;
+
+                if (r.message.Trim() == string.Empty)
+                {
+                    r.result = 0;
+                    return r;
+                }
+
+                int count = 0;
+                string[] songLines = r.message.Trim().Split('\n');
+                foreach (string songLine in songLines)
+                {
+                    string[] songParts = songLine.Split(',');
+                    Song song = new Song();
+                    int id;
+                    if(!int.TryParse(songParts[0], out id))
+                    {
+                        r.error=true;
+                        r.message = "Exception in MobileListSongsSQL: could not parse song id";
+                        return r;
+                    }
+                    song.ID = id;
+                    song.title = songParts[1];
+                    song.artist = songParts[2];
+                    song.pathOnDisk = "";
+                    songs.Add(song);
+                    count++;
+                }
+                r.message = "";
+                r.result = count;
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.message = "Exception " + e.Message;
+                r.error = true;
+                return r;
+            }
+        }
+
+        public Response MobileBrowseSongs(out List<Song> songs, string firstLetter, bool isArtist, int start, int count, int DJID)
+        {
+            Response r = new Response();
+            songs = null;
+            int length = firstLetter.Length;
+            try
+            {
+                /*
+                 * 
+                 * select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * 
+                 * from DJSongs where DJListID = '1') B on A.SongID = B.SongID and B.rn between 7 and 10;
+                 */
+
+                songs = new List<Song>();
+                string command;
+                command = "select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * ";
+                command += "from DJSongs where DJListID = '" + DJID.ToString() + "'";
+
+                if (isArtist && length > 0)
+                {
+                    command += "and LEFT([Artist]," + length.ToString() + ") = '" + firstLetter + "'";
+                }
+                else if (length > 0)
+                {
+                    command += "and LEFT([Title]," + length.ToString() + ") = '" + firstLetter + "'";
+                }
+
+                command += ") B on A.SongID = B.SongID and B.rn between ";
+                command += (start + 1).ToString() + " and ";
+                command += (start + count).ToString();
+                command += ";";
+
+                string[] columns = new string[3] { "SongID", "Title", "Artist" };
+                r = DBQuery(command, columns);
+
+                if (r.error)
+                    return r;
+
+                if (r.message.Trim() == string.Empty)
+                {
+                    r.result = 0;
+                    return r;
+                }
+
+                int count2 = 0;
+                string[] songLines = r.message.Trim().Split('\n');
+                foreach (string songLine in songLines)
+                {
+                    string[] songParts = songLine.Split(',');
+                    Song song = new Song();
+                    int id;
+                    if (!int.TryParse(songParts[0], out id))
+                    {
+                        r.error = true;
+                        r.message = "Exception in MobileListSongsSQL: could not parse song id";
+                        return r;
+                    }
+                    song.ID = id;
+                    song.title = songParts[1];
+                    song.artist = songParts[2];
+                    song.pathOnDisk = "";
+                    songs.Add(song);
+                    count2++;
+                }
+                r.message = "";
+                r.result = count2;
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.message = "Exception " + e.Message;
+                r.error = true;
+                return r;
+            }
+        }
+
 
         #endregion
     }
