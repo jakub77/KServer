@@ -54,4 +54,17 @@
     </xs:sequence>
   </xs:complexType>
   <xs:element name="SongRequest" nillable="true" type="tns:SongRequest" />
+  <xs:complexType name="ArrayOfqueueSinger">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="queueSinger" nillable="true" type="tns:queueSinger" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfqueueSinger" nillable="true" type="tns:ArrayOfqueueSinger" />
+  <xs:complexType name="queueSinger">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="songs" nillable="true" type="tns:ArrayOfSong" />
+      <xs:element minOccurs="0" name="user" nillable="true" type="tns:User" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="queueSinger" nillable="true" type="tns:queueSinger" />
 </xs:schema>

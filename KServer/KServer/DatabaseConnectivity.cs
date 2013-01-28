@@ -120,6 +120,26 @@ namespace KServer
             }
         }
 
+        public Response SongExists(int DJID, int SongID)
+        {
+            string command;
+            command = "select SongID from DJSongs where ";
+            command += "SongID = '" + SongID.ToString() + "' and ";
+            command += "DJListID = '" + DJID.ToString() + "';";
+            string[] columns = new string[1] { "SongID" };
+            return DBQuery(command, columns);
+        }
+
+        public Response SongInformation(int DJID, int SongID)
+        {
+            string command;
+            command = "select Title, Artist, PathOnDisk from DJSongs where ";
+            command += "SongID = '" + SongID.ToString() + "' and ";
+            command += "DJListID = '" + DJID.ToString() + "';";
+            string[] columns = new string[3] { "Title", "Artist", "PathOnDisk" };
+            return DBQuery(command, columns);
+        }
+
         #region DJStuff
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -381,6 +401,15 @@ namespace KServer
             return DBQuery(command, columns);
         }
 
+        public Response MobileIDtoUsername(int MobileID)
+        {
+            string command;
+            command = "select Username from MobileUsers where ";
+            command += "ID = '" + MobileID.ToString() + "';";
+            string[] columns = new string[1] { "Username" };
+            return DBQuery(command, columns);
+        }
+
         public Response MobileValidateID(int MobileID)
         {
             string command;
@@ -567,6 +596,24 @@ namespace KServer
                 r.error = true;
                 return r;
             }
+        }
+
+        public Response GetSongRequests(int DJID)
+        {
+            string command;
+            command = "select List from DJSongRequests where ";
+            command += "ListDJID = '" + DJID.ToString() + "';";
+            string[] columns = new string[1] { "List" };
+            return DBQuery(command, columns);
+        }
+
+        public Response SetSongRequests(int DJID, string requestString)
+        {
+            string command;
+            command = "update DJSongRequests set ";
+            command += "List = '" + requestString + "' where ";
+            command += "ListDJID = '" + DJID.ToString() + "';";
+            return DBNonQuery(command);
         }
 
 

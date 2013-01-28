@@ -33,7 +33,7 @@ namespace DJTestClient
 
                 if (command.StartsWith("h")) //HELP
                 {
-                    Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>");
+                    Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, listQueue<lq>");
                 }
                 else if (command.StartsWith("q")) // QUIT
                 {
@@ -179,6 +179,31 @@ namespace DJTestClient
                         if (!r.error)
                             foreach (Song s in songs)
                                 Console.WriteLine(s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
+                    }
+                }
+                else if (command.StartsWith("lq"))
+                {
+                    try
+                    {
+                        queueSinger[] queue;
+                        Response r = proxy.DJGetQueue(out queue, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                        Console.WriteLine("Queue: ");
+                        if (r.error)
+                            return;
+                        foreach (queueSinger qs in queue)
+                        {
+                            Console.WriteLine("ID: " + qs.user.userID + ", Name: " + qs.user.userName);
+                            foreach (Song s in qs.songs)
+                                Console.WriteLine("\t" + s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk);
+                        }
+
                     }
                     catch (Exception e)
                     {

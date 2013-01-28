@@ -332,7 +332,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Conver the DJKey to a DJID
+                // Convert the DJKey to a DJID
                 r = DJKeyToID(DJKey, out DJID);
                 if (r.error)
                     return r;
@@ -365,6 +365,112 @@ namespace KServer
         }
 
         // Queue management
+        public Response DJGetQueue(out List<queueSinger> queue, long DJKey)
+        {
+            queue = new List<queueSinger>();
+            int DJID = -1, DJStatus = -1, count = 0;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Attempt to conenct to DB.
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Get the status of the DJ.
+                r = db.DJGetStatus(DJID);
+                if (r.error)
+                    return r;
+
+                // Try to parse the status.
+                if (!int.TryParse(r.message.Trim(), out DJStatus))
+                {
+                    r.error = true;
+                    r.message = "Exception in DJListSongs: Unable to parse status from DB!";
+                    return r;
+                }
+
+                // If the DJ is not logged in, don't list songs.
+                if (DJStatus == 0)
+                {
+                    r.error = true;
+                    r.message = "You are not logged in!";
+                    return r;
+                }
+
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                string raw = r.message;
+                if (raw.Trim() == "")
+                {
+                    r.error = false;
+                    r.message = "Empty Queue";
+                    return r;
+                }
+
+                string[] clientRequests = raw.Split('`');
+                for (int i = 0; i < clientRequests.Length; i++)
+                {
+                    string[] parts = clientRequests[i].Split('~');
+                    if (parts.Length == 0)
+                    {
+                        r.error = true;
+                        r.message = "Error in DBtoList 1";
+                        return r;
+                    }
+
+                    queueSinger qs = new queueSinger();
+                    qs.songs = new List<Song>();
+                    User u = new User();
+                    u.userID = int.Parse(parts[0]);
+                    r = db.MobileIDtoUsername(u.userID);
+                    if (r.error)
+                        return r;
+                    if (r.message.Trim().Length == 0)
+                    {
+                        r.error = true;
+                        r.message = "DB Username lookup exception in DJGetQueue!";
+                        return r;
+                    }
+
+                    u.userName = r.message.Trim();
+                    qs.user = u;
+
+                    for (int j = 1; j < parts.Length; j++)
+                    {
+                        Song s = new Song();
+                        s.ID = int.Parse(parts[j]);
+                        r = db.SongInformation(DJID, s.ID);
+                        if (r.error)
+                            return r;
+                        if (r.message.Trim().Length == 0)
+                        {
+                            r.error = true;
+                            r.message = "DB Song lookup exception in DJGETQUEUE!";
+                            return r;
+                        }
+                        string[] songParts = r.message.Split(',');
+                        s.title = songParts[0];
+                        s.artist = songParts[1];
+                        s.pathOnDisk = songParts[2];
+                        qs.songs.Add(s);
+
+                    }
+                    queue.Add(qs);
+                    count++;
+                }
+            }
+            Response rr = new Response();
+            rr.result = count;
+            return rr;
+        }
+
         public Response DJAddQueue(SongRequest sr, int queueIndex, int sessionID, long DJKey)
         {
             Response r = new Response();

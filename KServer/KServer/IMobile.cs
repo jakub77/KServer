@@ -40,30 +40,4 @@ namespace KServer
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongRequest/?songID={songID}&userKey={userKey}")]
         Response MobileSongRequest(int songID, long userKey);
     }
-
-
-    /*
-     *         [OperationContract]
-        // Song management
-        [OperationContract]
-        Response DJAddSongs(List<Song> songs, long DJKey);
-        [OperationContract]
-        Response DJRemoveSongs(List<Song> songs, long DJKey);
-        [OperationContract]
-        Response DJListSongs(out List<Song> songs, long DJKey);
-
-        // Queue management
-        [OperationContract]
-        Response DJAddQueue(SongRequest sr, int queueIndex, int sessionID, long DJKey);
-        [OperationContract]
-        Response DJRemoveSongRequest(SongRequest sr, int sessionID, long DJKey);
-        [OperationContract]
-        Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey);
-        [OperationContract]
-        Response DJRemoveUser(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey);
-        [OperationContract]
-        Response DJMoveUser(int userID, int sessionID, long DJKey);
-     */
-    
-
 }

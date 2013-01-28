@@ -48,6 +48,8 @@ namespace KServer
         Response DJRemoveUser(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey);
         [OperationContract]
         Response DJMoveUser(int userID, int sessionID, long DJKey);
+        [OperationContract]
+        Response DJGetQueue(out List<queueSinger> queue, long DJKey);
     }
 
 

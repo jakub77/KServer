@@ -70,7 +70,7 @@ namespace KServer
                     return r;
                 }
 
-                // Information seems valid, sign up DJ and return successfulness.
+                // Information seems valid, sign up client and return successfulness.
                 r = db.MobileSignUp(username, password);
                 return r;
             }
@@ -86,7 +86,7 @@ namespace KServer
                     return new LogInResponse(r);
 
                 // See if the username/password combination is valid.
-                // If it is valid, the DJID will be stored in r.message.
+                // If it is valid, the userkey will be stored in r.message.
                 // If it is not valid, r.message will be empty.
                 r = db.MobileValidateUsernamePassword(username, password);
                 if (r.error)
@@ -100,7 +100,7 @@ namespace KServer
                     return new LogInResponse(r);
                 }
 
-                // Get the DJID stored in r.message.
+                // Get the client ID stored in r.message.
                 if (!int.TryParse(r.message.Trim(), out MobileID))
                 {
                     r.error = true;
@@ -108,7 +108,7 @@ namespace KServer
                     return new LogInResponse(r);
                 }
 
-                // Get the current status of the DJ
+                // Get the current status of the client
                 r = db.MobileGetStatus(MobileID);
                 if (r.error)
                     return new LogInResponse(r);
@@ -121,7 +121,7 @@ namespace KServer
                     return new LogInResponse(r);
                 }
 
-                // If either the status or the DJID are not yet set, return error.
+                // If either the status or the ID are not yet set, return error.
                 if (MobileStatus == -1 || MobileID == -1)
                 {
                     r.error = true;
@@ -143,7 +143,7 @@ namespace KServer
                 if (r.error)
                     return new LogInResponse(r);
 
-                // Attempt to change the DJID into a userKey
+                // Attempt to change the MobileID into a userKey
                 long userKey;
                 r = MobileIDToKey(MobileID, out userKey);
                 if (r.error)
@@ -169,17 +169,17 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Convert the DJKey to a DJID
+                // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out MobileID);
                 if (r.error)
                     return r;
 
-                // Get the current status of the DJ
+                // Get the current status of the client.
                 r = db.MobileGetStatus(MobileID);
                 if (r.error)
                     return r;
 
-                // Try to parse the status of the DJ.
+                // Try to parse the status of the client.
                 if (!int.TryParse(r.message.Trim(), out MobileStatus))
                 {
                     r.error = true;
@@ -187,7 +187,7 @@ namespace KServer
                     return r;
                 }
 
-                // If the DJ is not signed in, inform them.
+                // If the client is not signed in, inform them.
                 if (MobileStatus <= 0)
                 {
                     r.error = true;
@@ -218,15 +218,14 @@ namespace KServer
                 if (r.error)
                     return null;
 
-                // Get the current status of the DJ
+                // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
                     return null;
-
-                // Try to parse the status of the DJ.
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
                     return null;
 
+                // Complete the search.
                 r = db.MobileSearchSongs(out songs, title.Trim(), artist.Trim(), venueID);
                 if (r.error)
                     return null;
@@ -255,12 +254,10 @@ namespace KServer
                 if (r.error)
                     return null;
 
-                // Get the current status of the DJ
+                // Check to make sure the venue exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
                     return null;
-
-                // Try to parse the status of the DJ.
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
                     return null;
 
@@ -273,12 +270,234 @@ namespace KServer
         }
         public Response MobileSongRequest(int songID, long userKey)
         {
+            int venueID = 1;
+            int venueStatus;
+            int songExists;
+            int mobileID;
+            int MobileStatus = -2;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return r;
+
+                // Get the current status of the client.
+                r = db.MobileGetStatus(mobileID);
+                if (r.error)
+                    return r;
+
+                // Try to parse the status of the client.
+                if (!int.TryParse(r.message.Trim(), out MobileStatus))
+                {
+                    r.error = true;
+                    r.message = "Exception in MobileSignIn: Unable to parse status from DB!";
+                    return r;
+                }
+
+                // If the client is not signed in, inform them.
+                if (MobileStatus <= 0)
+                {
+                    r.error = true;
+                    r.message = "You are not signed in.";
+                    return r;
+                }
+
+                // Get the current status of the venue
+                r = db.DJGetStatus(venueID);
+                if (r.error)
+                    return r;
+
+                // Try to parse the status of the DJ.
+                if (!int.TryParse(r.message.Trim(), out venueStatus))
+                {
+                    r.error = true;
+                    r.message = "Exception in DJSignIn: Unable to parse status from DB!";
+                    return r;
+                }
+
+                // Check to see if the DJ is accepting songs.
+                if (venueStatus == 0)
+                {
+                    r.error = true;
+                    r.message = "Venue is not accepting songs.";
+                    return r;
+                }
+
+                r = db.SongExists(venueID, songID);
+                if (r.error)
+                    return r;
+
+                if (!int.TryParse(r.message.Trim(), out songExists))
+                {
+                    r.error = true;
+                    r.message = "Could not find song";
+                    return r;
+                }
+
+                r = db.GetSongRequests(venueID);
+                if (r.error)
+                    return r;
+
+                string requests = r.message;
+                string newRequests = string.Empty;
+
+                if (requests.Trim().Length == 0)
+                {
+                    requests = mobileID.ToString() + "~" + songID;
+                    r = db.SetSongRequests(venueID, requests);
+                    return r;
+                }
+                
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                List<queueSinger> queue;
+                r = DBToMinimalList(requests, out queue);
+                if (r.error)
+                    return r;
+
+                // Search to see if the user is already in this list of singers.
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    // We found the userID already in here.
+                    if (queue[i].user.userID == mobileID)
+                    {
+                        // Loop through the songs to see if the user is already singing this song.
+                        for (int j = 0; j < queue[i].songs.Count; j++)
+                        {
+                            if (queue[i].songs[j].ID == songID)
+                            {
+                                r.error = true;
+                                r.message = "You are already in queue to sing that song";
+                                return r;
+                            }
+
+                        }
+                        // They dont' already have the song in the list, add them to the list
+                        Song s = new Song();
+                        s.ID = songID;
+                        queue[i].songs.Add(s);
+                        MinimalListToDB(queue, out newRequests);
+                        return db.SetSongRequests(venueID, newRequests);
+                    }
+                }
+
+                queueSinger qs = new queueSinger();
+                qs.songs = new List<Song>();
+
+                User u = new User();
+                u.userID = mobileID;
+                qs.user = u;    
+
+                Song song = new Song();
+                song.ID = songID;
+                qs.songs.Add(song);
+
+                queue.Add(qs);
+                MinimalListToDB(queue, out newRequests);
+                return db.SetSongRequests(venueID, newRequests);
+
+                
+
+                /*
+
+                string newRequests = string.Empty;
+                string[] clientRequests = requests.Split('`');
+                // Loop through all of the different user's song request lines.
+                for (int i = 0; i < clientRequests.Length; i++)
+                {
+                    // Get the individual parts of the request line.
+                    string[] requestParts = clientRequests[i].Split('~');
+                    // If this is not the line for the current user, look at the next line.
+                    if (requestParts[0].Trim() != mobileID.ToString().Trim())
+                        continue;
+
+                    // Now this is the line for the current user. Loop through their songs seeing if they already are in queue for the song.
+                    for (int j = 1; j < requestParts.Length; j++)
+                    {
+                        if (requestParts[j] == songID.ToString())
+                        {
+                            r.error = true;
+                            r.message = "You are already in queue to sing that song";
+                            return r;
+                        }
+                    }
+
+                    // Now that we have the right user, and the song is not being sung by them, add them to that user list.
+                    clientRequests[i] += "~" + songID.ToString();
+                    // Now pack up the request string again, and send it off the user, and exit this funciton.
+                    foreach (string clientRequest in clientRequests)
+                    {
+                        newRequests += clientRequest + "`";
+                    }
+                    newRequests = newRequests.Substring(0, newRequests.Length - 1);
+                    return db.SetSongRequests(venueID, newRequests);                    
+                }
+
+                // If we are here, the client was not found in the request string.
+                newRequests = requests + "`" + mobileID.ToString() + "~" + songID.ToString();
+                return db.SetSongRequests(venueID, newRequests);            
+                 */
+            }
+        }
+
+
+        private Response MinimalListToDB(List<queueSinger> queue, out string raw)
+        {
+            raw = string.Empty;
+            foreach (queueSinger qs in queue)
+            {
+                raw += qs.user.userID.ToString();
+                foreach (Song s in qs.songs)
+                {
+                    raw += "~" + s.ID;
+                }
+                raw += "`";    
+            }
+            raw = raw.Substring(0, raw.Length - 1);
+            return new Response();
+        }
+
+
+        private Response DBToMinimalList(string raw, out List<queueSinger> queue)
+        {
+            int count = 0;
             Response r = new Response();
-            r.error = true;
-            r.message = "MobileSongRequest is not yet implemented.";
-            r.result = songID;
+
+            queue = new List<queueSinger>();
+            string[] clientRequests = raw.Split('`');
+            for (int i = 0; i < clientRequests.Length; i++)
+            {
+                string[] parts = clientRequests[i].Split('~');
+                if (parts.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Error in DBtoList 1";
+                    return r;
+                }
+
+                queueSinger qs = new queueSinger();
+                qs.songs = new List<Song>();
+                User u = new User();
+                u.userID = int.Parse(parts[0]);
+                qs.user = u;
+
+                for (int j = 1; j < parts.Length; j++)
+                {
+                    Song s = new Song();
+                    s.ID = int.Parse(parts[j]);
+                    qs.songs.Add(s);
+
+                }
+                queue.Add(qs);
+                count++;
+            }
             return r;
         }
+
 
         /// <summary>
         /// 

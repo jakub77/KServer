@@ -79,6 +79,12 @@
   <wsdl:message name="IDJ_DJMoveUser_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJMoveUserResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJGetQueue_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetQueue" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJGetQueue_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetQueueResponse" />
+  </wsdl:message>
   <wsdl:portType name="IDJ">
     <wsdl:operation name="DJSignUp">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJSignUp" message="tns:IDJ_DJSignUp_InputMessage" />
@@ -127,6 +133,10 @@
     <wsdl:operation name="DJMoveUser">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJMoveUser" message="tns:IDJ_DJMoveUser_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJMoveUserResponse" message="tns:IDJ_DJMoveUser_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJGetQueue">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGetQueue" message="tns:IDJ_DJGetQueue_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGetQueueResponse" message="tns:IDJ_DJGetQueue_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IDJ" type="tns:IDJ">
@@ -232,6 +242,15 @@
     </wsdl:operation>
     <wsdl:operation name="DJMoveUser">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJMoveUser" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJGetQueue">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJGetQueue" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
