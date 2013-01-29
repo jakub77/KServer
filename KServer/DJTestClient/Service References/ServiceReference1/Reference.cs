@@ -578,6 +578,9 @@ namespace DJTestClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJGetQueue", ReplyAction="http://tempuri.org/IDJ/DJGetQueueResponse")]
         DJTestClient.ServiceReference1.Response DJGetQueue(out DJTestClient.ServiceReference1.queueSinger[] queue, long DJKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJPopQueue", ReplyAction="http://tempuri.org/IDJ/DJPopQueueResponse")]
+        DJTestClient.ServiceReference1.Response DJPopQueue(DJTestClient.ServiceReference1.SongRequest sr, long DJKey);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -657,6 +660,10 @@ namespace DJTestClient.ServiceReference1 {
         
         public DJTestClient.ServiceReference1.Response DJGetQueue(out DJTestClient.ServiceReference1.queueSinger[] queue, long DJKey) {
             return base.Channel.DJGetQueue(out queue, DJKey);
+        }
+        
+        public DJTestClient.ServiceReference1.Response DJPopQueue(DJTestClient.ServiceReference1.SongRequest sr, long DJKey) {
+            return base.Channel.DJPopQueue(sr, DJKey);
         }
     }
 }

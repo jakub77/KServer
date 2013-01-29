@@ -33,7 +33,7 @@ namespace DJTestClient
 
                 if (command.StartsWith("h")) //HELP
                 {
-                    Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, listQueue<lq>");
+                    Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
                 }
                 else if (command.StartsWith("q")) // QUIT
                 {
@@ -185,7 +185,7 @@ namespace DJTestClient
                         Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
                     }
                 }
-                else if (command.StartsWith("lq"))
+                else if (command.StartsWith("lq")) // List the song queue for the loggin in DJ.
                 {
                     try
                     {
@@ -195,14 +195,36 @@ namespace DJTestClient
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
                         Console.WriteLine("Queue: ");
-                        if (r.error)
-                            return;
-                        foreach (queueSinger qs in queue)
-                        {
-                            Console.WriteLine("ID: " + qs.user.userID + ", Name: " + qs.user.userName);
-                            foreach (Song s in qs.songs)
-                                Console.WriteLine("\t" + s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk);
-                        }
+                        if (!r.error)
+                            foreach (queueSinger qs in queue)
+                            {
+                                Console.WriteLine("ID: " + qs.user.userID + ", Name: " + qs.user.userName);
+                                foreach (Song s in qs.songs)
+                                    Console.WriteLine("\t" + s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk);
+                            }
+
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
+                    }
+                }
+                else if (command.StartsWith("pq")) // Pop the first song request off the queue for the loggin in DJ.
+                {
+                    try
+                    {
+                        SongRequest sr = new SongRequest();
+                        User u = new User();
+                        Console.WriteLine("Enter clientID:");
+                        u.userID = int.Parse(Console.ReadLine().Trim());
+                        Console.WriteLine("Enter SongID:");
+                        sr.songID = int.Parse(Console.ReadLine().Trim());
+                        sr.user = u;
+
+                        Response r = proxy.DJPopQueue(sr, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
 
                     }
                     catch (Exception e)

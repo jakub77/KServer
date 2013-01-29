@@ -364,6 +364,68 @@ namespace KServer
             }
         }
 
+        public Response DJPopQueue(SongRequest sr, long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Attempt to conenct to DB.
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+                r = DJCheckStatus(DJID, "!0", db);
+                if (r.error)
+                    return r;
+
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                string raw = r.message;
+                if (raw.Trim() == "")
+                {
+                    r.error = true;
+                    r.message = "Empty Queue";
+                    return r;
+                }
+
+                List<queueSinger> queue;
+                r = DBToMinimalList(raw, out  queue);
+                if (r.error)
+                    return r;
+
+                if (queue[0].user.userID != sr.user.userID || queue[0].songs[0].ID != sr.songID)
+                {
+                    r.error = true;
+                    r.message = "Song Request to Pop did not match first song Request, is your queue out of date?";
+                    r.message += "\nDBUID: " + queue[0].user.userID + ", GUID: " + sr.user.userID;
+                    r.message += "\nDBSID: " + queue[0].songs[0].ID + ", GSID: " + sr.songID;
+                    return r;
+                }
+
+                queue[0].songs.RemoveAt(0);
+                if (queue[0].songs.Count == 0)
+                    queue.RemoveAt(0);
+                else
+                {
+                    queueSinger temp = queue[0];
+                    queue.RemoveAt(0);
+                    queue.Add(temp);
+                }
+
+                raw = string.Empty;
+                r = MinimalListToDB(queue, out raw);
+                if (r.error)
+                    return r;
+                return db.SetSongRequests(DJID, raw);
+            }
+        }
+
+
         // Queue management
         public Response DJGetQueue(out List<queueSinger> queue, long DJKey)
         {
@@ -413,6 +475,75 @@ namespace KServer
                     r.message = "Empty Queue";
                     return r;
                 }
+
+                r = DBToFullList(raw, out queue, DJID, db);
+                if (r.error)
+                    return r;
+                r.result = count;
+                return r;
+            }
+        }
+
+        private Response MinimalListToDB(List<queueSinger> queue, out string raw)
+        {
+            raw = string.Empty;
+            foreach (queueSinger qs in queue)
+            {
+                raw += qs.user.userID.ToString();
+                foreach (Song s in qs.songs)
+                {
+                    raw += "~" + s.ID;
+                }
+                raw += "`";
+            }
+            raw = raw.Substring(0, raw.Length - 1);
+            return new Response();
+        }
+
+        private Response DBToMinimalList(string raw, out List<queueSinger> queue)
+        {
+            int count = 0;
+            Response r = new Response();
+
+            queue = new List<queueSinger>();
+            string[] clientRequests = raw.Split('`');
+            for (int i = 0; i < clientRequests.Length; i++)
+            {
+                string[] parts = clientRequests[i].Split('~');
+                if (parts.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Error in DBtoList 1";
+                    return r;
+                }
+
+                queueSinger qs = new queueSinger();
+                qs.songs = new List<Song>();
+                User u = new User();
+                u.userID = int.Parse(parts[0]);
+                qs.user = u;
+
+                for (int j = 1; j < parts.Length; j++)
+                {
+                    Song s = new Song();
+                    s.ID = int.Parse(parts[j]);
+                    qs.songs.Add(s);
+
+                }
+                queue.Add(qs);
+                count++;
+            }
+            return r;
+        }
+
+        public Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
+        {
+                queue = new List<queueSinger>();
+                // Attempt to conenct to DB.
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+                int count = 0;
 
                 string[] clientRequests = raw.Split('`');
                 for (int i = 0; i < clientRequests.Length; i++)
@@ -465,10 +596,7 @@ namespace KServer
                     queue.Add(qs);
                     count++;
                 }
-            }
-            Response rr = new Response();
-            rr.result = count;
-            return rr;
+                return r;
         }
 
         public Response DJAddQueue(SongRequest sr, int queueIndex, int sessionID, long DJKey)
@@ -504,6 +632,68 @@ namespace KServer
             Response r = new Response();
             r.error = true;
             r.message = "DJMoveUser is not yet implemented";
+            return r;
+        }
+
+
+        private Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
+        {
+            Response r;
+            int DJStatus, desired;
+            bool notStatus = false;
+            // Get the status of the DJ.
+            r = db.DJGetStatus(DJID);
+            if (r.error)
+                return r;
+
+            // Attempt to parse that status of the DJ.
+            if (!int.TryParse(r.message.Trim(), out DJStatus))
+            {
+                r.error = true;
+                r.message = "Exception in DJCheckStatus: Unable to parse status from DB!";
+                return r;
+            }
+
+            if (desiredStatus[0] == '!')
+            {
+                notStatus = true;
+                desiredStatus = desiredStatus.Substring(1);
+            }
+
+            if(!int.TryParse(desiredStatus, out desired))
+            {
+                r.error = true;
+                r.message = "Exception in DJCheckStatus: Cannot parse desired Status";
+                return r;
+            }
+
+            if (!notStatus)
+            {
+                if (DJStatus != desired)
+                {
+                    r.error = true;
+                    if (desired == 0)
+                        r.message = "You are not signed out.";
+                    else if (desired == 1)
+                        r.message = "You are not signed in.";
+                    else
+                        r.message = "You are in the wrong state, possibly not created a session?";
+                    return r;
+                }
+            }
+            else if (DJStatus == desired)
+            {
+                r.error = true;
+                if (desired == 0)
+                    r.message = "You are signed out and cannot do that.";
+                else if (desired == 1)
+                    r.message = "You are signed in and cannot do that.";
+                else
+                    r.message = "You are in the wrong state, do you have a session running?";
+                return r;
+            }
+
+            r.result = DJStatus;
             return r;
         }
 

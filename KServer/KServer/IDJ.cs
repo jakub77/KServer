@@ -50,6 +50,8 @@ namespace KServer
         Response DJMoveUser(int userID, int sessionID, long DJKey);
         [OperationContract]
         Response DJGetQueue(out List<queueSinger> queue, long DJKey);
+        [OperationContract]
+        Response DJPopQueue(SongRequest sr, long DJKey);
     }
 
 

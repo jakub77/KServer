@@ -202,4 +202,19 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="DJPopQueue">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q24="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q24:SongRequest" />
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJPopQueueResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q25="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJPopQueueResult" nillable="true" type="q25:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

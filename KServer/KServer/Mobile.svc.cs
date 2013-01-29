@@ -399,48 +399,6 @@ namespace KServer
                 queue.Add(qs);
                 MinimalListToDB(queue, out newRequests);
                 return db.SetSongRequests(venueID, newRequests);
-
-                
-
-                /*
-
-                string newRequests = string.Empty;
-                string[] clientRequests = requests.Split('`');
-                // Loop through all of the different user's song request lines.
-                for (int i = 0; i < clientRequests.Length; i++)
-                {
-                    // Get the individual parts of the request line.
-                    string[] requestParts = clientRequests[i].Split('~');
-                    // If this is not the line for the current user, look at the next line.
-                    if (requestParts[0].Trim() != mobileID.ToString().Trim())
-                        continue;
-
-                    // Now this is the line for the current user. Loop through their songs seeing if they already are in queue for the song.
-                    for (int j = 1; j < requestParts.Length; j++)
-                    {
-                        if (requestParts[j] == songID.ToString())
-                        {
-                            r.error = true;
-                            r.message = "You are already in queue to sing that song";
-                            return r;
-                        }
-                    }
-
-                    // Now that we have the right user, and the song is not being sung by them, add them to that user list.
-                    clientRequests[i] += "~" + songID.ToString();
-                    // Now pack up the request string again, and send it off the user, and exit this funciton.
-                    foreach (string clientRequest in clientRequests)
-                    {
-                        newRequests += clientRequest + "`";
-                    }
-                    newRequests = newRequests.Substring(0, newRequests.Length - 1);
-                    return db.SetSongRequests(venueID, newRequests);                    
-                }
-
-                // If we are here, the client was not found in the request string.
-                newRequests = requests + "`" + mobileID.ToString() + "~" + songID.ToString();
-                return db.SetSongRequests(venueID, newRequests);            
-                 */
             }
         }
 
