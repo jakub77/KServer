@@ -39,5 +39,9 @@ namespace KServer
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongRequest/?songID={songID}&userKey={userKey}")]
         Response MobileSongRequest(int songID, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileViewQueue/?userKey={userKey}")]
+        List<queueSinger> MobileViewQueue(long userKey);
     }
 }

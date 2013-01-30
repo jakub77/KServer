@@ -402,6 +402,113 @@ namespace KServer
             }
         }
 
+        public List<queueSinger> MobileViewQueue(long userKey)
+        {
+            int venueID = 1;
+            List<queueSinger> queue = new List<queueSinger>();
+            int DJID = -1, DJStatus = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Attempt to conenct to DB.
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return null;
+
+                DJID = venueID;
+
+                // Get the status of the DJ.
+                r = db.DJGetStatus(DJID);
+                if (r.error)
+                    return null;
+
+                // Try to parse the status.
+                if (!int.TryParse(r.message.Trim(), out DJStatus))
+                    return null;
+
+                // If the DJ is not logged in, don't list songs.
+                if (DJStatus == 0)
+                    return null;
+
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return null;
+
+                string raw = r.message;
+                if (raw.Trim() == "")
+                {
+                    return queue;
+                }
+
+                r = DBToNearlyFullList(raw, out queue, DJID, db);
+                if (r.error)
+                    return null;
+                return queue;
+            }
+        }
+
+        public Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
+        {
+            queue = new List<queueSinger>();
+            // Attempt to conenct to DB.
+            Response r = db.OpenConnection();
+            if (r.error)
+                return r;
+            int count = 0;
+
+            string[] clientRequests = raw.Split('`');
+            for (int i = 0; i < clientRequests.Length; i++)
+            {
+                string[] parts = clientRequests[i].Split('~');
+                if (parts.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Error in DBtoList 1";
+                    return r;
+                }
+
+                queueSinger qs = new queueSinger();
+                qs.songs = new List<Song>();
+                User u = new User();
+                u.userID = int.Parse(parts[0]);
+                r = db.MobileIDtoUsername(u.userID);
+                if (r.error)
+                    return r;
+                if (r.message.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "DB Username lookup exception in DJGetQueue!";
+                    return r;
+                }
+
+                u.userName = r.message.Trim();
+                qs.user = u;
+
+                for (int j = 1; j < parts.Length; j++)
+                {
+                    Song s = new Song();
+                    s.ID = int.Parse(parts[j]);
+                    r = db.SongInformation(DJID, s.ID);
+                    if (r.error)
+                        return r;
+                    if (r.message.Trim().Length == 0)
+                    {
+                        r.error = true;
+                        r.message = "DB Song lookup exception in DJGETQUEUE!";
+                        return r;
+                    }
+                    string[] songParts = r.message.Split(',');
+                    s.title = songParts[0];
+                    s.artist = songParts[1];
+                    s.pathOnDisk = string.Empty;
+                    qs.songs.Add(s);
+
+                }
+                queue.Add(qs);
+                count++;
+            }
+            return r;
+        }
+
 
         private Response MinimalListToDB(List<queueSinger> queue, out string raw)
         {

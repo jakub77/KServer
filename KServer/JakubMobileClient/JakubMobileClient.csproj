@@ -58,8 +58,26 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.LogInResponse.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
+    <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.queueSinger.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
+    <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.Response.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
+    <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.Song.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
     <None Include="Service References\ServiceReference1\Mobile.wsdl" />
     <None Include="Service References\ServiceReference1\Mobile.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\ServiceReference1\Mobile1.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\ServiceReference1\Mobile2.xsd">
       <SubType>Designer</SubType>
     </None>
   </ItemGroup>
