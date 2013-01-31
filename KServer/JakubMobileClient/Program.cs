@@ -15,20 +15,25 @@ namespace JakubMobileClient
     {
         static void Main(string[] args)
         {
-            //MobileClient proxy = new MobileClient();
-            //LogInResponse r = proxy.MobileSignIn("Jakub", "topsecret");
-
+            // Used to make http requests.
             WebClient client = new WebClient();
+            // Base address of all commands.
             string baseAddress = "http://sunny.eng.utah.edu:81/Mobile.svc";
+            // The key that describes the user. Is not set until signup is called!
             long userKey = -1;
-            bool displayJSON = true;
+            // Wether to display JSON or clearer object messages.
+            bool displayJSON = false;
+            // The venue of the location. Currently the server ignores this until venues are implemented.
             int venueID = 1;
 
+            Console.WriteLine("Remember to signin before using commands that use a userKey");
             for (; ; )
             {
+                // Get the command
                 Console.WriteLine("Enter command or [help]");
                 string command = Console.ReadLine();
 
+                // Bit if/else if statement to determine waht the command is.
                 if (command.StartsWith("h")) //HELP
                 {
                     //Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
@@ -44,17 +49,26 @@ namespace JakubMobileClient
                 }
                 else if (command.StartsWith("su")) // SIGN UP
                 {
+                    // Get the username/password from the user.
                     string username, password;
                     Console.Write("Username: ");
                     username = Console.ReadLine();
                     Console.Write("Password: ");
                     password = Console.ReadLine();
+
+                    // Form the URL and get results from the server.
                     Stream data = client.OpenRead(baseAddress + "/MobileSignUp/?username=" + username.Trim() + "&password=" + password.Trim());
+                    // Read the raw results and turn into a string.
                     StreamReader reader = new StreamReader(data);
                     string s = reader.ReadToEnd();
+
+                    // Since MobileSignUp returns a Response object. Convert the JSON to a Response object.
                     Response r = strToJSON<Response>(s);
+                    
+                    // If we are diplaying JSON, simply display the original string returned.
                     if (displayJSON)
                         Console.WriteLine("JSON: " + s);
+                    // Otherwise, display values that comes from the response object.
                     else
                     {
                         Console.WriteLine("Error: " + r.error);
@@ -62,7 +76,7 @@ namespace JakubMobileClient
                         Console.WriteLine("Message:\n" + r.message);
                     }
                 }
-                else if (command.StartsWith("si"))
+                else if (command.StartsWith("si")) // SIGN IN
                 {
                     string username, password;
                     Console.Write("Username: ");
@@ -84,7 +98,7 @@ namespace JakubMobileClient
                     }
                     userKey = r.userKey; 
                 }
-                else if (command.StartsWith("so")) // Signout a DJ
+                else if (command.StartsWith("so")) // SIGN OUT
                 {
                     try
                     {
@@ -141,7 +155,7 @@ namespace JakubMobileClient
                         Console.WriteLine("Exception: " + e.Message);
                     }
                 }
-                else if (command.StartsWith("sb")) // Song browse
+                else if (command.StartsWith("sb")) // Song BROWSE
                 {
                     try
                     {
@@ -230,13 +244,10 @@ namespace JakubMobileClient
                         Console.WriteLine("Exception: " + e.Message);
                     }
                 }
-
-
-                //
             }
         }
 
-
+        // Convert json to compatable object.
         public static T strToJSON<T>(string json)
         {
             T obj = Activator.CreateInstance<T>();

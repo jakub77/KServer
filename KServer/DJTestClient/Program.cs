@@ -23,11 +23,17 @@ namespace DJTestClient
         {
             //InstanceContext site = new InstanceContext(new DJCallbacks());
             //DJClient proxy = new DJClient(site);
+            
+            // User the proxy to communicate with server.
             DJClient proxy = new DJClient();
+
+            // This is the DJKey that identifies the DJ. It is not set until a signin request is made.
             long DJKey = -1;
 
+            Console.WriteLine("Remember to sign in before using commands that need a DJKey");
             for (; ; )
             {
+                // Get user input for what to do. 
                 Console.WriteLine("Enter command or [help]");
                 string command = Console.ReadLine();
 
@@ -39,7 +45,7 @@ namespace DJTestClient
                 {
                     return;
                 }
-                else if (command.StartsWith("ld")) // LIST DJS
+                else if (command.StartsWith("ld")) // LIST DJS [This is a temporary function, not for release]
                 {
                     Response r;
                     try
