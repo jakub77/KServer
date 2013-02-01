@@ -37,7 +37,7 @@ namespace JakubMobileClient
                 if (command.StartsWith("h")) //HELP
                 {
                     //Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
-                    Console.WriteLine("help<h>, JSONOut<j>, quit<q>, signUp<su>, signIn<si>, signOut<so>, songSearch<ss>,\nsongBrowse<sb>, songRequest<sr>, listQueue<lq>");
+                    Console.WriteLine("help<h>, JSONOut<j>, quit<q>, listMobile<lm>, signUp<su>, signIn<si>, \nsignOut<so>, songSearch<ss>,songBrowse<sb>, songRequest<sr>, listQueue<lq>");
                 }
                 else if (command.StartsWith("j")) // TOGGLE JSON/OBJECT OUTPUT
                 {
@@ -46,6 +46,22 @@ namespace JakubMobileClient
                 else if (command.StartsWith("q")) // QUIT
                 {
                     return;
+                }
+                else if(command.StartsWith("lm"))
+                {
+                    Stream data = client.OpenRead(baseAddress + "/MobileSignUp/?username=list&password=ignore");
+                    StreamReader reader = new StreamReader(data);
+                    string s = reader.ReadToEnd();
+                    Response r = strToJSON<Response>(s);
+                    if (displayJSON)
+                        Console.WriteLine("JSON: " + s);
+                    else
+                    {
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+
                 }
                 else if (command.StartsWith("su")) // SIGN UP
                 {
