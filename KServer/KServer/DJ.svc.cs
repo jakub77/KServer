@@ -84,7 +84,7 @@ namespace KServer
         /// <returns>LogInReponse returns the outcome. The UserKey sent back is used for all communicaiton in further methods.</returns>
         public LogInResponse DJSignIn(string username, string password)
         {
-            int DJID = -1, DJStatus = -1;
+            int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Attempt to conenct to DB.
@@ -115,35 +115,10 @@ namespace KServer
                     return new LogInResponse(r);
                 }
 
-                // Get the current status of the DJ
-                r = db.DJGetStatus(DJID);
+                // Make sure the DJ is not logged in. RIGHT NOW: JUST DON'T CHECK ANYTHING USEFUL TO ALLOW FOR LOGINS TO OCCUR WHEN LOGGED IN!
+                r = DJCheckStatus(DJID, "!4", db);
                 if (r.error)
                     return new LogInResponse(r);
-
-                // Parse the status from the DB.
-                if (!int.TryParse(r.message.Trim(), out DJStatus))
-                {
-                    r.error = true;
-                    r.message = "Exception in DJSignIn: Unable to parse status from DB!";
-                    return new LogInResponse(r);
-                }
-
-                // If either the status or the DJID are not yet set, return error.
-                if (DJStatus == -1 || DJID == -1)
-                {
-                    r.error = true;
-                    r.message = "Exception in DJSignIn: DJStatus or DJID are not yet set!";
-                    return new LogInResponse(r);
-                }
-
-                // Code to not allow a signed in user to sign in again, disabled since signouts
-                // are not yet guarenteed upon a client disconnecting.
-                //if(DJStatus != 0)
-                //{
-                //    r.error= true;
-                //    r.message= "You are already signed in.";
-                //    return new LogInResponse(r);
-                //}
 
                 // Information seems valid, attempt to sign in.
                 r = db.DJSignIn(DJID);
@@ -174,7 +149,7 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response DJSignOut(long DJKey)
         {
-            int DJID, DJStatus;
+            int DJID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Attempt to open the connection to the DB.
@@ -187,26 +162,10 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Get the current status of the DJ
-                r = db.DJGetStatus(DJID);
+                // Make sure the DJ is not logged out.
+                r = DJCheckStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
-
-                // Try to parse the status of the DJ.
-                if (!int.TryParse(r.message.Trim(), out DJStatus))
-                {
-                    r.error = true;
-                    r.message = "Exception in DJSignIn: Unable to parse status from DB!";
-                    return r;
-                }
-
-                // If the DJ is not signed in, inform them.
-                if (DJStatus <= 0)
-                {
-                    r.error = true;
-                    r.message = "You are not signed in.";
-                    return r;
-                }
 
                 // A sign out seems to be valid.
                 r = db.DJSignOut(DJID);
@@ -225,7 +184,7 @@ namespace KServer
         /// <returns>The outcome of the operaiton.</returns>
         public Response DJAddSongs(List<Song> songs, long DJKey)
         {
-            int DJID = -1, DJStatus = -1;
+            int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Attempt to conenct to DB
@@ -238,26 +197,10 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Get the current status of the DJ.
-                r = db.DJGetStatus(DJID);
+                // Make sure the DJ is not logged out.
+                r = DJCheckStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
-
-                // Try to parse the status of the DJ.
-                if (!int.TryParse(r.message.Trim(), out DJStatus))
-                {
-                    r.error = true;
-                    r.message = "Exception in DJSignIn: Unable to parse status from DB!";
-                    return r;
-                }
-
-                // If the DJ is not logged in, don't add songs.
-                if (DJStatus == 0)
-                {
-                    r.error = true;
-                    r.message = "You must be logged in to add songs.";
-                    return r;
-                }
 
                 // Adding songs seems to be valid, add the list of songs to the DJ.
                 r = db.DJAddSongsIgnoringDuplicates(songs, DJID);
@@ -274,7 +217,7 @@ namespace KServer
         /// <returns></returns>
         public Response DJRemoveSongs(List<Song> songs, long DJKey)
         {
-            int DJID = -1, DJStatus = -1;
+            int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Attempt to connect to the DB.
@@ -287,26 +230,10 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Get the status of the DJ.
-                r = db.DJGetStatus(DJID);
+                // Make sure the DJ is not logged out.
+                r = DJCheckStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
-
-                // Attempt to parse that status of the DJ.
-                if (!int.TryParse(r.message.Trim(), out DJStatus))
-                {
-                    r.error = true;
-                    r.message = "Exception in DJRemoveSongs: Unable to parse status from DB!";
-                    return r;
-                }
-
-                // If the DJ is not logged in, inform DJ.
-                if (DJStatus == 0)
-                {
-                    r.error = true;
-                    r.message = "You must be logged in to remove songs.";
-                    return r;
-                }
 
                 // Information seems to be valid, remove songs.
                 r = db.DJRemoveSongs(songs, DJID);
@@ -324,7 +251,7 @@ namespace KServer
         public Response DJListSongs(out List<Song> songs, long DJKey)
         {
             songs = null;
-            int DJID = -1, DJStatus = -1;
+            int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Attempt to conenct to DB.
@@ -337,26 +264,10 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Get the status of the DJ.
-                r = db.DJGetStatus(DJID);
+                // Make sure the DJ isn't logged out
+                r = DJCheckStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
-
-                // Try to parse the status.
-                if (!int.TryParse(r.message.Trim(), out DJStatus))
-                {
-                    r.error = true;
-                    r.message = "Exception in DJListSongs: Unable to parse status from DB!";
-                    return r;
-                }
-
-                // If the DJ is not logged in, don't list songs.
-                if (DJStatus == 0)
-                {
-                    r.error = true;
-                    r.message = "You are not logged in!";
-                    return r;
-                }
 
                 // Information seems valid, list the songs.
                 r = db.DJListSongs(out songs, DJID);
@@ -373,10 +284,12 @@ namespace KServer
                 Response r = db.OpenConnection();
                 if (r.error)
                     return r;
+
                 // Convert the DJKey to a DJID
                 r = DJKeyToID(DJKey, out DJID);
                 if (r.error)
                     return r;
+
                 r = DJCheckStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
@@ -430,7 +343,7 @@ namespace KServer
         public Response DJGetQueue(out List<queueSinger> queue, long DJKey)
         {
             queue = new List<queueSinger>();
-            int DJID = -1, DJStatus = -1, count = 0;
+            int DJID = -1, count = 0;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Attempt to conenct to DB.
@@ -443,26 +356,10 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Get the status of the DJ.
-                r = db.DJGetStatus(DJID);
+                // Make sure the DJ is not logged out.
+                r = DJCheckStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
-
-                // Try to parse the status.
-                if (!int.TryParse(r.message.Trim(), out DJStatus))
-                {
-                    r.error = true;
-                    r.message = "Exception in DJListSongs: Unable to parse status from DB!";
-                    return r;
-                }
-
-                // If the DJ is not logged in, don't list songs.
-                if (DJStatus == 0)
-                {
-                    r.error = true;
-                    r.message = "You are not logged in!";
-                    return r;
-                }
 
                 r = db.GetSongRequests(DJID);
                 if (r.error)
@@ -636,7 +533,7 @@ namespace KServer
         }
 
 
-        private Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
+        public Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
             int DJStatus, desired;

@@ -74,6 +74,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CommonMethods.cs" />
     <Compile Include="DatabaseConnectivity.cs" />
     <Compile Include="IMobile.cs" />
     <Compile Include="Mobile.svc.cs">

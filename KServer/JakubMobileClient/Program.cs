@@ -38,6 +38,7 @@ namespace JakubMobileClient
                 {
                     //Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
                     Console.WriteLine("help<h>, JSONOut<j>, quit<q>, listMobile<lm>, signUp<su>, signIn<si>, \nsignOut<so>, songSearch<ss>,songBrowse<sb>, songRequest<sr>, listQueue<lq>");
+                    Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>");
                 }
                 else if (command.StartsWith("j")) // TOGGLE JSON/OBJECT OUTPUT
                 {
@@ -218,6 +219,58 @@ namespace JakubMobileClient
                         Console.Write("SongID: ");
                         songID = Console.ReadLine();
                         Stream data = client.OpenRead(baseAddress + "/MobileSongRequest/?songID=" + songID + "&userKey=" + userKey);
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("sc"))
+                {
+                    try
+                    {
+                        string oldSongID, newSongID;
+                        Console.Write("Old Song ID: ");
+                        oldSongID = Console.ReadLine();
+                        Console.Write("New Song ID: ");
+                        newSongID = Console.ReadLine();
+                        Stream data = client.OpenRead(baseAddress + "/MobileChangeSongRequest/?oldSongID=" + oldSongID + "&newSongID=" + newSongID + "&userKey="+ userKey);
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("sx"))
+                {
+                    try
+                    {
+                        string songID;
+                        Console.Write("Old Song ID: ");
+                        songID = Console.ReadLine();
+                        Stream data = client.OpenRead(baseAddress + "/MobileRemoveSongRequest/?songID=" + songID + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
                         Response r = strToJSON<Response>(s);
