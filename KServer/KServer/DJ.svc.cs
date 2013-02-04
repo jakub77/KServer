@@ -11,7 +11,6 @@ namespace KServer
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Multiple, IncludeExceptionDetailInFaults = true)]
 
-    // Username and password must be the same to be valid (TEMP... of course)
     public class Service1 : IDJ
     {
         /// <summary>
@@ -173,7 +172,13 @@ namespace KServer
             }
         }
 
-        public Session DJCreateSession(long DJKey) { return null; }
+        public Response DJCreateSession(long DJKey) 
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJCreateSession is not yet implemented";
+            return r; 
+        }
 
         /// <summary>
         /// Add the given songs to the list of songs for the given DJ.

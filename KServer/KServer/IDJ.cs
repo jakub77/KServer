@@ -27,7 +27,7 @@ namespace KServer
         [OperationContract]
         Response DJSignOut(long DJKey);
         [OperationContract]
-        Session DJCreateSession(long DJKey);
+        Response DJCreateSession(long DJKey);
 
         // Song management
         [OperationContract]
