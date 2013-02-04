@@ -39,15 +39,15 @@ namespace KServer
 
         // Queue management
         [OperationContract]
-        Response DJAddQueue(SongRequest sr, int queueIndex, int sessionID, long DJKey);
+        Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey);
         [OperationContract]
-        Response DJRemoveSongRequest(SongRequest sr, int sessionID, long DJKey);
+        Response DJRemoveSongRequest(SongRequest sr, long DJKey);
         [OperationContract]
-        Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey);
+        Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, long DJKey);
         [OperationContract]
-        Response DJRemoveUser(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey);
+        Response DJRemoveUser(int userID, long DJKey);
         [OperationContract]
-        Response DJMoveUser(int userID, int sessionID, long DJKey);
+        Response DJMoveUser(SongRequest newSR, SongRequest oldSR, long DJKey);
         [OperationContract]
         Response DJGetQueue(out List<queueSinger> queue, long DJKey);
         [OperationContract]

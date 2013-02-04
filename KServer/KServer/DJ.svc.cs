@@ -496,42 +496,41 @@ namespace KServer
                 return r;
         }
 
-        public Response DJAddQueue(SongRequest sr, int queueIndex, int sessionID, long DJKey)
+        public Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey)
         {
             Response r = new Response();
             r.error = true;
             r.message = "DJAddQueue is not yet implemented";
             return r;
         }
-        public Response DJRemoveSongRequest(SongRequest sr, int sessionID, long DJKey)
+        public Response DJRemoveSongRequest(SongRequest sr, long DJKey)
         {
             Response r = new Response();
             r.error = true;
             r.message = "DJRemoveSongRequest is not yet implemented";
             return r;
         }
-        public Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey)
+        public Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, long DJKey)
         {
             Response r = new Response();
             r.error = true;
             r.message = "DJChangeSongRequest is not yet implemented";
             return r;
         }
-        public Response DJRemoveUser(SongRequest newSR, SongRequest oldSR, int sessionID, long DJKey)
+        public Response DJRemoveUser(int userID, long DJKey)
         {
             Response r = new Response();
             r.error = true;
             r.message = "DJRemoveUser is not yet implemented";
             return r;
         }
-        public Response DJMoveUser(int userID, int sessionID, long DJKey)
+        public Response DJMoveUser(SongRequest newSR, SongRequest oldSR, long DJKey)
         {
             Response r = new Response();
             r.error = true;
             r.message = "DJMoveUser is not yet implemented";
             return r;
         }
-
 
         public Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
         {

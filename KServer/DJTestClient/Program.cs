@@ -5,6 +5,8 @@ using System.Text;
 using System.Threading.Tasks;
 using DJTestClient.ServiceReference1;
 using System.ServiceModel;
+using System.Security.Cryptography;
+using System.IO;
 
 namespace DJTestClient
 {
@@ -23,7 +25,7 @@ namespace DJTestClient
         {
             //InstanceContext site = new InstanceContext(new DJCallbacks());
             //DJClient proxy = new DJClient(site);
-            
+
             // User the proxy to communicate with server.
             DJClient proxy = new DJClient();
 
@@ -40,6 +42,19 @@ namespace DJTestClient
                 if (command.StartsWith("h")) //HELP
                 {
                     Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
+                }
+                else if (command.StartsWith("x"))
+                {
+                    try
+                    {
+                        string[] parts = command.Split(' ');
+                        int num = int.Parse(parts[1]);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Error: " + e.Message);
+                    }
+
                 }
                 else if (command.StartsWith("q")) // QUIT
                 {
@@ -242,7 +257,7 @@ namespace DJTestClient
                 {
                     Console.WriteLine("Invalid Command!");
                 }
-            } 
+            }
         }
     }
 }

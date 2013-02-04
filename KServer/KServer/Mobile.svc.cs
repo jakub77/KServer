@@ -837,6 +837,10 @@ namespace KServer
         /// <returns></returns>
         private Response MobileIDToKey(int MobileID, out long MobileKey)
         {
+            //System.Security.Cryptography.SHA1 sha = System.Security.Cryptography.SHA1.Create();
+            //byte[] preHash = System.Text.Encoding.UTF32.GetBytes(MobileID.ToString());
+            //byte[] hash = sha.ComputeHash(preHash);
+
             // Temporary implementation, always success.
             MobileKey = (long)MobileID;
             return new Response();
