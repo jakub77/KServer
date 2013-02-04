@@ -49,6 +49,11 @@ namespace DJTestClient
                     {
                         string[] parts = command.Split(' ');
                         int num = int.Parse(parts[1]);
+                        System.Security.Cryptography.SHA1 sha = System.Security.Cryptography.SHA1Managed.Create();
+                        byte[] res = sha.ComputeHash(BitConverter.GetBytes(num));
+                        long l = BitConverter.ToInt64(res, 0);
+                        Console.WriteLine(l.ToString());
+
                     }
                     catch (Exception e)
                     {
