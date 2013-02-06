@@ -75,7 +75,8 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.message = "Exception SQL_NON_QUERY\n" + e.Message;
+                r.message = "Exception SQL_NON_QUERY\n" + e.Message + "\n";  
+                r.message += command;
                 r.error = true;
                 return r;
             }
