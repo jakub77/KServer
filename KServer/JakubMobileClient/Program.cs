@@ -302,7 +302,7 @@ namespace JakubMobileClient
                         {
                             foreach (queueSinger qs in queue)
                             {
-                                Console.WriteLine("ID: " + qs.user.userID + ", Name: " + qs.user.userName);
+                                Console.WriteLine("\nID: " + qs.user.userID + ", Name: " + qs.user.userName);
                                 foreach (Song song in qs.songs)
                                     Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist);
                             }

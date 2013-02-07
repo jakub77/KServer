@@ -224,9 +224,14 @@ namespace DJTestClient
                         if (!r.error)
                             foreach (queueSinger qs in queue)
                             {
-                                Console.WriteLine("ID: " + qs.user.userID + ", Name: " + qs.user.userName);
+                                string id = "ID: " + qs.user.userID + ", Name: " + qs.user.userName;
+
+                                Console.WriteLine("\n" + id.Trim());
                                 foreach (Song s in qs.songs)
-                                    Console.WriteLine("\t" + s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk);
+                                {
+                                    string s2 = s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk;
+                                    Console.WriteLine("  " + s2.Trim());
+                                }
                             }
 
                     }
