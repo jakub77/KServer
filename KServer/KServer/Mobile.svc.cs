@@ -26,10 +26,7 @@ namespace KServer
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to open connection to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Escape to allow the MobileTestClient to list all Mobile information
                 // WILL BE REMOVED FOR RELEASE!
@@ -80,10 +77,7 @@ namespace KServer
             int MobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to conenct to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return new LogInResponse(r);
+                Response r = new Response();
 
                 // See if the username/password combination is valid.
                 // If it is valid, the userkey will be stored in r.message.
@@ -139,10 +133,7 @@ namespace KServer
             int MobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to open the connection to the DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out MobileID);
@@ -173,9 +164,7 @@ namespace KServer
             List<Song> songs;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return null;
+                Response r = new Response();
 
                 // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
@@ -209,9 +198,7 @@ namespace KServer
             List<Song> s;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return null;
+                Response r = new Response();
 
                 // Check to make sure the venue exists.
                 r = db.DJGetStatus(venueID);
@@ -234,9 +221,7 @@ namespace KServer
             int mobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID);
@@ -336,9 +321,7 @@ namespace KServer
             bool songChangeMade = false;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID);
@@ -438,9 +421,7 @@ namespace KServer
             int mobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the userKey to MobileIDx
                 r = MobileKeyToID(userKey, out mobileID);
@@ -490,6 +471,8 @@ namespace KServer
                             if (queue[i].songs[j].ID == songID)
                             {
                                 queue[i].songs.RemoveAt(j);
+                                if (queue[i].songs.Count == 0)
+                                    queue.RemoveAt(i);
                                 MinimalListToDB(queue, out newRequests);
                                 return db.SetSongRequests(venueID, newRequests);
                             }
@@ -515,10 +498,7 @@ namespace KServer
             int DJID = -1, DJStatus = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to conenct to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return null;
+                Response r = new Response();
 
                 DJID = venueID;
 
@@ -555,10 +535,7 @@ namespace KServer
         public Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
-            // Attempt to conenct to DB.
-            Response r = db.OpenConnection();
-            if (r.error)
-                return r;
+            Response r = new Response();
             int count = 0;
 
             string[] clientRequests = raw.Split('`');
@@ -628,7 +605,8 @@ namespace KServer
                 }
                 raw += "`";    
             }
-            raw = raw.Substring(0, raw.Length - 1);
+            if (raw.Length > 0)
+                raw = raw.Substring(0, raw.Length - 1);
             return new Response();
         }
 
@@ -805,10 +783,7 @@ namespace KServer
             // Validate that the DJID is valid.
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to connect to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Try to validate DJID using DB.
                 r = db.MobileValidateID(MobileID);

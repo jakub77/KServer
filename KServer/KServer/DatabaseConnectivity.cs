@@ -16,8 +16,6 @@ namespace KServer
         private int connectionTimeOut = 10;
         private string connectionString = String.Empty;
 
-        SqlConnection DBConnection = null;
-
         public DatabaseConnectivity()
         {
             connectionString = string.Empty;
@@ -34,19 +32,7 @@ namespace KServer
         /// <returns></returns>
         public Response OpenConnection()
         {
-            Response r = new Response();
-            try
-            {
-                DBConnection = new SqlConnection(connectionString);
-                DBConnection.Open();
-                return r;
-            }
-            catch (Exception e)
-            {
-                r.error = true;
-                r.message = "Exception SQL: Could not open a connection to the DB" + e.Message;
-                return r;
-            }
+            return new Response();
         }
 
         /// <summary>
@@ -54,15 +40,11 @@ namespace KServer
         /// </summary>
         void IDisposable.Dispose()
         {
-            try
-            {
-                DBConnection.Close();
-            }
-            catch (Exception) { }
+            return;
         }
 
 
-
+        /*
         // Execute the given command a a query to the database.
         // Return the values for any valid given columns.
 
@@ -127,6 +109,7 @@ namespace KServer
                 return r;
             }
         }
+        */
 
         private Response DBNonRead(SqlCommand cmd)
         {
@@ -443,115 +426,98 @@ namespace KServer
         // Returns the information in a response if no errors occured.
         public Response MobileListMembers()
         {
-            string command;
-            command = "select * from MobileUsers;";
-            string[] columns = new string[4] { "ID", "Username", "Password", "Status" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select * from MobileUsers;");
+            return DBRead(cmd, new string[4] { "ID", "Username", "Password", "Status" });
         }
 
         // Check to see if a mobile username is valid.
         // If username is valid, returns the unique DJID in message.
         public Response MobileValidateUsername(string username)
         {
-            string command;
-            command = "select ID from MobileUsers where ";
-            command += "Username = '" + username.Trim() + "';";
-            string[] columns = new string[1] { "ID" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Username = @username;");
+            cmd.Parameters.AddWithValue("@username", username);
+            return DBRead(cmd, new string[1] { "ID" });
         }
 
         // Check to see if a DJ's username and password are valid.
         // If credentials are valid, returns the unique DJID in message.
         public Response MobileValidateUsernamePassword(string username, string password)
         {
-            string command;
-            command = "select ID from MobileUsers where ";
-            command += "Username = '" + username.Trim() + "' and ";
-            command += "Password = '" + password.Trim() + "';";
-            string[] columns = new string[1] { "ID" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Username = @username and Password = @password;");
+            cmd.Parameters.AddWithValue("@username", username.Trim());
+            cmd.Parameters.AddWithValue("@password", password.Trim());
+            return DBRead(cmd, new string[1] { "ID" });
         }
 
         public Response MobileIDtoUsername(int MobileID)
         {
-            string command;
-            command = "select Username from MobileUsers where ";
-            command += "ID = '" + MobileID.ToString() + "';";
-            string[] columns = new string[1] { "Username" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select Username from MobileUsers where ID = @mobileID;");
+            cmd.Parameters.AddWithValue("@mobileID", MobileID);
+            return DBRead(cmd, new string[1] { "Username" });
         }
 
         public Response MobileValidateID(int MobileID)
         {
-            string command;
-            command = "select Status from MobileUsers where ";
-            command += "ID = '" + MobileID.ToString() + "';";
-            string[] columns = new string[1] { "Status" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select Status from MobileUsers where ID = @mobileID;");
+            cmd.Parameters.AddWithValue("@mobileID", MobileID);
+            return DBRead(cmd, new string[1] { "Status" });
         }
 
         // Get the current status of the given mobile client.
         public Response MobileGetStatus(int MobileID)
         {
-            string command;
-            command = "select Status from MobileUsers where ";
-            command += "ID = '" + MobileID.ToString() + "';";
-            string[] columns = new string[1] { "Status" };
-            return DBQuery(command, columns);
-
+            return MobileValidateID(MobileID);
         }
 
         // Adds a new mobile client user to the DB.
         // Returns whether it occured successfully.
         public Response MobileSignUp(string username, string password)
         {
-            string command;
-            command = "insert into MobileUsers (Username, Password, Status) Values (";
-            command += "'" + username.Trim() + "',";
-            command += "'" + password.Trim() + "',";
-            command += "'" + "0" + "'";
-            command += ");";
-            return DBNonQuery(command);
+            SqlCommand cmd = new SqlCommand("insert into MobileUsers (Username, Password, Status) Values (@username, @password, @status);");
+            cmd.Parameters.AddWithValue("@username", username.Trim());
+            cmd.Parameters.AddWithValue("@password", password.Trim());
+            cmd.Parameters.AddWithValue("@status", 0);
+            return DBNonRead(cmd);
         }
 
         // Signs a mobile client into the system. Return whether it occured successfully.
         public Response MobileSignIn(int MobileID)
         {
-            string command;
-            command = "update MobileUsers set Status = '1' where ";
-            command += "ID = '" + MobileID.ToString() + "';";
-            return DBNonQuery(command);
+            SqlCommand cmd = new SqlCommand("update MobileUsers set Status = '1' where ID = @mobileID;");
+            cmd.Parameters.AddWithValue("@mobileID", MobileID);
+            return DBNonRead(cmd);
         }
 
-        // Sign a DJ out of the system. Return whether successful.
+        // Sign a client out of the system. Return whether successful.
         public Response MobileSignOut(int MobileID)
         {
-            string command;
-            command = "update MobileUsers set Status = '0' where ";
-            command += "ID = '" + MobileID.ToString() + "';";
-            return DBNonQuery(command);
+            SqlCommand cmd = new SqlCommand("update MobileUsers set Status = '0' where ID = @mobileID;");
+            cmd.Parameters.AddWithValue("@mobileID", MobileID);
+            return DBNonRead(cmd);
         }
 
         public Response MobileSearchSongs(out List<Song> songs, string title, string artist, int DJID)
         {
             Response r = new Response();
-            songs = null;
+            songs = new List<Song>();
             try
             {
-                songs = new List<Song>();
-                string command;
-                command = "select * from DJSongs where ";
-                command += "DJListID = '" + DJID.ToString() + "'";
+                SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID");
+                cmd.Parameters.AddWithValue("@DJID", DJID);
+                if (title.Trim().Length > 0)
+                {
+                    cmd.CommandText += " and Title = @title";
+                    cmd.Parameters.AddWithValue("@title", title.Trim());
+                }
+                if (artist.Trim().Length > 0)
+                {
+                    cmd.CommandText += " and Artist = @artist";
+                    cmd.Parameters.AddWithValue("@artist", artist.Trim());
+                }
+                cmd.CommandText += ";";
 
-                if (title.Length > 0)
-                    command += "and Title = '" + title + "'";
-                if (artist.Length > 0)
-                    command += "and Artist = '" + artist + "'";
-                command += ";";
+                r = DBRead(cmd, new string[3] { "SongID", "Title", "Artist" });
 
-                string[] columns = new string[3] { "SongID", "Title", "Artist" };
-                r = DBQuery(command, columns);
-                
                 if (r.error)
                     return r;
 
@@ -568,9 +534,9 @@ namespace KServer
                     string[] songParts = songLine.Split(',');
                     Song song = new Song();
                     int id;
-                    if(!int.TryParse(songParts[0], out id))
+                    if (!int.TryParse(songParts[0], out id))
                     {
-                        r.error=true;
+                        r.error = true;
                         r.message = "Exception in MobileListSongsSQL: could not parse song id";
                         return r;
                     }
@@ -596,37 +562,33 @@ namespace KServer
         public Response MobileBrowseSongs(out List<Song> songs, string firstLetter, bool isArtist, int start, int count, int DJID)
         {
             Response r = new Response();
-            songs = null;
+            songs = new List<Song>();
             int length = firstLetter.Length;
             try
             {
-                /*
-                 * 
-                 * select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * 
-                 * from DJSongs where DJListID = '1') B on A.SongID = B.SongID and B.rn between 7 and 10;
-                 */
-
-                songs = new List<Song>();
-                string command;
-                command = "select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * ";
-                command += "from DJSongs where DJListID = '" + DJID.ToString() + "'";
+                // select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * 
+                // from DJSongs where DJListID = '1') B on A.SongID = B.SongID and B.rn between 7 and 10;
+                SqlCommand cmd = new SqlCommand("select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * from DJSongs where DJListID = @DJID");
+                cmd.Parameters.AddWithValue("@DJID", DJID);
 
                 if (isArtist && length > 0)
                 {
-                    command += "and LEFT([Artist]," + length.ToString() + ") = '" + firstLetter + "'";
+                    cmd.CommandText += " and LEFT([Artist], @length) = @firstLetter";
+                    cmd.Parameters.AddWithValue("@length", length);
+                    cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
                 }
                 else if (length > 0)
                 {
-                    command += "and LEFT([Title]," + length.ToString() + ") = '" + firstLetter + "'";
+                    cmd.CommandText += " and LEFT([Title], @length) = @firstLetter";
+                    cmd.Parameters.AddWithValue("@length", length);
+                    cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
                 }
 
-                command += ") B on A.SongID = B.SongID and B.rn between ";
-                command += (start + 1).ToString() + " and ";
-                command += (start + count).ToString();
-                command += ";";
-
-                string[] columns = new string[3] { "SongID", "Title", "Artist" };
-                r = DBQuery(command, columns);
+                cmd.CommandText += ") B on A.SongID = B.SongID and B.rn between @start and @end;";
+                cmd.Parameters.AddWithValue("@start", (start + 1));
+                cmd.Parameters.AddWithValue("@end", (start + count));
+                
+                r = DBRead(cmd, new string[3] { "SongID", "Title", "Artist" });
 
                 if (r.error)
                     return r;
@@ -663,7 +625,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.message = "Exception " + e.Message;
+                r.message = "Exception in MobileSongBrowse " + e.ToString();
                 r.error = true;
                 return r;
             }
@@ -671,20 +633,17 @@ namespace KServer
 
         public Response GetSongRequests(int DJID)
         {
-            string command;
-            command = "select List from DJSongRequests where ";
-            command += "ListDJID = '" + DJID.ToString() + "';";
-            string[] columns = new string[1] { "List" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select List from DJSongRequests where ListDJID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBRead(cmd, new string[1] { "List" });
         }
 
         public Response SetSongRequests(int DJID, string requestString)
         {
-            string command;
-            command = "update DJSongRequests set ";
-            command += "List = '" + requestString + "' where ";
-            command += "ListDJID = '" + DJID.ToString() + "';";
-            return DBNonQuery(command);
+            SqlCommand cmd = new SqlCommand("update DJSongRequests set List = @list where ListDJID = @DJID;");
+            cmd.Parameters.AddWithValue("@list", requestString);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBNonRead(cmd);
         }
 
 

@@ -24,11 +24,7 @@ namespace KServer
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to open connection to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
-
+                Response r = new Response();
                 // Escape to allow the DJTestClient to list all DJ information
                 // WILL BE REMOVED FOR RELEASE!
                 if (username.Equals("list", StringComparison.OrdinalIgnoreCase))
@@ -86,10 +82,7 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to conenct to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return new LogInResponse(r);
+                Response r = new Response();
 
                 // See if the username/password combination is valid.
                 // If it is valid, the DJID will be stored in r.message.
@@ -151,10 +144,7 @@ namespace KServer
             int DJID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to open the connection to the DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the DJKey to a DJID
                 r = DJKeyToID(DJKey, out DJID);
@@ -192,10 +182,7 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to conenct to DB
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Attempt to convert DJKey to DJID
                 r = DJKeyToID(DJKey, out DJID);
@@ -225,10 +212,7 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to connect to the DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Attempt to convert DJKey to DJID
                 r = DJKeyToID(DJKey, out DJID);
@@ -259,10 +243,7 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to conenct to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the DJKey to a DJID
                 r = DJKeyToID(DJKey, out DJID);
@@ -285,10 +266,7 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to conenct to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the DJKey to a DJID
                 r = DJKeyToID(DJKey, out DJID);
@@ -325,10 +303,6 @@ namespace KServer
                     return r;
                 }
 
-                //r.error = true;
-                //r.message = "Queue count: " + queue.Count();
-
-
                 queue[0].songs.RemoveAt(0);
                 if (queue[0].songs.Count == 0)
                     queue.RemoveAt(0);
@@ -355,10 +329,7 @@ namespace KServer
             int DJID = -1, count = 0;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to conenct to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                Response r = new Response();
 
                 // Convert the DJKey to a DJID
                 r = DJKeyToID(DJKey, out DJID);
@@ -402,7 +373,8 @@ namespace KServer
                 }
                 raw += "`";
             }
-            raw = raw.Substring(0, raw.Length - 1);
+            if (raw.Length > 0)
+                raw = raw.Substring(0, raw.Length - 1);
             return new Response();
         }
 
@@ -445,12 +417,8 @@ namespace KServer
         public Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
                 queue = new List<queueSinger>();
-                // Attempt to conenct to DB.
-                //Response r = db.OpenConnection();
-                //if (r.error)
-                //    return r;
-                int count = 0;
                 Response r = new Response();
+                int count = 0;
 
                 string[] clientRequests = raw.Split('`');
                 for (int i = 0; i < clientRequests.Length; i++)
@@ -617,11 +585,7 @@ namespace KServer
             // Validate that the DJID is valid.
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                // Attempt to connect to DB.
-                //Response r = db.OpenConnection();
-                //if (r.error)
-                //    return r;
-                Response r;
+                Response r = new Response();
 
                 // Try to validate DJID using DB.
                 r = db.DJValidateDJID(DJID);
