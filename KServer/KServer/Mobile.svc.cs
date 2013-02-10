@@ -442,7 +442,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Convert the userKey to MobileID
+                // Convert the userKey to MobileIDx
                 r = MobileKeyToID(userKey, out mobileID);
                 if (r.error)
                     return r;

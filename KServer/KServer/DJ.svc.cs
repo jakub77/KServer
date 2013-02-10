@@ -325,6 +325,10 @@ namespace KServer
                     return r;
                 }
 
+                //r.error = true;
+                //r.message = "Queue count: " + queue.Count();
+
+
                 queue[0].songs.RemoveAt(0);
                 if (queue[0].songs.Count == 0)
                     queue.RemoveAt(0);
@@ -442,10 +446,11 @@ namespace KServer
         {
                 queue = new List<queueSinger>();
                 // Attempt to conenct to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                //Response r = db.OpenConnection();
+                //if (r.error)
+                //    return r;
                 int count = 0;
+                Response r = new Response();
 
                 string[] clientRequests = raw.Split('`');
                 for (int i = 0; i < clientRequests.Length; i++)
@@ -613,9 +618,10 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Attempt to connect to DB.
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+                //Response r = db.OpenConnection();
+                //if (r.error)
+                //    return r;
+                Response r;
 
                 // Try to validate DJID using DB.
                 r = db.DJValidateDJID(DJID);

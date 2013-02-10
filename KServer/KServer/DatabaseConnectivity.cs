@@ -14,8 +14,19 @@ namespace KServer
         private string DBPassword = "topsecret";
         private string database = "KaraokeDB";
         private int connectionTimeOut = 10;
+        private string connectionString = String.Empty;
 
         SqlConnection DBConnection = null;
+
+        public DatabaseConnectivity()
+        {
+            connectionString = string.Empty;
+            connectionString += "user id=" + DBUsername + ";";
+            connectionString += "pwd=" + DBPassword + ";";
+            connectionString += "server=" + SQLServerAddress + ";";
+            connectionString += "database=" + database + ";";
+            connectionString += "connection timeout=" + connectionTimeOut + ";";
+        }
 
         /// <summary>
         /// Open a connection to the DB.
@@ -26,12 +37,6 @@ namespace KServer
             Response r = new Response();
             try
             {
-                string connectionString = string.Empty;
-                connectionString += "user id=" + DBUsername + ";";
-                connectionString += "pwd=" + DBPassword + ";";
-                connectionString += "server=" + SQLServerAddress + ";";
-                connectionString += "database=" + database + ";";
-                connectionString += "connection timeout=" + connectionTimeOut + ";";
                 DBConnection = new SqlConnection(connectionString);
                 DBConnection.Open();
                 return r;
@@ -39,7 +44,7 @@ namespace KServer
             catch (Exception e)
             {
                 r.error = true;
-                r.message = "Exception SQL: Could not open a connection to the DB\n" + e.Message;
+                r.message = "Exception SQL: Could not open a connection to the DB" + e.Message;
                 return r;
             }
         }
@@ -56,31 +61,7 @@ namespace KServer
             catch (Exception) { }
         }
 
-        /// <summary>
-        /// Execute the command as a NonQuery.
-        /// If successful, Response.result contains the number of rows effected.
-        /// </summary>
-        /// <param name="command">The command to execute.</param>
-        /// <returns>Outcome of attempt.</returns>
-        private Response DBNonQuery(string command)
-        {
-            Response r = new Response();
-            int affectedRows = 0;
-            try
-            {
-                SqlCommand c = new SqlCommand(command, DBConnection);
-                affectedRows = c.ExecuteNonQuery();
-                r.result = affectedRows;
-                return r;
-            }
-            catch (Exception e)
-            {
-                r.message = "Exception SQL_NON_QUERY\n" + e.Message + "\n";  
-                r.message += command;
-                r.error = true;
-                return r;
-            }
-        }
+
 
         // Execute the given command a a query to the database.
         // Return the values for any valid given columns.
@@ -121,24 +102,102 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Execute the command as a NonQuery.
+        /// If successful, Response.result contains the number of rows effected.
+        /// </summary>
+        /// <param name="command">The command to execute.</param>
+        /// <returns>Outcome of attempt.</returns>
+        private Response DBNonQuery(string command)
+        {
+            Response r = new Response();
+            int affectedRows = 0;
+            try
+            {
+                SqlCommand c = new SqlCommand(command, DBConnection);
+                affectedRows = c.ExecuteNonQuery();
+                r.result = affectedRows;
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.message = "Exception SQL_NON_QUERY\n" + e.Message + "\n";
+                r.message += command;
+                r.error = true;
+                return r;
+            }
+        }
+
+        private Response DBNonRead(SqlCommand cmd)
+        {
+            Response r = new Response();
+            int affectedRows = 0;
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    cmd.Connection = con;
+                    affectedRows = cmd.ExecuteNonQuery();
+                    r.result = affectedRows;
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DBNonRead\n " + e.Message;
+                    return r;
+            }
+        }
+
+        private Response DBRead(SqlCommand cmd, string[] columns)
+        {
+            Response r = new Response();
+            r.result = 0;
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    cmd.Connection = con;
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            r.result++;
+                            for (int i = 0; i < columns.Length - 1; i++)
+                                r.message += reader[columns[i]].ToString().Trim() + ",";
+                            if (columns.Length > 0)
+                                r.message += reader[columns[columns.Length - 1]].ToString().Trim();
+                            r.message += "\n";
+                        }
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DBRead\n " + e.Message;
+                return r;
+            }
+        }
+
         public Response SongExists(int DJID, int SongID)
         {
-            string command;
-            command = "select SongID from DJSongs where ";
-            command += "SongID = '" + SongID.ToString() + "' and ";
-            command += "DJListID = '" + DJID.ToString() + "';";
-            string[] columns = new string[1] { "SongID" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select SongID from DJSongs where SongID = @songID and DJListID = @DJID;");
+            cmd.Parameters.AddWithValue("@songID", SongID);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBRead(cmd, new string[1] { "SongID" });
         }
 
         public Response SongInformation(int DJID, int SongID)
         {
-            string command;
-            command = "select Title, Artist, PathOnDisk from DJSongs where ";
-            command += "SongID = '" + SongID.ToString() + "' and ";
-            command += "DJListID = '" + DJID.ToString() + "';";
-            string[] columns = new string[3] { "Title", "Artist", "PathOnDisk" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk from DJSongs where SongID = @songID and DJListID = @DJID;");
+            cmd.Parameters.AddWithValue("@songID", SongID);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBRead(cmd, new string[3] { "Title", "Artist", "PathOnDisk" });
         }
 
         #region DJStuff
@@ -152,89 +211,73 @@ namespace KServer
         // Returns the information in a response if no errors occured.
         public Response DJListMembers()
         {
-            string command;
-            command = "select * from DJUsers;";
-            string[] columns = new string[4] { "ID", "Username", "Password", "Status" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select * from DJUsers;");
+            return DBRead(cmd, new string[4] { "ID", "Username", "Password", "Status" });
         }
 
         // Check to see if a DJ's username and password are valid.
         // If credentials are valid, returns the unique DJID in message.
         public Response DJValidateUsernamePassword(string username, string password)
         {
-            string command;
-            command = "select ID from DJUsers where ";
-            command += "Username = '" + username.Trim() + "' and ";
-            command += "Password = '" + password.Trim() + "';";
-            string[] columns = new string[1] { "ID" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select ID from DJUsers where Username = @username and Password = @password;");
+            cmd.Parameters.AddWithValue("@username", username.Trim());
+            cmd.Parameters.AddWithValue("@password", password.Trim());
+            return DBRead(cmd, new string[1] { "ID" });
         }
 
         // Check to see if a DJ's username is valid.
         // If username is valid, returns the unique DJID in message.
         public Response DJValidateUsername(string username)
         {
-            string command;
-            command = "select ID from DJUsers where ";
-            command += "Username = '" + username.Trim() + "';";
-            string[] columns = new string[1] { "ID" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select ID from DJUsers where Username = @username;");
+            cmd.Parameters.AddWithValue("@username", username);
+            return DBRead(cmd, new string[1] { "ID" });
         }
 
         public Response DJValidateDJID(int DJID)
         {
-            string command;
-            command = "select Status from DJUsers where ";
-            command += "ID = '" + DJID.ToString() + "';";
-            string[] columns = new string[1] { "Status" };
-            return DBQuery(command, columns);
+            SqlCommand cmd = new SqlCommand("select Status from DJUsers where ID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBRead(cmd, new string[1] { "Status" });
         }
 
         // Get the current status of the given DJ.
         public Response DJGetStatus(int DJID)
         {
-            string command;
-            command = "select Status from DJUsers where ";
-            command += "ID = '" + DJID.ToString() + "';";
-            string[] columns = new string[1] { "Status" };
-            return DBQuery(command, columns);
-
+            return DJValidateDJID(DJID);
         }
 
         // Adds a new DJ to the system.
         // Returns whether it occured successfully.
         public Response DJSignUp(string username, string password)
         {
-            string command;
-            command = "insert into DJUsers (Username, Password, SongListID, Status) Values (";
-            command += "'" + username.Trim() + "',";
-            command += "'" + password.Trim() + "',";
-            command += "'" + "7" + "',";
-            command += "'" + "0" + "'";
-            command += ");";
-            return DBNonQuery(command);
+            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, SongListID, Status) Values (@username, @password, @songListID, @status);");
+            cmd.Parameters.AddWithValue("@username", username.Trim());
+            cmd.Parameters.AddWithValue("@password", password.Trim());
+            cmd.Parameters.AddWithValue("@songListID", 0);
+            cmd.Parameters.AddWithValue("@status", 0);
+            return DBNonRead(cmd);
         }
 
         // Signs a DJ into the system. Return whether it occured successfully.
         public Response DJSignIn(int DJID)
         {
-            string command;
-            command = "update DJUsers set Status = '1' where ";
-            command += "ID = '" + DJID.ToString() + "';";
-            return DBNonQuery(command);
+            SqlCommand cmd = new SqlCommand("update DJUsers set Status = '1' where ID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBNonRead(cmd);
         }
 
         // Sign a DJ out of the system. Return whether successful.
         public Response DJSignOut(int DJID)
         {
-            string command;
-            command = "update DJUsers set Status = '0' where ";
-            command += "ID = '" + DJID.ToString() + "';";
-            return DBNonQuery(command);
+            SqlCommand cmd = new SqlCommand("update DJUsers set Status = '0' where ID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBNonRead(cmd);
         }
 
         /// <summary>
         /// Add songs to a DJ's library. If a song already exists in that library, it is not added.
+        /// If the song exists in the library, but the path is different than the path supplied, the path in the library is updated.
         /// Returns the number of songs actually added in Response.result.
         /// </summary>
         /// <param name="songs">Songs to add</param>
@@ -242,43 +285,71 @@ namespace KServer
         /// <returns></returns>
         public Response DJAddSongsIgnoringDuplicates(List<Song> songs, int DJID)
         {
-            bool songAlreadyExisted = false;
+            int songsAlreadyExisted = 0;
+            int songPathsUpdated = 0;
             int songsAdded = 0;
             Response r = new Response();
             r.result = 0;
             foreach (Song s in songs)
             {
-                string command;
-                command = "select SongID from DJSongs where ";
-                command += "DJListID = '" + DJID.ToString() + "'";
-                command += "and Title = '" + s.title + "'";
-                command += "and Artist = '" + s.artist + "'";
-                command += "and PathOnDisk = '" + s.pathOnDisk + "'";
-                command += ";";
-                string[] columns = new string[1] { "SongID" };
-                r = DBQuery(command, columns);
+                // Get any song that matches exactly.
+                SqlCommand cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist and PathOnDisk = @pathOnDisk;");
+                cmd.Parameters.AddWithValue("@DJID", DJID);
+                cmd.Parameters.AddWithValue("@title", s.title);
+                cmd.Parameters.AddWithValue("@artist", s.artist);
+                cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+                r = DBRead(cmd, new string[1] { "SongID" });
                 if (r.error)
                     return r;
 
+                // If a song matched exactly, no need to add it again/modify it.
                 if (r.message.Trim() != string.Empty)
                 {
-                    songAlreadyExisted = true;
+                    songsAlreadyExisted++;
                     continue;
                 }
 
-                command = "insert into DJSongs (DJListID, Title, Artist, PathOnDisk) Values (";
-                command += "'" + DJID.ToString() + "',";
-                command += "'" + s.title + "',";
-                command += "'" + s.artist + "',";
-                command += "'" + s.pathOnDisk + "'";
-                command += ");";
-                r = DBNonQuery(command);
+                // Get any song that matches all criteria except path on disk.
+                cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist;");
+                cmd.Parameters.AddWithValue("@DJID", DJID);
+                cmd.Parameters.AddWithValue("@title", s.title);
+                cmd.Parameters.AddWithValue("@artist", s.artist);
+                r = DBRead(cmd, new string[1] { "SongID" });
+                if (r.error)
+                    return r;
+
+                // If a song just has a differnt path on disk, update the path on disk.
+                if (r.message.Trim() != string.Empty)
+                {
+                    cmd = new SqlCommand("update DJSongs set PathOnDisk = @pathOnDisk where DJListID = @DJID and Title = @title and Artist = @artist;");
+                    cmd.Parameters.AddWithValue("@DJID", DJID);
+                    cmd.Parameters.AddWithValue("@title", s.title);
+                    cmd.Parameters.AddWithValue("@artist", s.artist);
+                    cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+                    r = DBNonRead(cmd);
+                    if (r.error)
+                        return r;
+                    songPathsUpdated++;
+                    continue;
+                }
+
+                // Otherwise, add the new song.
+                cmd = new SqlCommand("insert into DJSongs (DJListID, Title, Artist, PathOnDisk) Values (@DJID, @title, @artist, @pathOnDisk);");
+                cmd.Parameters.AddWithValue("@DJID", DJID);
+                cmd.Parameters.AddWithValue("@title", s.title);
+                cmd.Parameters.AddWithValue("@artist", s.artist);
+                cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+                r = DBNonRead(cmd);
                 if (r.error)
                     return r;
                 songsAdded++;
             }
-            if (songAlreadyExisted)
-                r.message = "Warning: Song(s) were not added since they already existed";
+
+            r.message = string.Empty;
+            if (songsAlreadyExisted > 0)
+                r.message += "Warning: " + songsAlreadyExisted + " song(s) were not added since they already existed\n";
+            if (songPathsUpdated > 0)
+                r.message += "Warning: " + songPathsUpdated + " song(s) were not added, but instead had pathOnDisk updated";
             r.result = songsAdded;
             return r;
         }
@@ -286,28 +357,27 @@ namespace KServer
         // Remove songs form a DJ's library.
         public Response DJRemoveSongs(List<Song> songs, int DJID)
         {
-            bool songNotFound = false;
+            int songsNotFound = 0;
             int songsRemoved = 0;
             Response r = new Response();
             foreach (Song s in songs)
             {
-                string command;
-                command = "delete from DJSongs where ";
-                command += "DJListID = '" + DJID.ToString() + "'";
-                command += "and Title = '" + s.title + "'";
-                command += "and Artist = '" + s.artist + "'";
-                command += "and PathOnDisk = '" + s.pathOnDisk + "'";
-                command += ";";
-                r = DBNonQuery(command);
+                SqlCommand cmd = new SqlCommand("delete from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist and PathOnDisk = @pathOnDisk;");
+                cmd.Parameters.AddWithValue("@DJID", DJID);
+                cmd.Parameters.AddWithValue("@title", s.title);
+                cmd.Parameters.AddWithValue("@artist", s.artist);
+                cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+                r = DBNonRead(cmd);
                 if (r.error)
                     return r;
                 if (r.result == 0)
-                    songNotFound = true;
+                    songsNotFound++;
                 else
                     songsRemoved++;
             }
-            if(songNotFound)
-                r.message = "Warning: Song(s) in the list were not found";
+
+            if (songsNotFound > 0)
+                r.message = "Warning: " + songsNotFound + " song(s) in the list were not found and thus were not removed";
             r.result = songsRemoved;
             return r;
         }
@@ -315,21 +385,21 @@ namespace KServer
         public Response DJListSongs(out List<Song> songs, int DJID)
         {
             Response r = new Response();
-            songs = null;
+            songs = new List<Song>();
+            SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            r = DBRead(cmd, new string[4] { "SongID", "Title", "Artist", "PathOnDisk" });
+            if (r.error)
+                return r;
+
+            if (r.message.Trim() == string.Empty)
+            {
+                r.message = "Warning: No songs were found";
+                return r;
+            }
+
             try
             {
-                songs = new List<Song>();
-                string command;
-                command = "select * from DJSongs where ";
-                command += "DJListID = '" + DJID.ToString() + "';";
-                string[] columns = new string[4] { "SongID", "Title", "Artist", "PathOnDisk" };
-                r = DBQuery(command, columns);
-                if (r.error)
-                    return r;
-
-                if (r.message.Trim() == string.Empty)
-                    return r;
-
                 string[] songLines = r.message.Trim().Split('\n');
                 foreach (string songLine in songLines)
                 {
@@ -354,7 +424,7 @@ namespace KServer
             catch (Exception e)
             {
 
-                r.message = "Exception " + e.Message;
+                r.message = "Exception " + e.ToString();
                 r.error = true;
                 return r;
             }
