@@ -21,13 +21,15 @@ namespace KServer
         // DJ STUFF
         // Log in etc
         [OperationContract]
-        Response DJSignUp(string userName, string password);
+        Response DJSignUp(string userName, string password, Venue venue, string email);
         [OperationContract]
         LogInResponse DJSignIn(string userName, string password);
         [OperationContract]
         Response DJSignOut(long DJKey);
         [OperationContract]
         Response DJCreateSession(long DJKey);
+        [OperationContract]
+        Response DJGetQRNumber(long DJKey);
 
         // Song management
         [OperationContract]
@@ -52,10 +54,26 @@ namespace KServer
         Response DJGetQueue(out List<queueSinger> queue, long DJKey);
         [OperationContract]
         Response DJPopQueue(SongRequest sr, long DJKey);
+        [OperationContract]
+        Response DJNewUserWaitTime(long DJKey);
+
+
     }
 
 
     // Use a data contract as illustrated in the sample below to add composite types to service operations.
+
+    // Song History
+    [DataContract]
+    public class SongHistory
+    {
+        [DataMember]
+        public Song song { get; set; }
+        [DataMember]
+        public Venue venue { get; set; }
+        [DataMember]
+        public DateTime date { get; set; }
+    }
 
     // Describe individual venues.
     [DataContract]
@@ -91,6 +109,8 @@ namespace KServer
         public int ID { get; set; }
         [DataMember]
         public string pathOnDisk {get; set; }
+        [DataMember]
+        public int duration { get; set; }
     }
 
     // Describe a session

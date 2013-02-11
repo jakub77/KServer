@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.ServiceModel.Web;
 using System.Text;
 using System.Security.Permissions;
+using System.Security.Cryptography;
 
 namespace KServer
 {
@@ -20,7 +21,7 @@ namespace KServer
         /// <param name="username">The requested username.</param>
         /// <param name="password">The requested password.</param>
         /// <returns>The success of the operation.</returns>
-        public Response DJSignUp(string username, string password)
+        public Response DJSignUp(string username, string password, Venue venue, string email)
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
@@ -158,6 +159,11 @@ namespace KServer
 
                 // A sign out seems to be valid.
                 r = db.DJSignOut(DJID);
+                if (r.error)
+                    return r;
+
+                // Remove the key from the DB.
+                r = db.DJSetKey(DJID, null);
                 return r;
             }
         }
@@ -474,6 +480,17 @@ namespace KServer
                 return r;
         }
 
+        public Response DJGetQRNumber(long DJKey)
+        {
+            Response r = new Response();
+            return r;
+        }
+        public Response DJNewUserWaitTime(long DJKey)
+        {
+            Response r = new Response();
+            return r;
+        }
+
         public Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey)
         {
             Response r = new Response();
@@ -579,29 +596,25 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         private Response DJKeyToID(long DJKey, out int DJID)
         {
-            // Conver the DJKey to a DJID. (Temporary implementation).
-            DJID = (int)DJKey;
-
-            // Validate that the DJID is valid.
+            DJID = -1;
+            Response r = new Response();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
-
-                // Try to validate DJID using DB.
-                r = db.DJValidateDJID(DJID);
+                r = db.DJGetIDFromKey(DJKey);
                 if (r.error)
                     return r;
-
-                // See if that DJID exists.
-                if (r.message.Trim() == String.Empty)
+                if (r.message.Trim().Length == 0)
                 {
-                    string s = r.message.Trim();
                     r.error = true;
-                    r.message = "Exception in DJKeyToID: The DJID could not be validated!";
+                    r.message = "DJKey is not valid";
                     return r;
                 }
-
-                // DJID exists, return success.
+                if (!int.TryParse(r.message.Trim(), out DJID))
+                {
+                    r.error = true;
+                    r.message = "Exception in DJKeyToID: DJID Parse Fail";
+                    return r;
+                }
                 return r;
             }
         }
@@ -614,9 +627,18 @@ namespace KServer
         /// <returns></returns>
         private Response DJIDToKey(int DJID, out long DJKey)
         {
-            // Temporary implementation, always success.
-            DJKey = (long)DJID;
-            return new Response();
+            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+            byte[] res = sha.ComputeHash(BitConverter.GetBytes(DJID));
+            DJKey = BitConverter.ToInt64(res, 0);
+
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                r = db.DJSetKey(DJID, DJKey);
+                if (r.error)
+                    return r;
+            }
+            return r;
         }
 
     }

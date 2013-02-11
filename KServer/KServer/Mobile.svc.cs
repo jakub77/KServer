@@ -159,7 +159,7 @@ namespace KServer
         /// <returns></returns>
         public List<Song> MobileSongSearch(string title, string artist, int venueID)
         {
-            venueID = 1;
+            venueID = 4;
             int venueStatus;
             List<Song> songs;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -193,7 +193,7 @@ namespace KServer
         /// <returns></returns>
         public List<Song> MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID)
         {
-            venueID = 1;
+            venueID = 4;
             int venueStatus;
             List<Song> s;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -216,7 +216,7 @@ namespace KServer
         }
         public Response MobileSongRequest(int songID, long userKey)
         {
-            int venueID = 1;
+            int venueID = 4;
             int songExists;
             int mobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -263,7 +263,7 @@ namespace KServer
                     r = db.SetSongRequests(venueID, requests);
                     return r;
                 }
-                
+
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
                 r = DBToMinimalList(requests, out queue);
@@ -301,7 +301,7 @@ namespace KServer
 
                 User u = new User();
                 u.userID = mobileID;
-                qs.user = u;    
+                qs.user = u;
 
                 Song song = new Song();
                 song.ID = songID;
@@ -315,7 +315,7 @@ namespace KServer
 
         public Response MobileChangeSongRequest(int oldSongID, int newSongID, long userKey)
         {
-            int venueID = 1;
+            int venueID = 4;
             int songExists;
             int mobileID;
             bool songChangeMade = false;
@@ -417,7 +417,7 @@ namespace KServer
 
         public Response MobileRemoveSongRequest(int songID, long userKey)
         {
-            int venueID = 1;
+            int venueID = 4;
             int mobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
@@ -493,7 +493,7 @@ namespace KServer
 
         public List<queueSinger> MobileViewQueue(long userKey)
         {
-            int venueID = 1;
+            int venueID = 4;
             List<queueSinger> queue = new List<queueSinger>();
             int DJID = -1, DJStatus = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -603,7 +603,7 @@ namespace KServer
                 {
                     raw += "~" + s.ID;
                 }
-                raw += "`";    
+                raw += "`";
             }
             if (raw.Length > 0)
                 raw = raw.Substring(0, raw.Length - 1);
@@ -819,6 +819,67 @@ namespace KServer
             // Temporary implementation, always success.
             MobileKey = (long)MobileID;
             return new Response();
+        }
+
+        public Response MobileGetWaitTime(long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
+        }
+
+        public Response MobileJoinVenue(string QR, long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
+        }
+
+        public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
+        {
+            return new List<SongHistory>();
+        }
+
+        public Response MobileCreatePlaylist(string name, int venueID, long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
+        }
+
+        public Response MobileDeletePlaylist(int playListID, long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
+        }
+
+        public Response MobileAddSongToPlaylist(int songID, int playListID, long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
+        }
+
+        public Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
+        }
+
+        public Response MobileRateSong(int songID, int venueID, long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
+        }
+
+        public Response MobileViewSongRating(int songID, int venueID, long userKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            return r;
         }
     }
 }

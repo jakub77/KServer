@@ -51,5 +51,46 @@ namespace KServer
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileViewQueue/?userKey={userKey}")]
         List<queueSinger> MobileViewQueue(long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileGetWaitTime/?userKey={userKey}")]
+        Response MobileGetWaitTime(long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileJoinVenue/?QR={QR}&userKey={userKey}")]
+        Response MobileJoinVenue(string QR, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileViewSongHistory/?start={start}&count={count}&userKey={userKey}")]
+        List<SongHistory> MobileViewSongHistory(int start, int count, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileCreatePlaylist/?name={name}&venueID={venueID}&userKey={userKey}")]
+        Response MobileCreatePlaylist(string name, int venueID, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileDeletePlaylist/?playListID={playListID}&userKey={userKey}")]
+        Response MobileDeletePlaylist(int playListID, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileAddSongToPlaylist/?songID={songID}&playListID={playListID}&userKey={userKey}")]
+        Response MobileAddSongToPlaylist(int songID, int playListID, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileRemoveSongFromPlaylist/?songID={songID}&playListID={playListID}&userKey={userKey}")]
+        Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileRateSong/?songID={songID}&venueID={venueID}&userKey={userKey}")]
+        Response MobileRateSong(int songID, int venueID, long userKey);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileViewSongRating/?songID={songID}&venueID={venueID}&userKey={userKey}")]
+        Response MobileViewSongRating(int songID, int venueID, long userKey);
+
+   
+
+
+
     }
 }

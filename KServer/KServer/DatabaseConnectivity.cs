@@ -27,15 +27,6 @@ namespace KServer
         }
 
         /// <summary>
-        /// Open a connection to the DB.
-        /// </summary>
-        /// <returns></returns>
-        public Response OpenConnection()
-        {
-            return new Response();
-        }
-
-        /// <summary>
         /// Dispose resources.
         /// </summary>
         void IDisposable.Dispose()
@@ -43,75 +34,7 @@ namespace KServer
             return;
         }
 
-
-        /*
-        // Execute the given command a a query to the database.
-        // Return the values for any valid given columns.
-
-        /// <summary>
-        /// Execute the command as a Query.
-        /// </summary>
-        /// <param name="command">The command to execute.</param>
-        /// <param name="columns">The columns of information to return.</param>
-        /// <returns>Outcome of attempt. If successful, the result is stored in response.message. 
-        /// Newlines separates rows. Commas separate fields. Response.result stores the number of row.</returns>
-        private Response DBQuery(string command, string[] columns)
-        {
-            Response r = new Response();
-            try
-            {
-                r.result = 0;
-                SqlDataReader reader = null;
-                SqlCommand c = new SqlCommand(command, DBConnection);
-                reader = c.ExecuteReader();
-                while (reader.Read())
-                {
-                    r.result++;
-                    for (int i = 0; i < columns.Length - 1; i++)
-                        r.message += reader[columns[i]].ToString().Trim() + ",";
-                    if (columns.Length > 0)
-                        r.message += reader[columns[columns.Length - 1]].ToString().Trim();
-                    r.message += "\n";                
-                }
-                reader.Close();
-                return r;
-            }
-            catch (Exception e)
-            {
-                r.message = "Exception SQL_Query\n" + e.Message + "\n" + command;
-                r.error = true;
-                return r;
-            }
-        }
-
-        /// <summary>
-        /// Execute the command as a NonQuery.
-        /// If successful, Response.result contains the number of rows effected.
-        /// </summary>
-        /// <param name="command">The command to execute.</param>
-        /// <returns>Outcome of attempt.</returns>
-        private Response DBNonQuery(string command)
-        {
-            Response r = new Response();
-            int affectedRows = 0;
-            try
-            {
-                SqlCommand c = new SqlCommand(command, DBConnection);
-                affectedRows = c.ExecuteNonQuery();
-                r.result = affectedRows;
-                return r;
-            }
-            catch (Exception e)
-            {
-                r.message = "Exception SQL_NON_QUERY\n" + e.Message + "\n";
-                r.message += command;
-                r.error = true;
-                return r;
-            }
-        }
-        */
-
-        private Response DBNonRead(SqlCommand cmd)
+        private Response DBNonQuery(SqlCommand cmd)
         {
             Response r = new Response();
             int affectedRows = 0;
@@ -129,12 +52,12 @@ namespace KServer
             catch (Exception e)
             {
                 r.error = true;
-                r.message = "Exception in DBNonRead\n " + e.Message;
+                r.message = "Exception in DBNonQuery\n " + e.Message;
                     return r;
             }
         }
 
-        private Response DBRead(SqlCommand cmd, string[] columns)
+        private Response DBQuery(SqlCommand cmd, string[] columns)
         {
             Response r = new Response();
             r.result = 0;
@@ -162,7 +85,7 @@ namespace KServer
             catch (Exception e)
             {
                 r.error = true;
-                r.message = "Exception in DBRead\n " + e.Message;
+                r.message = "Exception in DBQuery: " + e.Message;
                 return r;
             }
         }
@@ -172,7 +95,7 @@ namespace KServer
             SqlCommand cmd = new SqlCommand("select SongID from DJSongs where SongID = @songID and DJListID = @DJID;");
             cmd.Parameters.AddWithValue("@songID", SongID);
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBRead(cmd, new string[1] { "SongID" });
+            return DBQuery(cmd, new string[1] { "SongID" });
         }
 
         public Response SongInformation(int DJID, int SongID)
@@ -180,7 +103,7 @@ namespace KServer
             SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk from DJSongs where SongID = @songID and DJListID = @DJID;");
             cmd.Parameters.AddWithValue("@songID", SongID);
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBRead(cmd, new string[3] { "Title", "Artist", "PathOnDisk" });
+            return DBQuery(cmd, new string[3] { "Title", "Artist", "PathOnDisk" });
         }
 
         #region DJStuff
@@ -195,7 +118,7 @@ namespace KServer
         public Response DJListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from DJUsers;");
-            return DBRead(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            return DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
         }
 
         // Check to see if a DJ's username and password are valid.
@@ -205,7 +128,7 @@ namespace KServer
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where Username = @username and Password = @password;");
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
-            return DBRead(cmd, new string[1] { "ID" });
+            return DBQuery(cmd, new string[1] { "ID" });
         }
 
         // Check to see if a DJ's username is valid.
@@ -214,14 +137,32 @@ namespace KServer
         {
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where Username = @username;");
             cmd.Parameters.AddWithValue("@username", username);
-            return DBRead(cmd, new string[1] { "ID" });
+            return DBQuery(cmd, new string[1] { "ID" });
         }
 
         public Response DJValidateDJID(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select Status from DJUsers where ID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBRead(cmd, new string[1] { "Status" });
+            return DBQuery(cmd, new string[1] { "Status" });
+        }
+
+        public Response DJSetKey(int DJID, object DJKey)
+        {
+            SqlCommand cmd = new SqlCommand("update DJUsers set KeyHash = @DJKey where ID = @DJID;");
+            if(DJKey == null)
+                cmd.Parameters.AddWithValue("@DJKey", DBNull.Value);
+            else
+                cmd.Parameters.AddWithValue("@DJKey", DJKey);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBNonQuery(cmd);
+        }
+
+        public Response DJGetIDFromKey(long DJKey)
+        {
+            SqlCommand cmd = new SqlCommand("select ID from DJUsers where KeyHash = @DJKey;");
+            cmd.Parameters.AddWithValue("@DJKey", DJKey);
+            return DBQuery(cmd, new string[] { "ID" });
         }
 
         // Get the current status of the given DJ.
@@ -234,12 +175,11 @@ namespace KServer
         // Returns whether it occured successfully.
         public Response DJSignUp(string username, string password)
         {
-            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, SongListID, Status) Values (@username, @password, @songListID, @status);");
+            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status) Values (@username, @password, @status);");
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
-            cmd.Parameters.AddWithValue("@songListID", 0);
             cmd.Parameters.AddWithValue("@status", 0);
-            return DBNonRead(cmd);
+            return DBNonQuery(cmd);
         }
 
         // Signs a DJ into the system. Return whether it occured successfully.
@@ -247,7 +187,7 @@ namespace KServer
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set Status = '1' where ID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBNonRead(cmd);
+            return DBNonQuery(cmd);
         }
 
         // Sign a DJ out of the system. Return whether successful.
@@ -255,7 +195,7 @@ namespace KServer
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set Status = '0' where ID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBNonRead(cmd);
+            return DBNonQuery(cmd);
         }
 
         /// <summary>
@@ -281,7 +221,7 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@title", s.title);
                 cmd.Parameters.AddWithValue("@artist", s.artist);
                 cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                r = DBRead(cmd, new string[1] { "SongID" });
+                r = DBQuery(cmd, new string[1] { "SongID" });
                 if (r.error)
                     return r;
 
@@ -297,7 +237,7 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@DJID", DJID);
                 cmd.Parameters.AddWithValue("@title", s.title);
                 cmd.Parameters.AddWithValue("@artist", s.artist);
-                r = DBRead(cmd, new string[1] { "SongID" });
+                r = DBQuery(cmd, new string[1] { "SongID" });
                 if (r.error)
                     return r;
 
@@ -309,7 +249,7 @@ namespace KServer
                     cmd.Parameters.AddWithValue("@title", s.title);
                     cmd.Parameters.AddWithValue("@artist", s.artist);
                     cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                    r = DBNonRead(cmd);
+                    r = DBNonQuery(cmd);
                     if (r.error)
                         return r;
                     songPathsUpdated++;
@@ -322,7 +262,7 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@title", s.title);
                 cmd.Parameters.AddWithValue("@artist", s.artist);
                 cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                r = DBNonRead(cmd);
+                r = DBNonQuery(cmd);
                 if (r.error)
                     return r;
                 songsAdded++;
@@ -350,7 +290,7 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@title", s.title);
                 cmd.Parameters.AddWithValue("@artist", s.artist);
                 cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                r = DBNonRead(cmd);
+                r = DBNonQuery(cmd);
                 if (r.error)
                     return r;
                 if (r.result == 0)
@@ -371,7 +311,7 @@ namespace KServer
             songs = new List<Song>();
             SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            r = DBRead(cmd, new string[4] { "SongID", "Title", "Artist", "PathOnDisk" });
+            r = DBQuery(cmd, new string[4] { "SongID", "Title", "Artist", "PathOnDisk" });
             if (r.error)
                 return r;
 
@@ -427,7 +367,7 @@ namespace KServer
         public Response MobileListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from MobileUsers;");
-            return DBRead(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            return DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
         }
 
         // Check to see if a mobile username is valid.
@@ -436,7 +376,7 @@ namespace KServer
         {
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Username = @username;");
             cmd.Parameters.AddWithValue("@username", username);
-            return DBRead(cmd, new string[1] { "ID" });
+            return DBQuery(cmd, new string[1] { "ID" });
         }
 
         // Check to see if a DJ's username and password are valid.
@@ -446,21 +386,21 @@ namespace KServer
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Username = @username and Password = @password;");
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
-            return DBRead(cmd, new string[1] { "ID" });
+            return DBQuery(cmd, new string[1] { "ID" });
         }
 
         public Response MobileIDtoUsername(int MobileID)
         {
             SqlCommand cmd = new SqlCommand("select Username from MobileUsers where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
-            return DBRead(cmd, new string[1] { "Username" });
+            return DBQuery(cmd, new string[1] { "Username" });
         }
 
         public Response MobileValidateID(int MobileID)
         {
             SqlCommand cmd = new SqlCommand("select Status from MobileUsers where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
-            return DBRead(cmd, new string[1] { "Status" });
+            return DBQuery(cmd, new string[1] { "Status" });
         }
 
         // Get the current status of the given mobile client.
@@ -477,7 +417,7 @@ namespace KServer
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
             cmd.Parameters.AddWithValue("@status", 0);
-            return DBNonRead(cmd);
+            return DBNonQuery(cmd);
         }
 
         // Signs a mobile client into the system. Return whether it occured successfully.
@@ -485,7 +425,7 @@ namespace KServer
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set Status = '1' where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
-            return DBNonRead(cmd);
+            return DBNonQuery(cmd);
         }
 
         // Sign a client out of the system. Return whether successful.
@@ -493,7 +433,7 @@ namespace KServer
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set Status = '0' where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
-            return DBNonRead(cmd);
+            return DBNonQuery(cmd);
         }
 
         public Response MobileSearchSongs(out List<Song> songs, string title, string artist, int DJID)
@@ -516,7 +456,7 @@ namespace KServer
                 }
                 cmd.CommandText += ";";
 
-                r = DBRead(cmd, new string[3] { "SongID", "Title", "Artist" });
+                r = DBQuery(cmd, new string[3] { "SongID", "Title", "Artist" });
 
                 if (r.error)
                     return r;
@@ -588,7 +528,7 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@start", (start + 1));
                 cmd.Parameters.AddWithValue("@end", (start + count));
                 
-                r = DBRead(cmd, new string[3] { "SongID", "Title", "Artist" });
+                r = DBQuery(cmd, new string[3] { "SongID", "Title", "Artist" });
 
                 if (r.error)
                     return r;
@@ -635,7 +575,7 @@ namespace KServer
         {
             SqlCommand cmd = new SqlCommand("select List from DJSongRequests where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBRead(cmd, new string[1] { "List" });
+            return DBQuery(cmd, new string[1] { "List" });
         }
 
         public Response SetSongRequests(int DJID, string requestString)
@@ -643,7 +583,7 @@ namespace KServer
             SqlCommand cmd = new SqlCommand("update DJSongRequests set List = @list where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@list", requestString);
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBNonRead(cmd);
+            return DBNonQuery(cmd);
         }
 
 
