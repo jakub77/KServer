@@ -91,9 +91,6 @@
     <None Include="Service References\ServiceReference1\DJTestClient.ServiceReference1.Response.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>
-    <None Include="Service References\ServiceReference1\DJTestClient.ServiceReference1.Session.datasource">
-      <DependentUpon>Reference.svcmap</DependentUpon>
-    </None>
     <None Include="Service References\ServiceReference1\DJTestClient.ServiceReference1.Song.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>

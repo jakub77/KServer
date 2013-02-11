@@ -262,67 +262,6 @@ namespace DJTestClient.ServiceReference1 {
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
-    [System.Runtime.Serialization.DataContractAttribute(Name="Session", Namespace="http://schemas.datacontract.org/2004/07/KServer")]
-    [System.SerializableAttribute()]
-    public partial class Session : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
-        
-        [System.NonSerializedAttribute()]
-        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
-        
-        [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private int sessionIDField;
-        
-        [System.Runtime.Serialization.OptionalFieldAttribute()]
-        private int venueIDField;
-        
-        [global::System.ComponentModel.BrowsableAttribute(false)]
-        public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
-            get {
-                return this.extensionDataField;
-            }
-            set {
-                this.extensionDataField = value;
-            }
-        }
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public int sessionID {
-            get {
-                return this.sessionIDField;
-            }
-            set {
-                if ((this.sessionIDField.Equals(value) != true)) {
-                    this.sessionIDField = value;
-                    this.RaisePropertyChanged("sessionID");
-                }
-            }
-        }
-        
-        [System.Runtime.Serialization.DataMemberAttribute()]
-        public int venueID {
-            get {
-                return this.venueIDField;
-            }
-            set {
-                if ((this.venueIDField.Equals(value) != true)) {
-                    this.venueIDField = value;
-                    this.RaisePropertyChanged("venueID");
-                }
-            }
-        }
-        
-        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
-        
-        protected void RaisePropertyChanged(string propertyName) {
-            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
-            if ((propertyChanged != null)) {
-                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
-            }
-        }
-    }
-    
-    [System.Diagnostics.DebuggerStepThroughAttribute()]
-    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="Song", Namespace="http://schemas.datacontract.org/2004/07/KServer")]
     [System.SerializableAttribute()]
     public partial class Song : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
@@ -550,7 +489,7 @@ namespace DJTestClient.ServiceReference1 {
         DJTestClient.ServiceReference1.Response DJSignOut(long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJCreateSession", ReplyAction="http://tempuri.org/IDJ/DJCreateSessionResponse")]
-        DJTestClient.ServiceReference1.Session DJCreateSession(long DJKey);
+        DJTestClient.ServiceReference1.Response DJCreateSession(long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJAddSongs", ReplyAction="http://tempuri.org/IDJ/DJAddSongsResponse")]
         DJTestClient.ServiceReference1.Response DJAddSongs(DJTestClient.ServiceReference1.Song[] songs, long DJKey);
@@ -562,19 +501,19 @@ namespace DJTestClient.ServiceReference1 {
         DJTestClient.ServiceReference1.Response DJListSongs(out DJTestClient.ServiceReference1.Song[] songs, long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJAddQueue", ReplyAction="http://tempuri.org/IDJ/DJAddQueueResponse")]
-        DJTestClient.ServiceReference1.Response DJAddQueue(DJTestClient.ServiceReference1.SongRequest sr, int queueIndex, int sessionID, long DJKey);
+        DJTestClient.ServiceReference1.Response DJAddQueue(DJTestClient.ServiceReference1.SongRequest sr, int queueIndex, long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJRemoveSongRequest", ReplyAction="http://tempuri.org/IDJ/DJRemoveSongRequestResponse")]
-        DJTestClient.ServiceReference1.Response DJRemoveSongRequest(DJTestClient.ServiceReference1.SongRequest sr, int sessionID, long DJKey);
+        DJTestClient.ServiceReference1.Response DJRemoveSongRequest(DJTestClient.ServiceReference1.SongRequest sr, long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJChangeSongRequest", ReplyAction="http://tempuri.org/IDJ/DJChangeSongRequestResponse")]
-        DJTestClient.ServiceReference1.Response DJChangeSongRequest(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, int sessionID, long DJKey);
+        DJTestClient.ServiceReference1.Response DJChangeSongRequest(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJRemoveUser", ReplyAction="http://tempuri.org/IDJ/DJRemoveUserResponse")]
-        DJTestClient.ServiceReference1.Response DJRemoveUser(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, int sessionID, long DJKey);
+        DJTestClient.ServiceReference1.Response DJRemoveUser(int userID, long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJMoveUser", ReplyAction="http://tempuri.org/IDJ/DJMoveUserResponse")]
-        DJTestClient.ServiceReference1.Response DJMoveUser(int userID, int sessionID, long DJKey);
+        DJTestClient.ServiceReference1.Response DJMoveUser(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJGetQueue", ReplyAction="http://tempuri.org/IDJ/DJGetQueueResponse")]
         DJTestClient.ServiceReference1.Response DJGetQueue(out DJTestClient.ServiceReference1.queueSinger[] queue, long DJKey);
@@ -622,7 +561,7 @@ namespace DJTestClient.ServiceReference1 {
             return base.Channel.DJSignOut(DJKey);
         }
         
-        public DJTestClient.ServiceReference1.Session DJCreateSession(long DJKey) {
+        public DJTestClient.ServiceReference1.Response DJCreateSession(long DJKey) {
             return base.Channel.DJCreateSession(DJKey);
         }
         
@@ -638,24 +577,24 @@ namespace DJTestClient.ServiceReference1 {
             return base.Channel.DJListSongs(out songs, DJKey);
         }
         
-        public DJTestClient.ServiceReference1.Response DJAddQueue(DJTestClient.ServiceReference1.SongRequest sr, int queueIndex, int sessionID, long DJKey) {
-            return base.Channel.DJAddQueue(sr, queueIndex, sessionID, DJKey);
+        public DJTestClient.ServiceReference1.Response DJAddQueue(DJTestClient.ServiceReference1.SongRequest sr, int queueIndex, long DJKey) {
+            return base.Channel.DJAddQueue(sr, queueIndex, DJKey);
         }
         
-        public DJTestClient.ServiceReference1.Response DJRemoveSongRequest(DJTestClient.ServiceReference1.SongRequest sr, int sessionID, long DJKey) {
-            return base.Channel.DJRemoveSongRequest(sr, sessionID, DJKey);
+        public DJTestClient.ServiceReference1.Response DJRemoveSongRequest(DJTestClient.ServiceReference1.SongRequest sr, long DJKey) {
+            return base.Channel.DJRemoveSongRequest(sr, DJKey);
         }
         
-        public DJTestClient.ServiceReference1.Response DJChangeSongRequest(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, int sessionID, long DJKey) {
-            return base.Channel.DJChangeSongRequest(newSR, oldSR, sessionID, DJKey);
+        public DJTestClient.ServiceReference1.Response DJChangeSongRequest(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, long DJKey) {
+            return base.Channel.DJChangeSongRequest(newSR, oldSR, DJKey);
         }
         
-        public DJTestClient.ServiceReference1.Response DJRemoveUser(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, int sessionID, long DJKey) {
-            return base.Channel.DJRemoveUser(newSR, oldSR, sessionID, DJKey);
+        public DJTestClient.ServiceReference1.Response DJRemoveUser(int userID, long DJKey) {
+            return base.Channel.DJRemoveUser(userID, DJKey);
         }
         
-        public DJTestClient.ServiceReference1.Response DJMoveUser(int userID, int sessionID, long DJKey) {
-            return base.Channel.DJMoveUser(userID, sessionID, DJKey);
+        public DJTestClient.ServiceReference1.Response DJMoveUser(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, long DJKey) {
+            return base.Channel.DJMoveUser(newSR, oldSR, DJKey);
         }
         
         public DJTestClient.ServiceReference1.Response DJGetQueue(out DJTestClient.ServiceReference1.queueSinger[] queue, long DJKey) {

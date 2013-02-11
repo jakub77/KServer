@@ -49,6 +49,18 @@
   <wsdl:message name="IMobile_MobileSongRequest_OutputMessage">
     <wsdl:part name="parameters" element="tns:MobileSongRequestResponse" />
   </wsdl:message>
+  <wsdl:message name="IMobile_MobileChangeSongRequest_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileChangeSongRequest" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileChangeSongRequest_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileChangeSongRequestResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileRemoveSongRequest_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileRemoveSongRequest" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileRemoveSongRequest_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileRemoveSongRequestResponse" />
+  </wsdl:message>
   <wsdl:message name="IMobile_MobileViewQueue_InputMessage">
     <wsdl:part name="parameters" element="tns:MobileViewQueue" />
   </wsdl:message>
@@ -83,6 +95,14 @@
     <wsdl:operation name="MobileSongRequest">
       <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileSongRequest" message="tns:IMobile_MobileSongRequest_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileSongRequestResponse" message="tns:IMobile_MobileSongRequest_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileChangeSongRequest">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileChangeSongRequest" message="tns:IMobile_MobileChangeSongRequest_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileChangeSongRequestResponse" message="tns:IMobile_MobileChangeSongRequest_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileRemoveSongRequest">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileRemoveSongRequest" message="tns:IMobile_MobileRemoveSongRequest_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileRemoveSongRequestResponse" message="tns:IMobile_MobileRemoveSongRequest_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="MobileViewQueue">
       <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileViewQueue" message="tns:IMobile_MobileViewQueue_InputMessage" />
