@@ -153,4 +153,144 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="MobileGetWaitTime">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileGetWaitTimeResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q11="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileGetWaitTimeResult" nillable="true" type="q11:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileJoinVenue">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="QR" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileJoinVenueResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q12="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileJoinVenueResult" nillable="true" type="q12:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileViewSongHistory">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="start" type="xs:int" />
+        <xs:element minOccurs="0" name="count" type="xs:int" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileViewSongHistoryResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q13="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileViewSongHistoryResult" nillable="true" type="q13:ArrayOfSongHistory" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileCreatePlaylist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="name" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="venueID" type="xs:int" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileCreatePlaylistResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q14="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileCreatePlaylistResult" nillable="true" type="q14:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileDeletePlaylist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="playListID" type="xs:int" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileDeletePlaylistResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q15="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileDeletePlaylistResult" nillable="true" type="q15:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileAddSongToPlaylist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="songID" type="xs:int" />
+        <xs:element minOccurs="0" name="playListID" type="xs:int" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileAddSongToPlaylistResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q16="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileAddSongToPlaylistResult" nillable="true" type="q16:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileRemoveSongFromPlaylist">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="songID" type="xs:int" />
+        <xs:element minOccurs="0" name="playListID" type="xs:int" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileRemoveSongFromPlaylistResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q17="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileRemoveSongFromPlaylistResult" nillable="true" type="q17:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileRateSong">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="songID" type="xs:int" />
+        <xs:element minOccurs="0" name="venueID" type="xs:int" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileRateSongResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q18="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileRateSongResult" nillable="true" type="q18:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileViewSongRating">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="songID" type="xs:int" />
+        <xs:element minOccurs="0" name="venueID" type="xs:int" />
+        <xs:element minOccurs="0" name="userKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="MobileViewSongRatingResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q19="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileViewSongRatingResult" nillable="true" type="q19:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

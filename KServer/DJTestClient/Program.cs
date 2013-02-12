@@ -70,7 +70,7 @@ namespace DJTestClient
                     Response r;
                     try
                     {
-                        r = proxy.DJSignUp("list", String.Empty);
+                        r = proxy.DJSignUp("list", String.Empty, new Venue(), String.Empty);
                         Console.WriteLine("Error: " + r.error);
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
@@ -90,7 +90,7 @@ namespace DJTestClient
                     password = Console.ReadLine();
                     try
                     {
-                        r = proxy.DJSignUp(username, password);
+                        r = proxy.DJSignUp(username, password, new Venue(), String.Empty);
                         Console.WriteLine("Error: " + r.error);
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);

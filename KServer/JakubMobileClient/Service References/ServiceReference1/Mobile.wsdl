@@ -67,6 +67,60 @@
   <wsdl:message name="IMobile_MobileViewQueue_OutputMessage">
     <wsdl:part name="parameters" element="tns:MobileViewQueueResponse" />
   </wsdl:message>
+  <wsdl:message name="IMobile_MobileGetWaitTime_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileGetWaitTime" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileGetWaitTime_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileGetWaitTimeResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileJoinVenue_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileJoinVenue" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileJoinVenue_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileJoinVenueResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileViewSongHistory_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileViewSongHistory" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileViewSongHistory_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileViewSongHistoryResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileCreatePlaylist_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileCreatePlaylist" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileCreatePlaylist_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileCreatePlaylistResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileDeletePlaylist_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileDeletePlaylist" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileDeletePlaylist_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileDeletePlaylistResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileAddSongToPlaylist_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileAddSongToPlaylist" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileAddSongToPlaylist_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileAddSongToPlaylistResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileRemoveSongFromPlaylist_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileRemoveSongFromPlaylist" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileRemoveSongFromPlaylist_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileRemoveSongFromPlaylistResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileRateSong_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileRateSong" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileRateSong_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileRateSongResponse" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileViewSongRating_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileViewSongRating" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileViewSongRating_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileViewSongRatingResponse" />
+  </wsdl:message>
   <wsdl:portType name="IMobile">
     <wsdl:operation name="test">
       <wsdl:input wsaw:Action="http://tempuri.org/IMobile/test" message="tns:IMobile_test_InputMessage" />
@@ -107,6 +161,42 @@
     <wsdl:operation name="MobileViewQueue">
       <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileViewQueue" message="tns:IMobile_MobileViewQueue_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileViewQueueResponse" message="tns:IMobile_MobileViewQueue_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileGetWaitTime">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileGetWaitTime" message="tns:IMobile_MobileGetWaitTime_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileGetWaitTimeResponse" message="tns:IMobile_MobileGetWaitTime_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileJoinVenue">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileJoinVenue" message="tns:IMobile_MobileJoinVenue_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileJoinVenueResponse" message="tns:IMobile_MobileJoinVenue_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileViewSongHistory">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileViewSongHistory" message="tns:IMobile_MobileViewSongHistory_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileViewSongHistoryResponse" message="tns:IMobile_MobileViewSongHistory_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileCreatePlaylist">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileCreatePlaylist" message="tns:IMobile_MobileCreatePlaylist_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileCreatePlaylistResponse" message="tns:IMobile_MobileCreatePlaylist_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileDeletePlaylist">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileDeletePlaylist" message="tns:IMobile_MobileDeletePlaylist_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileDeletePlaylistResponse" message="tns:IMobile_MobileDeletePlaylist_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileAddSongToPlaylist">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileAddSongToPlaylist" message="tns:IMobile_MobileAddSongToPlaylist_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileAddSongToPlaylistResponse" message="tns:IMobile_MobileAddSongToPlaylist_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileRemoveSongFromPlaylist">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileRemoveSongFromPlaylist" message="tns:IMobile_MobileRemoveSongFromPlaylist_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileRemoveSongFromPlaylistResponse" message="tns:IMobile_MobileRemoveSongFromPlaylist_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileRateSong">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileRateSong" message="tns:IMobile_MobileRateSong_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileRateSongResponse" message="tns:IMobile_MobileRateSong_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileViewSongRating">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileViewSongRating" message="tns:IMobile_MobileViewSongRating_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileViewSongRatingResponse" message="tns:IMobile_MobileViewSongRating_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:service name="Mobile" />

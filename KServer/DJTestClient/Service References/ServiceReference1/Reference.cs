@@ -15,6 +15,83 @@ namespace DJTestClient.ServiceReference1 {
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="Venue", Namespace="http://schemas.datacontract.org/2004/07/KServer")]
+    [System.SerializableAttribute()]
+    public partial class Venue : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
+        
+        [System.NonSerializedAttribute()]
+        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string venueAddressField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private int venueIDField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string venueNameField;
+        
+        [global::System.ComponentModel.BrowsableAttribute(false)]
+        public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
+            get {
+                return this.extensionDataField;
+            }
+            set {
+                this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string venueAddress {
+            get {
+                return this.venueAddressField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.venueAddressField, value) != true)) {
+                    this.venueAddressField = value;
+                    this.RaisePropertyChanged("venueAddress");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int venueID {
+            get {
+                return this.venueIDField;
+            }
+            set {
+                if ((this.venueIDField.Equals(value) != true)) {
+                    this.venueIDField = value;
+                    this.RaisePropertyChanged("venueID");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string venueName {
+            get {
+                return this.venueNameField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.venueNameField, value) != true)) {
+                    this.venueNameField = value;
+                    this.RaisePropertyChanged("venueName");
+                }
+            }
+        }
+        
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        
+        protected void RaisePropertyChanged(string propertyName) {
+            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
+            if ((propertyChanged != null)) {
+                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
     [System.Runtime.Serialization.DataContractAttribute(Name="Response", Namespace="http://schemas.datacontract.org/2004/07/KServer")]
     [System.SerializableAttribute()]
     public partial class Response : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
@@ -276,6 +353,9 @@ namespace DJTestClient.ServiceReference1 {
         private string artistField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private int durationField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string pathOnDiskField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
@@ -313,6 +393,19 @@ namespace DJTestClient.ServiceReference1 {
                 if ((object.ReferenceEquals(this.artistField, value) != true)) {
                     this.artistField = value;
                     this.RaisePropertyChanged("artist");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int duration {
+            get {
+                return this.durationField;
+            }
+            set {
+                if ((this.durationField.Equals(value) != true)) {
+                    this.durationField = value;
+                    this.RaisePropertyChanged("duration");
                 }
             }
         }
@@ -480,7 +573,7 @@ namespace DJTestClient.ServiceReference1 {
     public interface IDJ {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJSignUp", ReplyAction="http://tempuri.org/IDJ/DJSignUpResponse")]
-        DJTestClient.ServiceReference1.Response DJSignUp(string userName, string password);
+        DJTestClient.ServiceReference1.Response DJSignUp(string userName, string password, DJTestClient.ServiceReference1.Venue venue, string email);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJSignIn", ReplyAction="http://tempuri.org/IDJ/DJSignInResponse")]
         DJTestClient.ServiceReference1.LogInResponse DJSignIn(string userName, string password);
@@ -490,6 +583,9 @@ namespace DJTestClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJCreateSession", ReplyAction="http://tempuri.org/IDJ/DJCreateSessionResponse")]
         DJTestClient.ServiceReference1.Response DJCreateSession(long DJKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJGetQRNumber", ReplyAction="http://tempuri.org/IDJ/DJGetQRNumberResponse")]
+        DJTestClient.ServiceReference1.Response DJGetQRNumber(long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJAddSongs", ReplyAction="http://tempuri.org/IDJ/DJAddSongsResponse")]
         DJTestClient.ServiceReference1.Response DJAddSongs(DJTestClient.ServiceReference1.Song[] songs, long DJKey);
@@ -520,6 +616,9 @@ namespace DJTestClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJPopQueue", ReplyAction="http://tempuri.org/IDJ/DJPopQueueResponse")]
         DJTestClient.ServiceReference1.Response DJPopQueue(DJTestClient.ServiceReference1.SongRequest sr, long DJKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJNewUserWaitTime", ReplyAction="http://tempuri.org/IDJ/DJNewUserWaitTimeResponse")]
+        DJTestClient.ServiceReference1.Response DJNewUserWaitTime(long DJKey);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -549,8 +648,8 @@ namespace DJTestClient.ServiceReference1 {
                 base(binding, remoteAddress) {
         }
         
-        public DJTestClient.ServiceReference1.Response DJSignUp(string userName, string password) {
-            return base.Channel.DJSignUp(userName, password);
+        public DJTestClient.ServiceReference1.Response DJSignUp(string userName, string password, DJTestClient.ServiceReference1.Venue venue, string email) {
+            return base.Channel.DJSignUp(userName, password, venue, email);
         }
         
         public DJTestClient.ServiceReference1.LogInResponse DJSignIn(string userName, string password) {
@@ -563,6 +662,10 @@ namespace DJTestClient.ServiceReference1 {
         
         public DJTestClient.ServiceReference1.Response DJCreateSession(long DJKey) {
             return base.Channel.DJCreateSession(DJKey);
+        }
+        
+        public DJTestClient.ServiceReference1.Response DJGetQRNumber(long DJKey) {
+            return base.Channel.DJGetQRNumber(DJKey);
         }
         
         public DJTestClient.ServiceReference1.Response DJAddSongs(DJTestClient.ServiceReference1.Song[] songs, long DJKey) {
@@ -603,6 +706,10 @@ namespace DJTestClient.ServiceReference1 {
         
         public DJTestClient.ServiceReference1.Response DJPopQueue(DJTestClient.ServiceReference1.SongRequest sr, long DJKey) {
             return base.Channel.DJPopQueue(sr, DJKey);
+        }
+        
+        public DJTestClient.ServiceReference1.Response DJNewUserWaitTime(long DJKey) {
+            return base.Channel.DJNewUserWaitTime(DJKey);
         }
     }
 }

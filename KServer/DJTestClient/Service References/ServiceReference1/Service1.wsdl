@@ -31,6 +31,12 @@
   <wsdl:message name="IDJ_DJCreateSession_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJCreateSessionResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJGetQRNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetQRNumber" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJGetQRNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetQRNumberResponse" />
+  </wsdl:message>
   <wsdl:message name="IDJ_DJAddSongs_InputMessage">
     <wsdl:part name="parameters" element="tns:DJAddSongs" />
   </wsdl:message>
@@ -91,6 +97,12 @@
   <wsdl:message name="IDJ_DJPopQueue_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJPopQueueResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJNewUserWaitTime_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJNewUserWaitTime" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJNewUserWaitTime_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJNewUserWaitTimeResponse" />
+  </wsdl:message>
   <wsdl:portType name="IDJ">
     <wsdl:operation name="DJSignUp">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJSignUp" message="tns:IDJ_DJSignUp_InputMessage" />
@@ -107,6 +119,10 @@
     <wsdl:operation name="DJCreateSession">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJCreateSession" message="tns:IDJ_DJCreateSession_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJCreateSessionResponse" message="tns:IDJ_DJCreateSession_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJGetQRNumber">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGetQRNumber" message="tns:IDJ_DJGetQRNumber_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGetQRNumberResponse" message="tns:IDJ_DJGetQRNumber_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="DJAddSongs">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJAddSongs" message="tns:IDJ_DJAddSongs_InputMessage" />
@@ -148,6 +164,10 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJPopQueue" message="tns:IDJ_DJPopQueue_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJPopQueueResponse" message="tns:IDJ_DJPopQueue_OutputMessage" />
     </wsdl:operation>
+    <wsdl:operation name="DJNewUserWaitTime">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJNewUserWaitTime" message="tns:IDJ_DJNewUserWaitTime_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJNewUserWaitTimeResponse" message="tns:IDJ_DJNewUserWaitTime_OutputMessage" />
+    </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IDJ" type="tns:IDJ">
     <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
@@ -180,6 +200,15 @@
     </wsdl:operation>
     <wsdl:operation name="DJCreateSession">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJCreateSession" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJGetQRNumber">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJGetQRNumber" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -270,6 +299,15 @@
     </wsdl:operation>
     <wsdl:operation name="DJPopQueue">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJPopQueue" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJNewUserWaitTime">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJNewUserWaitTime" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

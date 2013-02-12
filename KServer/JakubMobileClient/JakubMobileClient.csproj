@@ -85,6 +85,9 @@
     <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.Song.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>
+    <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.SongHistory.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
     <None Include="Service References\ServiceReference1\Mobile.wsdl" />
     <None Include="Service References\ServiceReference1\Mobile.xsd">
       <SubType>Designer</SubType>
