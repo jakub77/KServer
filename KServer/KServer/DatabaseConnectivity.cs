@@ -175,11 +175,27 @@ namespace KServer
         // Returns whether it occured successfully.
         public Response DJSignUp(string username, string password)
         {
-            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status) Values (@username, @password, @status);");
+            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status, QR) Values (@username, @password, @status, @QR);");
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
             cmd.Parameters.AddWithValue("@status", 0);
+            cmd.Parameters.AddWithValue("@QR", "");
             return DBNonQuery(cmd);
+        }
+
+        public Response DJSetQR(string QR, int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("update DJUsers set QR = @QR where ID = @DJID;");
+            cmd.Parameters.AddWithValue("@QR", QR);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBNonQuery(cmd);
+        }
+
+        public Response DJGetQR(int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("select QR from DJUsers where ID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBQuery(cmd, new string[1] { "QR" });
         }
 
         // Signs a DJ into the system. Return whether it occured successfully.
@@ -446,14 +462,20 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@DJID", DJID);
                 if (title.Trim().Length > 0)
                 {
-                    cmd.CommandText += " and Title = @title";
-                    cmd.Parameters.AddWithValue("@title", title.Trim());
+                    cmd.CommandText += " and Title like @title";
+                    cmd.Parameters.AddWithValue("@title", ("%" + title + "%").Trim());
                 }
                 if (artist.Trim().Length > 0)
                 {
-                    cmd.CommandText += " and Artist = @artist";
-                    cmd.Parameters.AddWithValue("@artist", artist.Trim());
+                    cmd.CommandText += " and Artist like @artist";
+                    cmd.Parameters.AddWithValue("@artist", ("%" + artist + "%").Trim());
                 }
+
+                if (title.Trim().Length > 0 && artist.Trim().Length == 0)
+                    cmd.CommandText += " order by Title";
+                else
+                    cmd.CommandText += " order by Artist";
+
                 cmd.CommandText += ";";
 
                 r = DBQuery(cmd, new string[3] { "SongID", "Title", "Artist" });
@@ -508,8 +530,14 @@ namespace KServer
             {
                 // select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * 
                 // from DJSongs where DJListID = '1') B on A.SongID = B.SongID and B.rn between 7 and 10;
-                SqlCommand cmd = new SqlCommand("select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * from DJSongs where DJListID = @DJID");
+                SqlCommand cmd = new SqlCommand("select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by ");
                 cmd.Parameters.AddWithValue("@DJID", DJID);
+                if (isArtist)
+                    cmd.CommandText += "Artist";
+                else
+                    cmd.CommandText += "Title";
+                
+                cmd.CommandText+= (") as 'RN', * from DJSongs where DJListID = @DJID");
 
                 if (isArtist && length > 0)
                 {

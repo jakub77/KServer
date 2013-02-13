@@ -37,6 +37,12 @@
   <wsdl:message name="IDJ_DJGetQRNumber_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJGetQRNumberResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJGenerateNewQRNumber_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJGenerateNewQRNumber" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJGenerateNewQRNumber_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJGenerateNewQRNumberResponse" />
+  </wsdl:message>
   <wsdl:message name="IDJ_DJAddSongs_InputMessage">
     <wsdl:part name="parameters" element="tns:DJAddSongs" />
   </wsdl:message>
@@ -124,6 +130,10 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGetQRNumber" message="tns:IDJ_DJGetQRNumber_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGetQRNumberResponse" message="tns:IDJ_DJGetQRNumber_OutputMessage" />
     </wsdl:operation>
+    <wsdl:operation name="DJGenerateNewQRNumber">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGenerateNewQRNumber" message="tns:IDJ_DJGenerateNewQRNumber_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGenerateNewQRNumberResponse" message="tns:IDJ_DJGenerateNewQRNumber_OutputMessage" />
+    </wsdl:operation>
     <wsdl:operation name="DJAddSongs">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJAddSongs" message="tns:IDJ_DJAddSongs_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJAddSongsResponse" message="tns:IDJ_DJAddSongs_OutputMessage" />
@@ -209,6 +219,15 @@
     </wsdl:operation>
     <wsdl:operation name="DJGetQRNumber">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJGetQRNumber" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJGenerateNewQRNumber">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJGenerateNewQRNumber" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

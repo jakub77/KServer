@@ -67,6 +67,9 @@ namespace KServer
 
                 // Information seems valid, sign up DJ and return successfulness.
                 r = db.DJSignUp(username, password);
+                if (r.error)
+                    return r;
+
                 return r;
             }
         }
@@ -480,10 +483,51 @@ namespace KServer
                 return r;
         }
 
+        public Response DJGenerateNewQRNumber(long DJKey)
+        {
+            Response r;
+            using(DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                int DJID;
+                r = DJKeyToID(DJKey, out DJID);
+                if(r.error)
+                    return r;
+                String s = DJID.ToString() + DateTime.Now.ToString();
+                System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+                byte[] res = sha.ComputeHash(System.Text.Encoding.ASCII.GetBytes(s));
+                StringBuilder sb = new StringBuilder();
+                for(int i = 0; i < res.Length; i++)
+                    sb.Append(res[i].ToString("x2"));
+                String hex = sb.ToString().Substring(0, 8);
+                r = db.DJSetQR(hex, DJID);
+                if (r.error)
+                    return r;
+                return r;
+            }
+        }
+
         public Response DJGetQRNumber(long DJKey)
         {
-            Response r = new Response();
-            return r;
+            Response r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                int DJID;
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+                r = db.DJGetQR(DJID);
+                if (r.error)
+                    return r;
+
+                if (r.message.Trim().Length == 0)
+                {
+                    r = DJGenerateNewQRNumber(DJKey);
+                    if (r.error)
+                        return r;
+                    return DJGetQRNumber(DJKey);
+                }
+                return r;
+            }
         }
         public Response DJNewUserWaitTime(long DJKey)
         {

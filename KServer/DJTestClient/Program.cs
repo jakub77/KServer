@@ -43,6 +43,24 @@ namespace DJTestClient
                 {
                     Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
                 }
+                else if (command.StartsWith("gq"))
+                {
+                    Response r;
+                    try
+                    {
+                        r = proxy.DJGetQRNumber(DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("sq"))
+                {
+                }
                 else if (command.StartsWith("x"))
                 {
                     try

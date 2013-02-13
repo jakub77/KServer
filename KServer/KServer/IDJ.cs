@@ -30,6 +30,8 @@ namespace KServer
         Response DJCreateSession(long DJKey);
         [OperationContract]
         Response DJGetQRNumber(long DJKey);
+        [OperationContract]
+        Response DJGenerateNewQRNumber(long DJKey);
 
         // Song management
         [OperationContract]
