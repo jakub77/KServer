@@ -41,7 +41,10 @@ namespace DJTestClient
 
                 if (command.StartsWith("h")) //HELP
                 {
-                    Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
+                    Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>,");
+                    Console.WriteLine("listDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, listQueue<lq>,"); 
+                    Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest(rr)");
+                    Console.WriteLine("changeRequest<cr>");
                 }
                 else if (command.StartsWith("gq"))
                 {
@@ -58,8 +61,20 @@ namespace DJTestClient
                         Console.WriteLine("Exception: " + e.Message);
                     }
                 }
-                else if (command.StartsWith("sq"))
+                else if (command.StartsWith("nq"))
                 {
+                    Response r;
+                    try
+                    {
+                        r = proxy.DJGenerateNewQRNumber(DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("x"))
                 {
@@ -275,6 +290,84 @@ namespace DJTestClient
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
 
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
+                    }
+                }
+                else if (command.StartsWith("ar")) // Add a song request.
+                {
+                    try
+                    {
+                        SongRequest sr = new SongRequest();
+                        User u = new User();
+                        Console.WriteLine("Type ClientID, or enter 0/-1 to enter client name instead");
+                        u.userID = int.Parse(Console.ReadLine().Trim());
+                        if(u.userID == 0 || u.userID == -1)
+                        {
+                            Console.WriteLine("Enter the client name:");
+                            u.userName = Console.ReadLine().Trim();
+                        }
+                        Console.WriteLine("Enter SongID:");
+                        sr.songID = int.Parse(Console.ReadLine().Trim());
+                        sr.user = u;
+                        Console.WriteLine("enter index to insert client into:");
+                        int index = int.Parse(Console.ReadLine().Trim());
+
+                        Response r = proxy.DJAddQueue(sr, index, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
+                    }
+                }
+                else if (command.StartsWith("rr")) // Remove song request.
+                {
+                    try
+                    {
+                        SongRequest sr = new SongRequest();
+                        User u = new User();
+                        Console.WriteLine("Enter ClientID:");
+                        u.userID = int.Parse(Console.ReadLine().Trim());
+                        Console.WriteLine("Enter SongID:");
+                        sr.songID = int.Parse(Console.ReadLine().Trim());
+                        sr.user = u;
+
+                        Response r = proxy.DJRemoveSongRequest(sr, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
+                    }
+                }
+                else if (command.StartsWith("cr")) // Change song request.
+                {
+                    try
+                    {
+                        SongRequest newSR = new SongRequest();
+                        SongRequest oldSR = new SongRequest();
+                        User u = new User();
+                        Console.WriteLine("Enter ClientID:");
+                        u.userID = int.Parse(Console.ReadLine().Trim());
+                        Console.WriteLine("Enter Old Song ID:");
+                        oldSR.songID = int.Parse(Console.ReadLine().Trim());
+                        Console.WriteLine("Enter New Song ID:");
+                        newSR.songID = int.Parse(Console.ReadLine().Trim());
+                        oldSR.user = u;
+                        newSR.user = u;
+
+                        Response r = proxy.DJChangeSongRequest(newSR, oldSR, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
                     }
                     catch (Exception e)
                     {

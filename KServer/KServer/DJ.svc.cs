@@ -171,12 +171,61 @@ namespace KServer
             }
         }
 
-        public Response DJCreateSession(long DJKey) 
+        /// <summary>
+        /// Completed
+        /// </summary>
+        /// <param name="DJKey"></param>
+        /// <returns></returns>
+        public Response DJGenerateNewQRNumber(long DJKey)
         {
-            Response r = new Response();
-            r.error = true;
-            r.message = "DJCreateSession is not yet implemented";
-            return r; 
+            Response r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                int DJID;
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+                String s = DJID.ToString() + DateTime.Now.ToString();
+                System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+                byte[] res = sha.ComputeHash(System.Text.Encoding.ASCII.GetBytes(s));
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < res.Length; i++)
+                    sb.Append(res[i].ToString("x2"));
+                String hex = sb.ToString().Substring(0, 8);
+                r = db.DJSetQR(hex, DJID);
+                if (r.error)
+                    return r;
+                return r;
+            }
+        }
+
+        /// <summary>
+        ///  Complete
+        /// </summary>
+        /// <param name="DJKey"></param>
+        /// <returns></returns>
+        public Response DJGetQRNumber(long DJKey)
+        {
+            Response r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                int DJID;
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+                r = db.DJGetQR(DJID);
+                if (r.error)
+                    return r;
+
+                if (r.message.Trim().Length == 0)
+                {
+                    r = DJGenerateNewQRNumber(DJKey);
+                    if (r.error)
+                        return r;
+                    return DJGetQRNumber(DJKey);
+                }
+                return r;
+            }
         }
 
         /// <summary>
@@ -330,8 +379,12 @@ namespace KServer
             }
         }
 
-
-        // Queue management
+        /// <summary>
+        /// Done
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="DJKey"></param>
+        /// <returns></returns>
         public Response DJGetQueue(out List<queueSinger> queue, long DJKey)
         {
             queue = new List<queueSinger>();
@@ -370,6 +423,359 @@ namespace KServer
             }
         }
 
+
+        public Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey)
+        {
+            int DJID = -1;
+            int songID = -1;
+            int clientID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ isn't logged out.
+                r = DJCheckStatus(DJID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Check to see if song exists.
+                r = db.SongExists(DJID, sr.songID);
+                if (r.error)
+                    return r;
+
+                // Make sure a songID was sent back.
+                if (!int.TryParse(r.message.Trim(), out songID))
+                {
+                    r.error = true;
+                    r.message = "Could not find song";
+                    return r;
+                }
+
+                // If no userID is passed in.
+                if (sr.user.userID == 0 || sr.user.userID == -1)
+                {
+                    r = db.MobileValidateUsername(sr.user.userName);
+                    if (r.error)
+                        return r;
+                    if (!int.TryParse(r.message.Trim(), out clientID))
+                    {
+                        r.error = true;
+                        r.message = "CLient name could not be validated.";
+                        return r;
+                    }
+                }
+                // If a userID is passed in.
+                else
+                {
+                    r = db.MobileValidateID(sr.user.userID);
+                    if (r.error)
+                        return r;
+                    // See if an ID was returned.
+                    if (r.message.Trim() == String.Empty)
+                    {
+                        string s = r.message.Trim();
+                        r.error = true;
+                        r.message = "Client ID could not be validated.";
+                        return r;
+                    }
+                    clientID = sr.user.userID;
+                }
+
+                // Get the current song Requests
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                string requests = r.message;
+                string newRequests = string.Empty;
+
+                // If there were no requests, simply add the single request.
+                if (requests.Trim().Length == 0)
+                {
+                    newRequests = sr.user.userID.ToString() + "~" + sr.songID.ToString();
+                    r = db.SetSongRequests(DJID, newRequests);
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                List<queueSinger> queue;
+                r = DBToMinimalList(requests, out queue);
+                if (r.error)
+                    return r;
+
+                // Search to see if the user is already in this list of singers.
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    // We found the userID already in here.
+                    if (queue[i].user.userID == clientID)
+                    {
+                        // Loop through the songs to see if the user is already singing this song.
+                        for (int j = 0; j < queue[i].songs.Count; j++)
+                        {
+                            if (queue[i].songs[j].ID == sr.songID)
+                            {
+                                r.error = true;
+                                r.message = "User is already singing that song";
+                                return r;
+                            }
+
+                        }
+                        // They dont' already have the song in the list, add them to the list
+                        Song s = new Song();
+                        s.ID = sr.songID;
+                        queue[i].songs.Add(s);
+                        MinimalListToDB(queue, out newRequests);
+                        return db.SetSongRequests(DJID, newRequests);
+                    }
+                }
+
+                // Now they are not in the queue, add them at queueIndex. 
+                queueSinger qs = new queueSinger();
+                qs.songs = new List<Song>();
+
+                qs.user = sr.user;
+                qs.user.userID = clientID;
+
+                Song song = new Song();
+                song.ID = sr.songID;
+                qs.songs.Add(song);
+
+                if (queueIndex < 0)
+                    queueIndex = 0;
+                if (queueIndex > queue.Count)
+                    queueIndex = queue.Count;
+                queue.Insert(queueIndex, qs);
+                MinimalListToDB(queue, out newRequests);
+                return db.SetSongRequests(DJID, newRequests);
+            }
+        }
+        public Response DJRemoveSongRequest(SongRequest sr, long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ isn't logged out.
+                r = DJCheckStatus(DJID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Get the current song Requests
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                string requests = r.message;
+                string newRequests = string.Empty;
+
+                // If there were no requests, simply add the single request.
+                if (requests.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "The queue is empty";
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                List<queueSinger> queue;
+                r = DBToMinimalList(requests, out queue);
+                if (r.error)
+                    return r;
+
+                // Search to see if the user is already in this list of singers.
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    // We found the userID already in here.
+                    if (queue[i].user.userID == sr.user.userID)
+                    {
+                        // Loop through the songs to see if the user is already singing this song.
+                        for (int j = 0; j < queue[i].songs.Count; j++)
+                        {
+                            if (queue[i].songs[j].ID == sr.songID)
+                            {
+                                queue[i].songs.RemoveAt(j);
+                                if (queue[i].songs.Count == 0)
+                                    queue.RemoveAt(i);
+                                MinimalListToDB(queue, out newRequests);
+                                return db.SetSongRequests(DJID, newRequests);
+                            }
+
+                        }
+                        // If we can't find the current song.
+                        r.error = true;
+                        r.message = "Could not find the song to remove";
+                        return r;
+                    }
+                }
+
+                r.error = true;
+                r.message = "Could not find client in the queue.";
+                return r;
+            }
+        }
+        public Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, long DJKey)
+        {
+            int DJID = -1;
+            int songID = -1;
+            bool songChangeMade = false;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                if (newSR.user.userID != oldSR.user.userID)
+                {
+                    r.error = true;
+                    r.message = "User must be the same between song requets";
+                    return r;
+                }
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ isn't logged out.
+                r = DJCheckStatus(DJID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Check to see if song exists.
+                r = db.SongExists(DJID, newSR.songID);
+                if (r.error)
+                    return r;
+
+                // Make sure a songID was sent back.
+                if (!int.TryParse(r.message.Trim(), out songID))
+                {
+                    r.error = true;
+                    r.message = "Could not find new song.";
+                    return r;
+                }
+
+                // Make sure the mobile user is valid.
+                    r = db.MobileValidateID(oldSR.user.userID);
+                    if (r.error)
+                        return r;
+                    // See if an ID was returned.
+                    if (r.message.Trim() == String.Empty)
+                    {
+                        string s = r.message.Trim();
+                        r.error = true;
+                        r.message = "Client ID could not be validated.";
+                        return r;
+                    }
+
+                // Get the current song Requests
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                string requests = r.message;
+                string newRequests = string.Empty;
+
+                // If there were no requests, simply add the single request.
+                if (requests.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "There are no song requests";
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                List<queueSinger> queue;
+                r = DBToMinimalList(requests, out queue);
+                if (r.error)
+                    return r;
+
+                // Search to see if the user is already in this list of singers.
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    // We found the userID already in here.
+                    if (queue[i].user.userID == oldSR.user.userID)
+                    {
+                        // Loop through the songs to see if the user is already singing this song.
+                        for (int j = 0; j < queue[i].songs.Count; j++)
+                        {
+                            if (queue[i].songs[j].ID == newSR.songID)
+                            {
+                                r.error = true;
+                                r.message = "User is already singing that song";
+                                return r;
+                            }
+                            if (queue[i].songs[j].ID == oldSR.songID)
+                            {
+                                queue[i].songs[j].ID = newSR.songID;
+                                songChangeMade = true;
+                            }
+
+                        }
+
+                        
+                        if (songChangeMade)
+                        {
+                            MinimalListToDB(queue, out newRequests);
+                            return db.SetSongRequests(DJID, newRequests);
+                        }
+
+                        // We didn't find the old song.
+                        r.error = true;
+                        r.message = "Could not find the old song.";
+                        return r;
+                    }
+                }
+
+                // We didn't find the user.
+                r.error = true;
+                r.message = "Could not find the user.";
+                return r;
+            }
+        }
+        public Response DJRemoveUser(int userID, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJRemoveUser is not yet implemented";
+            return r;
+        }
+        public Response DJMoveUser(int userID, int index, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJMoveUser is not yet implemented";
+            return r;
+        }
+
+        public Response DJCreateSession(long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "DJCreateSession is not yet implemented";
+            return r;
+        }
+        public Response DJNewUserWaitTime(long DJKey)
+        {
+            Response r = new Response();
+            return r;
+        }
+
+
+        /// <summary>
+        /// Done
+        /// </summary>
+        /// <param name="queue"></param>
+        /// <param name="raw"></param>
+        /// <returns></returns>
         private Response MinimalListToDB(List<queueSinger> queue, out string raw)
         {
             raw = string.Empty;
@@ -386,7 +792,12 @@ namespace KServer
                 raw = raw.Substring(0, raw.Length - 1);
             return new Response();
         }
-
+        /// <summary>
+        /// Done
+        /// </summary>
+        /// <param name="raw"></param>
+        /// <param name="queue"></param>
+        /// <returns></returns>
         private Response DBToMinimalList(string raw, out List<queueSinger> queue)
         {
             int count = 0;
@@ -422,156 +833,81 @@ namespace KServer
             }
             return r;
         }
-
-        public Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
+        /// <summary>
+        /// Done
+        /// </summary>
+        /// <param name="raw"></param>
+        /// <param name="queue"></param>
+        /// <param name="DJID"></param>
+        /// <param name="db"></param>
+        /// <returns></returns>
+        private Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
-                queue = new List<queueSinger>();
-                Response r = new Response();
-                int count = 0;
+            queue = new List<queueSinger>();
+            Response r = new Response();
+            int count = 0;
 
-                string[] clientRequests = raw.Split('`');
-                for (int i = 0; i < clientRequests.Length; i++)
+            string[] clientRequests = raw.Split('`');
+            for (int i = 0; i < clientRequests.Length; i++)
+            {
+                string[] parts = clientRequests[i].Split('~');
+                if (parts.Length == 0)
                 {
-                    string[] parts = clientRequests[i].Split('~');
-                    if (parts.Length == 0)
-                    {
-                        r.error = true;
-                        r.message = "Error in DBtoList 1";
-                        return r;
-                    }
+                    r.error = true;
+                    r.message = "Error in DBtoList 1";
+                    return r;
+                }
 
-                    queueSinger qs = new queueSinger();
-                    qs.songs = new List<Song>();
-                    User u = new User();
-                    u.userID = int.Parse(parts[0]);
-                    r = db.MobileIDtoUsername(u.userID);
+                queueSinger qs = new queueSinger();
+                qs.songs = new List<Song>();
+                User u = new User();
+                u.userID = int.Parse(parts[0]);
+                r = db.MobileIDtoUsername(u.userID);
+                if (r.error)
+                    return r;
+                if (r.message.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "DB Username lookup exception in DJGetQueue!";
+                    return r;
+                }
+
+                u.userName = r.message.Trim();
+                qs.user = u;
+
+                for (int j = 1; j < parts.Length; j++)
+                {
+                    Song s = new Song();
+                    s.ID = int.Parse(parts[j]);
+                    r = db.SongInformation(DJID, s.ID);
                     if (r.error)
                         return r;
                     if (r.message.Trim().Length == 0)
                     {
                         r.error = true;
-                        r.message = "DB Username lookup exception in DJGetQueue!";
+                        r.message = "DB Song lookup exception in DJGETQUEUE!";
                         return r;
                     }
+                    string[] songParts = r.message.Split(',');
+                    s.title = songParts[0];
+                    s.artist = songParts[1];
+                    s.pathOnDisk = songParts[2];
+                    qs.songs.Add(s);
 
-                    u.userName = r.message.Trim();
-                    qs.user = u;
-
-                    for (int j = 1; j < parts.Length; j++)
-                    {
-                        Song s = new Song();
-                        s.ID = int.Parse(parts[j]);
-                        r = db.SongInformation(DJID, s.ID);
-                        if (r.error)
-                            return r;
-                        if (r.message.Trim().Length == 0)
-                        {
-                            r.error = true;
-                            r.message = "DB Song lookup exception in DJGETQUEUE!";
-                            return r;
-                        }
-                        string[] songParts = r.message.Split(',');
-                        s.title = songParts[0];
-                        s.artist = songParts[1];
-                        s.pathOnDisk = songParts[2];
-                        qs.songs.Add(s);
-
-                    }
-                    queue.Add(qs);
-                    count++;
                 }
-                return r;
-        }
-
-        public Response DJGenerateNewQRNumber(long DJKey)
-        {
-            Response r;
-            using(DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                int DJID;
-                r = DJKeyToID(DJKey, out DJID);
-                if(r.error)
-                    return r;
-                String s = DJID.ToString() + DateTime.Now.ToString();
-                System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
-                byte[] res = sha.ComputeHash(System.Text.Encoding.ASCII.GetBytes(s));
-                StringBuilder sb = new StringBuilder();
-                for(int i = 0; i < res.Length; i++)
-                    sb.Append(res[i].ToString("x2"));
-                String hex = sb.ToString().Substring(0, 8);
-                r = db.DJSetQR(hex, DJID);
-                if (r.error)
-                    return r;
-                return r;
+                queue.Add(qs);
+                count++;
             }
-        }
-
-        public Response DJGetQRNumber(long DJKey)
-        {
-            Response r;
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                int DJID;
-                r = DJKeyToID(DJKey, out DJID);
-                if (r.error)
-                    return r;
-                r = db.DJGetQR(DJID);
-                if (r.error)
-                    return r;
-
-                if (r.message.Trim().Length == 0)
-                {
-                    r = DJGenerateNewQRNumber(DJKey);
-                    if (r.error)
-                        return r;
-                    return DJGetQRNumber(DJKey);
-                }
-                return r;
-            }
-        }
-        public Response DJNewUserWaitTime(long DJKey)
-        {
-            Response r = new Response();
             return r;
         }
-
-        public Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey)
-        {
-            Response r = new Response();
-            r.error = true;
-            r.message = "DJAddQueue is not yet implemented";
-            return r;
-        }
-        public Response DJRemoveSongRequest(SongRequest sr, long DJKey)
-        {
-            Response r = new Response();
-            r.error = true;
-            r.message = "DJRemoveSongRequest is not yet implemented";
-            return r;
-        }
-        public Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, long DJKey)
-        {
-            Response r = new Response();
-            r.error = true;
-            r.message = "DJChangeSongRequest is not yet implemented";
-            return r;
-        }
-        public Response DJRemoveUser(int userID, long DJKey)
-        {
-            Response r = new Response();
-            r.error = true;
-            r.message = "DJRemoveUser is not yet implemented";
-            return r;
-        }
-        public Response DJMoveUser(SongRequest newSR, SongRequest oldSR, long DJKey)
-        {
-            Response r = new Response();
-            r.error = true;
-            r.message = "DJMoveUser is not yet implemented";
-            return r;
-        }
-
-        public Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
+        /// <summary>
+        /// Done
+        /// </summary>
+        /// <param name="DJID"></param>
+        /// <param name="desiredStatus"></param>
+        /// <param name="db"></param>
+        /// <returns></returns>
+        private Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
             int DJStatus, desired;
@@ -631,7 +967,6 @@ namespace KServer
             r.result = DJStatus;
             return r;
         }
-
         /// <summary>
         /// Convert a DJKey to a DJID.
         /// </summary>
@@ -662,7 +997,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Convert a DJID to a DJKey.
         /// </summary>

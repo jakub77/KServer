@@ -592,7 +592,6 @@ namespace KServer
             return r;
         }
 
-
         private Response MinimalListToDB(List<queueSinger> queue, out string raw)
         {
             raw = string.Empty;
@@ -609,7 +608,6 @@ namespace KServer
                 raw = raw.Substring(0, raw.Length - 1);
             return new Response();
         }
-
 
         private Response DBToMinimalList(string raw, out List<queueSinger> queue)
         {
@@ -793,7 +791,6 @@ namespace KServer
                 // See if that DJID exists.
                 if (r.message.Trim() == String.Empty)
                 {
-                    string s = r.message.Trim();
                     r.error = true;
                     r.message = "Exception in MobileKeytoID: ID could not be validated!";
                     return r;

@@ -51,7 +51,7 @@ namespace KServer
         [OperationContract]
         Response DJRemoveUser(int userID, long DJKey);
         [OperationContract]
-        Response DJMoveUser(SongRequest newSR, SongRequest oldSR, long DJKey);
+        Response DJMoveUser(int userID, int index, long DJKey);
         [OperationContract]
         Response DJGetQueue(out List<queueSinger> queue, long DJKey);
         [OperationContract]
