@@ -198,18 +198,10 @@ namespace KServer
             return DBQuery(cmd, new string[1] { "QR" });
         }
 
-        // Signs a DJ into the system. Return whether it occured successfully.
-        public Response DJSignIn(int DJID)
+        public Response DJSetStatus(int DJID, int status)
         {
-            SqlCommand cmd = new SqlCommand("update DJUsers set Status = '1' where ID = @DJID;");
-            cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBNonQuery(cmd);
-        }
-
-        // Sign a DJ out of the system. Return whether successful.
-        public Response DJSignOut(int DJID)
-        {
-            SqlCommand cmd = new SqlCommand("update DJUsers set Status = '0' where ID = @DJID;");
+            SqlCommand cmd = new SqlCommand("update DJUsers set Status = @status where ID = @DJID;");
+            cmd.Parameters.AddWithValue("@status", status);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBNonQuery(cmd);
         }
@@ -436,18 +428,10 @@ namespace KServer
             return DBNonQuery(cmd);
         }
 
-        // Signs a mobile client into the system. Return whether it occured successfully.
-        public Response MobileSignIn(int MobileID)
+        public Response MobileSetStatus(int MobileID, int status)
         {
-            SqlCommand cmd = new SqlCommand("update MobileUsers set Status = '1' where ID = @mobileID;");
-            cmd.Parameters.AddWithValue("@mobileID", MobileID);
-            return DBNonQuery(cmd);
-        }
-
-        // Sign a client out of the system. Return whether successful.
-        public Response MobileSignOut(int MobileID)
-        {
-            SqlCommand cmd = new SqlCommand("update MobileUsers set Status = '0' where ID = @mobileID;");
+            SqlCommand cmd = new SqlCommand("update MobileUsers set Status = @status where ID = @mobileID;");
+            cmd.Parameters.AddWithValue("@status", status);
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
             return DBNonQuery(cmd);
         }

@@ -108,7 +108,7 @@ namespace KServer
                     return new LogInResponse(r);
 
                 // Information seems valid, attempt to sign in.
-                r = db.MobileSignIn(MobileID);
+                r = db.MobileSetStatus(MobileID, 1);
                 if (r.error)
                     return new LogInResponse(r);
 
@@ -146,7 +146,7 @@ namespace KServer
                     return r;
 
                 // A sign out seems to be valid.
-                r = db.MobileSignOut(MobileID);
+                r = db.MobileSetStatus(MobileID, 0);
                 return r;
             }
         }
@@ -266,7 +266,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = DBToMinimalList(requests, out queue);
+                r = CommonMethods.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -291,7 +291,7 @@ namespace KServer
                         Song s = new Song();
                         s.ID = songID;
                         queue[i].songs.Add(s);
-                        MinimalListToDB(queue, out newRequests);
+                        CommonMethods.MinimalListToDB(queue, out newRequests);
                         return db.SetSongRequests(venueID, newRequests);
                     }
                 }
@@ -308,7 +308,7 @@ namespace KServer
                 qs.songs.Add(song);
 
                 queue.Add(qs);
-                MinimalListToDB(queue, out newRequests);
+                CommonMethods.MinimalListToDB(queue, out newRequests);
                 return db.SetSongRequests(venueID, newRequests);
             }
         }
@@ -367,7 +367,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = DBToMinimalList(requests, out queue);
+                r = CommonMethods.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -398,7 +398,7 @@ namespace KServer
 
                         if (songChangeMade)
                         {
-                            MinimalListToDB(queue, out newRequests);
+                            CommonMethods.MinimalListToDB(queue, out newRequests);
                             return db.SetSongRequests(venueID, newRequests);
                         }
                         // If we couldn't find the old song, inform user.
@@ -455,7 +455,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = DBToMinimalList(requests, out queue);
+                r = CommonMethods.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -473,7 +473,7 @@ namespace KServer
                                 queue[i].songs.RemoveAt(j);
                                 if (queue[i].songs.Count == 0)
                                     queue.RemoveAt(i);
-                                MinimalListToDB(queue, out newRequests);
+                                CommonMethods.MinimalListToDB(queue, out newRequests);
                                 return db.SetSongRequests(venueID, newRequests);
                             }
 
@@ -583,59 +583,6 @@ namespace KServer
                     s.title = songParts[0];
                     s.artist = songParts[1];
                     s.pathOnDisk = string.Empty;
-                    qs.songs.Add(s);
-
-                }
-                queue.Add(qs);
-                count++;
-            }
-            return r;
-        }
-
-        private Response MinimalListToDB(List<queueSinger> queue, out string raw)
-        {
-            raw = string.Empty;
-            foreach (queueSinger qs in queue)
-            {
-                raw += qs.user.userID.ToString();
-                foreach (Song s in qs.songs)
-                {
-                    raw += "~" + s.ID;
-                }
-                raw += "`";
-            }
-            if (raw.Length > 0)
-                raw = raw.Substring(0, raw.Length - 1);
-            return new Response();
-        }
-
-        private Response DBToMinimalList(string raw, out List<queueSinger> queue)
-        {
-            int count = 0;
-            Response r = new Response();
-
-            queue = new List<queueSinger>();
-            string[] clientRequests = raw.Split('`');
-            for (int i = 0; i < clientRequests.Length; i++)
-            {
-                string[] parts = clientRequests[i].Split('~');
-                if (parts.Length == 0)
-                {
-                    r.error = true;
-                    r.message = "Error in DBtoList 1";
-                    return r;
-                }
-
-                queueSinger qs = new queueSinger();
-                qs.songs = new List<Song>();
-                User u = new User();
-                u.userID = int.Parse(parts[0]);
-                qs.user = u;
-
-                for (int j = 1; j < parts.Length; j++)
-                {
-                    Song s = new Song();
-                    s.ID = int.Parse(parts[j]);
                     qs.songs.Add(s);
 
                 }

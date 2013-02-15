@@ -44,7 +44,7 @@ namespace DJTestClient
                     Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>,");
                     Console.WriteLine("listDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, listQueue<lq>,"); 
                     Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest(rr)");
-                    Console.WriteLine("changeRequest<cr>");
+                    Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>");
                 }
                 else if (command.StartsWith("gq"))
                 {
@@ -365,6 +365,42 @@ namespace DJTestClient
                         newSR.user = u;
 
                         Response r = proxy.DJChangeSongRequest(newSR, oldSR, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
+                    }
+                }
+                else if (command.StartsWith("mu")) // Move user
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter ClientID:");
+                        int userID = int.Parse(Console.ReadLine().Trim());
+                        Console.WriteLine("Enter new index:");
+                        int index = int.Parse(Console.ReadLine().Trim());
+
+                        Response r = proxy.DJMoveUser(userID, index, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message + "\n" + e.ToString());
+                    }
+                }
+                else if (command.StartsWith("ru")) // Remove user.
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter ClientID:");
+                        int userID = int.Parse(Console.ReadLine().Trim());
+
+                        Response r = proxy.DJRemoveUser(userID, DJKey);
                         Console.WriteLine("Error: " + r.error);
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
