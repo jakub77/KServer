@@ -106,7 +106,6 @@ namespace KServer
             return DBQuery(cmd, new string[3] { "Title", "Artist", "PathOnDisk" });
         }
 
-        #region DJStuff
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         // DJ STUFF
@@ -182,6 +181,47 @@ namespace KServer
             cmd.Parameters.AddWithValue("@QR", "");
             return DBNonQuery(cmd);
         }
+
+        public Response DJAddTempUser(string name, int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("insert into TempUsers (Name, Venue) Values (@name, @venue);");
+            cmd.Parameters.AddWithValue("@name", name.Trim());
+            cmd.Parameters.AddWithValue("@venue", DJID);
+            return DBNonQuery(cmd);
+        }
+
+        public Response DJValidateTempUserName(string name, int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("select ID from TempUsers where Name = @name and Venue = @venue;");
+            cmd.Parameters.AddWithValue("@name", name);
+            cmd.Parameters.AddWithValue("@venue", DJID);
+            return DBQuery(cmd, new string[1] { "ID" });
+        }
+
+        public Response DJGetTempUserName(int tempID, int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("select Name from TempUsers where ID = @tempID and Venue = @venue;");
+            cmd.Parameters.AddWithValue("@tempID", tempID);
+            cmd.Parameters.AddWithValue("@venue", DJID);
+            return DBQuery(cmd, new string[1] { "Name" });
+        }
+
+        public Response DJRemoveTempUser(int tempID, int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("Delete from TempUsers where ID = @tempID and Venue = @venue;");
+            cmd.Parameters.AddWithValue("@tempID", tempID);
+            cmd.Parameters.AddWithValue("@venue", DJID);
+            return DBNonQuery(cmd);
+        }
+
+        public Response DJRemoveAllTempUsers(int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("Delete from TempUsers where Venue = @venue;");
+            cmd.Parameters.AddWithValue("@venue", DJID);
+            return DBNonQuery(cmd);
+        }
+
+
 
         public Response DJSetQR(string QR, int DJID)
         {
@@ -360,9 +400,6 @@ namespace KServer
                 return r;
             }
         }
-
-        #endregion
-        #region mobileStuff
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -597,8 +634,5 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBNonQuery(cmd);
         }
-
-
-        #endregion
     }
 }

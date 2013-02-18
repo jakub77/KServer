@@ -532,7 +532,7 @@ namespace KServer
             }
         }
 
-        public Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
+        private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
             Response r = new Response();
@@ -553,7 +553,12 @@ namespace KServer
                 qs.songs = new List<Song>();
                 User u = new User();
                 u.userID = int.Parse(parts[0]);
-                r = db.MobileIDtoUsername(u.userID);
+
+                if (u.userID < 0)
+                    r = db.DJGetTempUserName(u.userID, DJID);
+                else
+                    r = db.MobileIDtoUsername(u.userID);
+
                 if (r.error)
                     return r;
                 if (r.message.Trim().Length == 0)

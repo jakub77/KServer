@@ -355,7 +355,18 @@ namespace KServer
 
                 queue[0].songs.RemoveAt(0);
                 if (queue[0].songs.Count == 0)
-                    queue.RemoveAt(0);
+                {
+                    if (queue[0].user.userID < 0)
+                    {
+                        r = db.DJRemoveTempUser(queue[0].user.userID, DJID);
+                        queue.RemoveAt(0);
+                        if (r.error)
+                            return r;
+                    }
+                    else
+                        queue.RemoveAt(0);
+
+                }
                 else
                 {
                     queueSinger temp = queue[0];
@@ -444,7 +455,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Make sure a songID was sent back.
+                // Make sure the songExists method returned a song.
                 if (!int.TryParse(r.message.Trim(), out songID))
                 {
                     r.error = true;
@@ -452,8 +463,50 @@ namespace KServer
                     return r;
                 }
 
-                // If no userID is passed in.
-                if (sr.user.userID == 0 || sr.user.userID == -1)
+                // when userID == -1, we are dealing with creating an anonmymous user.
+                if (sr.user.userID == -1)
+                {
+                    // See if this username exists.
+                    r = db.DJValidateTempUserName(sr.user.userName, DJID);
+                    if (r.error)
+                        return r;
+                    // In this case, the username does not exist.
+                    if (r.message.Trim().Length == 0)
+                    {
+                        // Add the tempUser.
+                        r = db.DJAddTempUser(sr.user.userName, DJID);
+                        if (r.error)
+                            return r;
+                        // Get the tempUser's ID from the DB.
+                        r = db.DJValidateTempUserName(sr.user.userName, DJID);
+                        if (r.error)
+                            return r;
+                        // Parse the ID.
+                        if (!int.TryParse(r.message.Trim(), out clientID))
+                        {
+                            r.error = true;
+                            r.message = "Unable to get the clientID of the new user.";
+                            return r;
+                        }
+                    }
+                    // In this case, the username already exists.
+                    else
+                    {
+                        // Get the tempUser's ID from the DB.
+                        r = db.DJValidateTempUserName(sr.user.userName, DJID);
+                        if (r.error)
+                            return r;
+                        // Parse the ID.
+                        if (!int.TryParse(r.message.Trim(), out clientID))
+                        {
+                            r.error = true;
+                            r.message = "Unable to get the clientID of the temp user.";
+                            return r;
+                        }
+                    }
+                }
+                // When userID == 0, we look the user up by username instead of userID.
+                else if (sr.user.userID == 0)
                 {
                     r = db.MobileValidateUsername(sr.user.userName);
                     if (r.error)
@@ -461,7 +514,7 @@ namespace KServer
                     if (!int.TryParse(r.message.Trim(), out clientID))
                     {
                         r.error = true;
-                        r.message = "CLient name could not be validated.";
+                        r.message = "Client name could not be validated.";
                         return r;
                     }
                 }
@@ -608,7 +661,15 @@ namespace KServer
                             {
                                 queue[i].songs.RemoveAt(j);
                                 if (queue[i].songs.Count == 0)
+                                {
                                     queue.RemoveAt(i);
+                                    if (sr.user.userID < 0)
+                                    {
+                                        r = db.DJRemoveTempUser(sr.user.userID, DJID);
+                                        if (r.error)
+                                            return r;
+                                    }
+                                }
                                 CommonMethods.MinimalListToDB(queue, out newRequests);
                                 return db.SetSongRequests(DJID, newRequests);
                             }
@@ -802,6 +863,14 @@ namespace KServer
                     if (queue[i].user.userID == userID)
                     {
                         queue.RemoveAt(i);
+
+                        if (userID < 0)
+                        {
+                            r = db.DJRemoveTempUser(userID, DJID);
+                            if (r.error)
+                                return r;
+                        }
+
                         CommonMethods.MinimalListToDB(queue, out newRequests);
                         return db.SetSongRequests(DJID, newRequests);
                     }

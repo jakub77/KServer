@@ -302,11 +302,16 @@ namespace DJTestClient
                     {
                         SongRequest sr = new SongRequest();
                         User u = new User();
-                        Console.WriteLine("Type ClientID, or enter 0/-1 to enter client name instead");
+                        Console.WriteLine("Type ClientID, or 0 to type in Client Name, or -1 to add a temp user.");
                         u.userID = int.Parse(Console.ReadLine().Trim());
-                        if(u.userID == 0 || u.userID == -1)
+                        if(u.userID == 0)
                         {
                             Console.WriteLine("Enter the client name:");
+                            u.userName = Console.ReadLine().Trim();
+                        }
+                        if (u.userID == -1)
+                        {
+                            Console.WriteLine("Enter the temp client name:");
                             u.userName = Console.ReadLine().Trim();
                         }
                         Console.WriteLine("Enter SongID:");
