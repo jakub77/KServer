@@ -147,6 +147,11 @@ namespace KServer
 
                 // A sign out seems to be valid.
                 r = db.MobileSetStatus(MobileID, 0);
+                if(r.error)
+                    return r;
+
+                // Remove the key from the DB.
+                r = db.MobileSetKey(MobileID, null);
                 return r;
             }
         }
@@ -727,28 +732,25 @@ namespace KServer
         /// <returns></returns>
         private Response MobileKeyToID(long MobileKey, out int MobileID)
         {
-            // Conver the DJKey to a DJID. (Temporary implementation).
-            MobileID = (int)MobileKey;
-
-            // Validate that the DJID is valid.
+            MobileID = -1;
+            Response r = new Response();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
-
-                // Try to validate DJID using DB.
-                r = db.MobileValidateID(MobileID);
+                r = db.MobileGetIDFromKey(MobileKey);
                 if (r.error)
                     return r;
-
-                // See if that DJID exists.
-                if (r.message.Trim() == String.Empty)
+                if (r.message.Trim().Length == 0)
                 {
                     r.error = true;
-                    r.message = "Exception in MobileKeytoID: ID could not be validated!";
+                    r.message = "MobileKey is not valid.";
                     return r;
                 }
-
-                // DJID exists, return success.
+                if (!int.TryParse(r.message.Trim(), out MobileID))
+                {
+                    r.error = true;
+                    r.message = "Exception in MobileKeyToID: MobileKey Parse Fail";
+                    return r;
+                }
                 return r;
             }
         }
@@ -761,13 +763,18 @@ namespace KServer
         /// <returns></returns>
         private Response MobileIDToKey(int MobileID, out long MobileKey)
         {
-            //System.Security.Cryptography.SHA1 sha = System.Security.Cryptography.SHA1.Create();
-            //byte[] preHash = System.Text.Encoding.UTF32.GetBytes(MobileID.ToString());
-            //byte[] hash = sha.ComputeHash(preHash);
+            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+            byte[] res = sha.ComputeHash(BitConverter.GetBytes(MobileID));
+            MobileKey = BitConverter.ToInt64(res, 0);
 
-            // Temporary implementation, always success.
-            MobileKey = (long)MobileID;
-            return new Response();
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                r = db.MobileSetKey(MobileID, MobileKey);
+                if (r.error)
+                    return r;
+            }
+            return r;
         }
 
         public Response MobileGetWaitTime(long userKey)

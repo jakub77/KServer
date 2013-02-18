@@ -620,6 +620,24 @@ namespace KServer
             }
         }
 
+        public Response MobileSetKey(int MobileID, object MobileKey)
+        {
+            SqlCommand cmd = new SqlCommand("update MobileUsers set KeyHash = @MobileKey where ID = @MobileID;");
+            if (MobileKey == null)
+                cmd.Parameters.AddWithValue("@MobileKey", DBNull.Value);
+            else
+                cmd.Parameters.AddWithValue("@MobileKey", MobileKey);
+            cmd.Parameters.AddWithValue("@MobileID", MobileID);
+            return DBNonQuery(cmd);
+        }
+
+        public Response MobileGetIDFromKey(long MobileKey)
+        {
+            SqlCommand cmd = new SqlCommand("select ID from MobileUsers where KeyHash = @MobileKey;");
+            cmd.Parameters.AddWithValue("@MobileKey", MobileKey);
+            return DBQuery(cmd, new string[] { "ID" });
+        }
+
         public Response GetSongRequests(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select List from DJSongRequests where ListDJID = @DJID;");
