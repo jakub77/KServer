@@ -24,7 +24,7 @@ namespace JakubMobileClient
             // Wether to display JSON or clearer object messages.
             bool displayJSON = false;
             // The venue of the location. Currently the server ignores this until venues are implemented.
-            int venueID = 1;
+            int venueID = -1;
 
             Console.WriteLine("Remember to signin before using commands that use a userKey");
             for (; ; )
@@ -37,10 +37,11 @@ namespace JakubMobileClient
                 if (command.StartsWith("h")) //HELP
                 {
                     //Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
-                    Console.WriteLine("help<h>, JSONOut<j>, quit<q>, listMobile<lm>, signUp<su>, signIn<si>, \nsignOut<so>, songSearch<ss>,songBrowse<sb>, songRequest<sr>, listQueue<lq>");
-                    Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>");
+                    Console.WriteLine("help<h>, JSONOut<jo>, quit<q>, listMobile<lm>, signUp<su>, signIn<si>,");
+                    Console.WriteLine("signOut<so>, songSearch<ss>,songBrowse<sb>, songRequest<sr>, listQueue<lq>,");
+                    Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>");
                 }
-                else if (command.StartsWith("j")) // TOGGLE JSON/OBJECT OUTPUT
+                else if (command.StartsWith("jo")) // TOGGLE JSON/OBJECT OUTPUT
                 {
                     displayJSON = !displayJSON;
                 }
@@ -306,6 +307,31 @@ namespace JakubMobileClient
                                 foreach (Song song in qs.songs)
                                     Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist);
                             }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("jv"))
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter QR string:");
+                        string QR = Console.ReadLine().Trim();
+                        Stream data = client.OpenRead(baseAddress + "/MobileJoinVenue/?QR=" + QR + "&userKey=" + userKey);
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        Response r = strToJSON<Response>(s);
+                        venueID = r.result;
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
                         }
                     }
                     catch (Exception e)

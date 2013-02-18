@@ -47,10 +47,10 @@ namespace KServer
                 }
 
                 // Validate that username and password are not too long.
-                if (username.Length > 10 || password.Length > 10)
+                if (username.Length > 20 || password.Length > 20)
                 {
                     r.error = true;
-                    r.message = "Username or password is longer than 10 characters.";
+                    r.message = "Username or password is longer than 20 characters.";
                     return r;
                 }
 
@@ -65,8 +65,57 @@ namespace KServer
                     return r;
                 }
 
+                // Validate the email address.
+                try
+                {
+                    var address = new System.Net.Mail.MailAddress(email);
+                }
+                catch
+                {
+                    r.error = true;
+                    r.message = "Email address is not valid";
+                    return r;
+                }
+
+                if (venue == null)
+                {
+                    r.error = true;
+                    r.message = "Venue information must be passed in.";
+                    return r;
+                }
+
+                if (venue.venueName == null || venue.venueName.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Venue name must be set";
+                    return r;
+                }
+
+                if (venue.venueName.Length > 20)
+                {
+                    r.error = true;
+                    r.message = "Venue name is longer than 20 characters.";
+                    return r;
+                }
+
+                if (venue.venueAddress.Length > 100)
+                {
+                    r.error = true;
+                    r.message = "Venue address is longer than 100 characters";
+                    return r;
+                }
+
+                if (venue.venueAddress == null || venue.venueAddress.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Venue address must be set";
+                    return r;
+                }
+
+
+
                 // Information seems valid, sign up DJ and return successfulness.
-                r = db.DJSignUp(username, password);
+                r = db.DJSignUp(username, password, email, venue.venueName, venue.venueAddress);
                 if (r.error)
                     return r;
 
@@ -323,7 +372,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -401,7 +450,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ is not logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -446,7 +495,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -622,7 +671,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -716,7 +765,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -830,7 +879,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -901,7 +950,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -950,15 +999,32 @@ namespace KServer
                 return r;
             }
         }
-
-
-
         public Response DJCreateSession(long DJKey)
         {
-            Response r = new Response();
-            r.error = true;
-            r.message = "DJCreateSession is not yet implemented";
-            return r;
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ is not logged out.
+                r = DJCheckStatus(DJID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Set the status of the DJ to accepting songs.
+                r = db.DJSetStatus(DJID, 2);
+                if (r.error)
+                    return r;
+                // Create a new field for song requests.
+                r = db.DJOpenSongRequests(DJID);
+                return r;
+
+            }
         }
         public Response DJNewUserWaitTime(long DJKey)
         {

@@ -25,10 +25,6 @@ namespace KServer
             connectionString += "database=" + database + ";";
             connectionString += "connection timeout=" + connectionTimeOut + ";";
         }
-
-        /// <summary>
-        /// Dispose resources.
-        /// </summary>
         void IDisposable.Dispose()
         {
             return;
@@ -56,7 +52,6 @@ namespace KServer
                     return r;
             }
         }
-
         private Response DBQuery(SqlCommand cmd, string[] columns)
         {
             Response r = new Response();
@@ -89,7 +84,6 @@ namespace KServer
                 return r;
             }
         }
-
         public Response SongExists(int DJID, int SongID)
         {
             SqlCommand cmd = new SqlCommand("select SongID from DJSongs where SongID = @songID and DJListID = @DJID;");
@@ -97,7 +91,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBQuery(cmd, new string[1] { "SongID" });
         }
-
         public Response SongInformation(int DJID, int SongID)
         {
             SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk from DJSongs where SongID = @songID and DJListID = @DJID;");
@@ -105,21 +98,11 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBQuery(cmd, new string[3] { "Title", "Artist", "PathOnDisk" });
         }
-
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // DJ STUFF
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-        // List all DJ's and all direct information associated with them.
-        // Returns the information in a response if no errors occured.
         public Response DJListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from DJUsers;");
             return DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
         }
-
         // Check to see if a DJ's username and password are valid.
         // If credentials are valid, returns the unique DJID in message.
         public Response DJValidateUsernamePassword(string username, string password)
@@ -129,7 +112,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@password", password.Trim());
             return DBQuery(cmd, new string[1] { "ID" });
         }
-
         // Check to see if a DJ's username is valid.
         // If username is valid, returns the unique DJID in message.
         public Response DJValidateUsername(string username)
@@ -138,14 +120,12 @@ namespace KServer
             cmd.Parameters.AddWithValue("@username", username);
             return DBQuery(cmd, new string[1] { "ID" });
         }
-
         public Response DJValidateDJID(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select Status from DJUsers where ID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBQuery(cmd, new string[1] { "Status" });
         }
-
         public Response DJSetKey(int DJID, object DJKey)
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set KeyHash = @DJKey where ID = @DJID;");
@@ -156,32 +136,31 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBNonQuery(cmd);
         }
-
         public Response DJGetIDFromKey(long DJKey)
         {
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where KeyHash = @DJKey;");
             cmd.Parameters.AddWithValue("@DJKey", DJKey);
             return DBQuery(cmd, new string[] { "ID" });
         }
-
-        // Get the current status of the given DJ.
         public Response DJGetStatus(int DJID)
         {
             return DJValidateDJID(DJID);
         }
-
         // Adds a new DJ to the system.
         // Returns whether it occured successfully.
-        public Response DJSignUp(string username, string password)
+        public Response DJSignUp(string username, string password, string email, string venueName, string venueAddress)
         {
-            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status, QR) Values (@username, @password, @status, @QR);");
+            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status, QR, Email, VenueName, VenueAddress)");
+            cmd.CommandText += "Values (@username, @password, @status, @QR, @email, @venueName, @venueAddress);";
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
             cmd.Parameters.AddWithValue("@status", 0);
             cmd.Parameters.AddWithValue("@QR", "");
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@venueName", venueName);
+            cmd.Parameters.AddWithValue("@venueAddress", venueAddress);
             return DBNonQuery(cmd);
         }
-
         public Response DJAddTempUser(string name, int DJID)
         {
             SqlCommand cmd = new SqlCommand("insert into TempUsers (Name, Venue) Values (@name, @venue);");
@@ -189,7 +168,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@venue", DJID);
             return DBNonQuery(cmd);
         }
-
         public Response DJValidateTempUserName(string name, int DJID)
         {
             SqlCommand cmd = new SqlCommand("select ID from TempUsers where Name = @name and Venue = @venue;");
@@ -197,7 +175,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@venue", DJID);
             return DBQuery(cmd, new string[1] { "ID" });
         }
-
         public Response DJGetTempUserName(int tempID, int DJID)
         {
             SqlCommand cmd = new SqlCommand("select Name from TempUsers where ID = @tempID and Venue = @venue;");
@@ -205,7 +182,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@venue", DJID);
             return DBQuery(cmd, new string[1] { "Name" });
         }
-
         public Response DJRemoveTempUser(int tempID, int DJID)
         {
             SqlCommand cmd = new SqlCommand("Delete from TempUsers where ID = @tempID and Venue = @venue;");
@@ -213,16 +189,24 @@ namespace KServer
             cmd.Parameters.AddWithValue("@venue", DJID);
             return DBNonQuery(cmd);
         }
-
         public Response DJRemoveAllTempUsers(int DJID)
         {
             SqlCommand cmd = new SqlCommand("Delete from TempUsers where Venue = @venue;");
             cmd.Parameters.AddWithValue("@venue", DJID);
             return DBNonQuery(cmd);
         }
+        public Response DJOpenSongRequests(int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("delete from DJSongRequests where ListDJID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            Response r = DBNonQuery(cmd);
+            if (r.error)
+                return r;
 
-
-
+            cmd = new SqlCommand("insert into DJSongRequests (ListDJID, List) Values (@DJID, '');");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBNonQuery(cmd);
+        }
         public Response DJSetQR(string QR, int DJID)
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set QR = @QR where ID = @DJID;");
@@ -230,14 +214,12 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBNonQuery(cmd);
         }
-
         public Response DJGetQR(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select QR from DJUsers where ID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBQuery(cmd, new string[1] { "QR" });
         }
-
         public Response DJSetStatus(int DJID, int status)
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set Status = @status where ID = @DJID;");
@@ -245,7 +227,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBNonQuery(cmd);
         }
-
         /// <summary>
         /// Add songs to a DJ's library. If a song already exists in that library, it is not added.
         /// If the song exists in the library, but the path is different than the path supplied, the path in the library is updated.
@@ -305,11 +286,12 @@ namespace KServer
                 }
 
                 // Otherwise, add the new song.
-                cmd = new SqlCommand("insert into DJSongs (DJListID, Title, Artist, PathOnDisk) Values (@DJID, @title, @artist, @pathOnDisk);");
+                cmd = new SqlCommand("insert into DJSongs (DJListID, Title, Artist, PathOnDisk, Duration) Values (@DJID, @title, @artist, @pathOnDisk, @Duration);");
                 cmd.Parameters.AddWithValue("@DJID", DJID);
                 cmd.Parameters.AddWithValue("@title", s.title);
                 cmd.Parameters.AddWithValue("@artist", s.artist);
                 cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+                cmd.Parameters.AddWithValue("@Duration", s.duration);
                 r = DBNonQuery(cmd);
                 if (r.error)
                     return r;
@@ -324,8 +306,6 @@ namespace KServer
             r.result = songsAdded;
             return r;
         }
-
-        // Remove songs form a DJ's library.
         public Response DJRemoveSongs(List<Song> songs, int DJID)
         {
             int songsNotFound = 0;
@@ -352,7 +332,6 @@ namespace KServer
             r.result = songsRemoved;
             return r;
         }
-
         public Response DJListSongs(out List<Song> songs, int DJID)
         {
             Response r = new Response();
@@ -401,20 +380,12 @@ namespace KServer
             }
         }
 
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // CLIENT STUFF
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
-        /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        // List all DJ's and all direct information associated with them.
-        // Returns the information in a response if no errors occured.
         public Response MobileListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from MobileUsers;");
             return DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
         }
-
         // Check to see if a mobile username is valid.
         // If username is valid, returns the unique DJID in message.
         public Response MobileValidateUsername(string username)
@@ -423,7 +394,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@username", username);
             return DBQuery(cmd, new string[1] { "ID" });
         }
-
         // Check to see if a DJ's username and password are valid.
         // If credentials are valid, returns the unique DJID in message.
         public Response MobileValidateUsernamePassword(string username, string password)
@@ -433,27 +403,22 @@ namespace KServer
             cmd.Parameters.AddWithValue("@password", password.Trim());
             return DBQuery(cmd, new string[1] { "ID" });
         }
-
         public Response MobileIDtoUsername(int MobileID)
         {
             SqlCommand cmd = new SqlCommand("select Username from MobileUsers where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
             return DBQuery(cmd, new string[1] { "Username" });
         }
-
         public Response MobileValidateID(int MobileID)
         {
             SqlCommand cmd = new SqlCommand("select Status from MobileUsers where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
             return DBQuery(cmd, new string[1] { "Status" });
         }
-
-        // Get the current status of the given mobile client.
         public Response MobileGetStatus(int MobileID)
         {
             return MobileValidateID(MobileID);
         }
-
         // Adds a new mobile client user to the DB.
         // Returns whether it occured successfully.
         public Response MobileSignUp(string username, string password)
@@ -464,7 +429,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@status", 0);
             return DBNonQuery(cmd);
         }
-
         public Response MobileSetStatus(int MobileID, int status)
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set Status = @status where ID = @mobileID;");
@@ -472,7 +436,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
             return DBNonQuery(cmd);
         }
-
         public Response MobileSearchSongs(out List<Song> songs, string title, string artist, int DJID)
         {
             Response r = new Response();
@@ -541,7 +504,6 @@ namespace KServer
                 return r;
             }
         }
-
         public Response MobileBrowseSongs(out List<Song> songs, string firstLetter, bool isArtist, int start, int count, int DJID)
         {
             Response r = new Response();
@@ -619,7 +581,36 @@ namespace KServer
                 return r;
             }
         }
+        public Response GetVenueIDByQR(string QR)
+        {
+            SqlCommand cmd = new SqlCommand("select ID from DJUsers where QR = @QR;");
+            cmd.Parameters.AddWithValue("@QR", QR);
+            return DBQuery(cmd, new string[1] { "ID" });
+        }
 
+        public Response GetVenueName(int venueID)
+        {
+            SqlCommand cmd = new SqlCommand("select VenueName from DJUsers where ID = @ID;");
+            cmd.Parameters.AddWithValue("@ID", venueID);
+            return DBQuery(cmd, new string[1] { "Venuename" });
+        }
+
+        public Response MobileSetVenue(int MobileID, object Venue)
+        {
+            SqlCommand cmd = new SqlCommand("update MobileUsers set Venue = @Venue where ID = @MobileID;");
+            if (Venue == null)
+                cmd.Parameters.AddWithValue("@Venue", DBNull.Value);
+            else
+                cmd.Parameters.AddWithValue("@Venue", Venue);
+            cmd.Parameters.AddWithValue("@MobileID", MobileID);
+            return DBNonQuery(cmd);
+        }
+        public Response MobileGetVenue(int MobileID)
+        {
+            SqlCommand cmd = new SqlCommand("select Venue from MobileUsers where ID = @MobileID;");
+            cmd.Parameters.AddWithValue("@MobileID", MobileID);
+            return DBQuery(cmd, new string[1] { "Venue" });
+        }
         public Response MobileSetKey(int MobileID, object MobileKey)
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set KeyHash = @MobileKey where ID = @MobileID;");
@@ -630,21 +621,18 @@ namespace KServer
             cmd.Parameters.AddWithValue("@MobileID", MobileID);
             return DBNonQuery(cmd);
         }
-
         public Response MobileGetIDFromKey(long MobileKey)
         {
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where KeyHash = @MobileKey;");
             cmd.Parameters.AddWithValue("@MobileKey", MobileKey);
             return DBQuery(cmd, new string[] { "ID" });
         }
-
         public Response GetSongRequests(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select List from DJSongRequests where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBQuery(cmd, new string[1] { "List" });
         }
-
         public Response SetSongRequests(int DJID, string requestString)
         {
             SqlCommand cmd = new SqlCommand("update DJSongRequests set List = @list where ListDJID = @DJID;");

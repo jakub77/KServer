@@ -81,6 +81,10 @@ namespace KServer
         Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey);
 
         [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileGetPlayLists/?venueID={venueID}&userKey={userKey}")]
+        List<Playlist> MobileGetPlayLists(int venueID, long userKey);
+
+        [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileRateSong/?songID={songID}&venueID={venueID}&userKey={userKey}")]
         Response MobileRateSong(int songID, int venueID, long userKey);
 

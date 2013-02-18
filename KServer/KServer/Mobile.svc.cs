@@ -152,19 +152,16 @@ namespace KServer
 
                 // Remove the key from the DB.
                 r = db.MobileSetKey(MobileID, null);
+                if (r.error)
+                    return r;
+
+                // Clear the venue from the DB
+                r = db.MobileSetVenue(MobileID, null);
                 return r;
             }
         }
-        /// <summary>
-        /// Currently returns 
-        /// </summary>
-        /// <param name="title"></param>
-        /// <param name="artist"></param>
-        /// <param name="venueID"></param>
-        /// <returns></returns>
         public List<Song> MobileSongSearch(string title, string artist, int venueID)
         {
-            venueID = 4;
             int venueStatus;
             List<Song> songs;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -186,19 +183,8 @@ namespace KServer
                 return songs;
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="firstLetter"></param>
-        /// <param name="isArtist"></param>
-        /// <param name="start"></param>
-        /// <param name="count"></param>
-        /// <param name="venueID"></param>
-        /// <returns></returns>
         public List<Song> MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID)
         {
-            venueID = 4;
             int venueStatus;
             List<Song> s;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -221,7 +207,7 @@ namespace KServer
         }
         public Response MobileSongRequest(int songID, long userKey)
         {
-            int venueID = 4;
+            int venueID = -1;
             int songExists;
             int mobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -238,8 +224,14 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                // Get the venueID
+                r = MobileGetVenue(mobileID, db);
+                if (r.error)
+                    return r;
+                venueID = r.result;
+
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "!0", db);
+                r = VenueCheckStatus(venueID, "2", db);
                 if (r.error)
                     return r;
 
@@ -317,10 +309,9 @@ namespace KServer
                 return db.SetSongRequests(venueID, newRequests);
             }
         }
-
         public Response MobileChangeSongRequest(int oldSongID, int newSongID, long userKey)
         {
-            int venueID = 4;
+            int venueID = -1;
             int songExists;
             int mobileID;
             bool songChangeMade = false;
@@ -338,8 +329,14 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                // Get the venueID
+                r = MobileGetVenue(mobileID, db);
+                if (r.error)
+                    return r;
+                venueID = r.result;
+
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "!0", db);
+                r = VenueCheckStatus(venueID, "2", db);
                 if (r.error)
                     return r;
 
@@ -419,10 +416,9 @@ namespace KServer
                 return r;
             }
         }
-
         public Response MobileRemoveSongRequest(int songID, long userKey)
         {
-            int venueID = 4;
+            int venueID = -1;
             int mobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
@@ -438,8 +434,14 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                // Get the venueID
+                r = MobileGetVenue(mobileID, db);
+                if (r.error)
+                    return r;
+                venueID = r.result;
+
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "!0", db);
+                r = VenueCheckStatus(venueID, "2", db);
                 if (r.error)
                     return r;
 
@@ -495,32 +497,37 @@ namespace KServer
                 return r;
             }
         }
-
         public List<queueSinger> MobileViewQueue(long userKey)
         {
-            int venueID = 4;
+            int venueID = -1;
+            int mobileID = -1;
             List<queueSinger> queue = new List<queueSinger>();
-            int DJID = -1, DJStatus = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 Response r = new Response();
 
-                DJID = venueID;
-
-                // Get the status of the DJ.
-                r = db.DJGetStatus(DJID);
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
                 if (r.error)
                     return null;
 
-                // Try to parse the status.
-                if (!int.TryParse(r.message.Trim(), out DJStatus))
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
                     return null;
 
-                // If the DJ is not logged in, don't list songs.
-                if (DJStatus == 0)
+                // Get the venueID
+                r = MobileGetVenue(mobileID, db);
+                if (r.error)
                     return null;
+                venueID = r.result;
 
-                r = db.GetSongRequests(DJID);
+                // Make sure the venue is accepting songs.
+                r = VenueCheckStatus(venueID, "2", db);
+                if (r.error)
+                    return queue;
+
+                r = db.GetSongRequests(venueID);
                 if (r.error)
                     return null;
 
@@ -530,13 +537,74 @@ namespace KServer
                     return queue;
                 }
 
-                r = DBToNearlyFullList(raw, out queue, DJID, db);
+                r = DBToNearlyFullList(raw, out queue, venueID, db);
                 if (r.error)
                     return null;
                 return queue;
             }
         }
+       
 
+        public Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
+        {
+            Response r;
+            int DJStatus, desired;
+            bool notStatus = false;
+            // Get the status of the DJ.
+            r = db.DJGetStatus(venueID);
+            if (r.error)
+                return r;
+
+            // Attempt to parse that status of the DJ.
+            if (!int.TryParse(r.message.Trim(), out DJStatus))
+            {
+                r.error = true;
+                r.message = "Exception in VenueCheckStatus: Unable to parse status from DB!";
+                return r;
+            }
+
+            if (desiredStatus[0] == '!')
+            {
+                notStatus = true;
+                desiredStatus = desiredStatus.Substring(1);
+            }
+
+            if (!int.TryParse(desiredStatus, out desired))
+            {
+                r.error = true;
+                r.message = "Exception in VenueCheckStatus: Cannot parse desired Status";
+                return r;
+            }
+
+            if (!notStatus)
+            {
+                if (DJStatus != desired)
+                {
+                    r.error = true;
+                    if (desired == 0)
+                        r.message = "Venue is online.";
+                    else if (desired == 1)
+                        r.message = "Venue is not online.";
+                    else
+                        r.message = "Venue does not have a session running";
+                    return r;
+                }
+            }
+            else if (DJStatus == desired)
+            {
+                r.error = true;
+                if (desired == 0)
+                    r.message = "Venue is not online.";
+                else if (desired == 1)
+                    r.message = "Venue is online.";
+                else
+                    r.message = "Venue has a session running.";
+                return r;
+            }
+
+            r.result = DJStatus;
+            return r;
+        }
         private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
@@ -601,135 +669,66 @@ namespace KServer
             }
             return r;
         }
-
         public static Response MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db)
-        {
-            Response r;
-            int MobileStatus, desired;
-            bool notStatus = false;
-            // Get the status of the DJ.
-            r = db.MobileGetStatus(mobileID);
-            if (r.error)
-                return r;
-
-            // Attempt to parse that status of the DJ.
-            if (!int.TryParse(r.message.Trim(), out MobileStatus))
-            {
-                r.error = true;
-                r.message = "Exception in MobileCheckStatus: Unable to parse status from DB!";
-                return r;
-            }
-
-            if (desiredStatus[0] == '!')
-            {
-                notStatus = true;
-                desiredStatus = desiredStatus.Substring(1);
-            }
-
-            if (!int.TryParse(desiredStatus, out desired))
-            {
-                r.error = true;
-                r.message = "Exception in MobileCheckStatus: Cannot parse desired Status";
-                return r;
-            }
-
-            if (!notStatus)
-            {
-                if (MobileStatus != desired)
                 {
-                    r.error = true;
-                    if (desired == 0)
-                        r.message = "You are not signed out.";
-                    else if (desired == 1)
-                        r.message = "You are not signed in.";
-                    else
-                        r.message = "You are in the wrong state, do you have a venue selected?";
+                    Response r;
+                    int MobileStatus, desired;
+                    bool notStatus = false;
+                    // Get the status of the DJ.
+                    r = db.MobileGetStatus(mobileID);
+                    if (r.error)
+                        return r;
+
+                    // Attempt to parse that status of the DJ.
+                    if (!int.TryParse(r.message.Trim(), out MobileStatus))
+                    {
+                        r.error = true;
+                        r.message = "Exception in MobileCheckStatus: Unable to parse status from DB!";
+                        return r;
+                    }
+
+                    if (desiredStatus[0] == '!')
+                    {
+                        notStatus = true;
+                        desiredStatus = desiredStatus.Substring(1);
+                    }
+
+                    if (!int.TryParse(desiredStatus, out desired))
+                    {
+                        r.error = true;
+                        r.message = "Exception in MobileCheckStatus: Cannot parse desired Status";
+                        return r;
+                    }
+
+                    if (!notStatus)
+                    {
+                        if (MobileStatus != desired)
+                        {
+                            r.error = true;
+                            if (desired == 0)
+                                r.message = "You are not signed out.";
+                            else if (desired == 1)
+                                r.message = "You are not signed in.";
+                            else
+                                r.message = "You are in the wrong state, do you have a venue selected?";
+                            return r;
+                        }
+                    }
+                    else if (MobileStatus == desired)
+                    {
+                        r.error = true;
+                        if (desired == 0)
+                            r.message = "You are signed out and cannot do that.";
+                        else if (desired == 1)
+                            r.message = "You are signed in and cannot do that.";
+                        else
+                            r.message = "You are in the wrong state, do you have a venue selected?";
+                        return r;
+                    }
+
+                    r.result = MobileStatus;
                     return r;
                 }
-            }
-            else if (MobileStatus == desired)
-            {
-                r.error = true;
-                if (desired == 0)
-                    r.message = "You are signed out and cannot do that.";
-                else if (desired == 1)
-                    r.message = "You are signed in and cannot do that.";
-                else
-                    r.message = "You are in the wrong state, do you have a venue selected?";
-                return r;
-            }
-
-            r.result = MobileStatus;
-            return r;
-        }
-
-        public Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
-        {
-            Response r;
-            int DJStatus, desired;
-            bool notStatus = false;
-            // Get the status of the DJ.
-            r = db.DJGetStatus(venueID);
-            if (r.error)
-                return r;
-
-            // Attempt to parse that status of the DJ.
-            if (!int.TryParse(r.message.Trim(), out DJStatus))
-            {
-                r.error = true;
-                r.message = "Exception in VenueCheckStatus: Unable to parse status from DB!";
-                return r;
-            }
-
-            if (desiredStatus[0] == '!')
-            {
-                notStatus = true;
-                desiredStatus = desiredStatus.Substring(1);
-            }
-
-            if (!int.TryParse(desiredStatus, out desired))
-            {
-                r.error = true;
-                r.message = "Exception in VenueCheckStatus: Cannot parse desired Status";
-                return r;
-            }
-
-            if (!notStatus)
-            {
-                if (DJStatus != desired)
-                {
-                    r.error = true;
-                    if (desired == 0)
-                        r.message = "Venue is online.";
-                    else if (desired == 1)
-                        r.message = "Venue is not online.";
-                    else
-                        r.message = "Venue does not have a session running";
-                    return r;
-                }
-            }
-            else if (DJStatus == desired)
-            {
-                r.error = true;
-                if (desired == 0)
-                    r.message = "Venue is not online.";
-                else if (desired == 1)
-                    r.message = "Venue is online.";
-                else
-                    r.message = "Venue has a session running.";
-                return r;
-            }
-
-            r.result = DJStatus;
-            return r;
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="MobileKey"></param>
-        /// <param name="MobileID"></param>
-        /// <returns></returns>
         private Response MobileKeyToID(long MobileKey, out int MobileID)
         {
             MobileID = -1;
@@ -754,13 +753,6 @@ namespace KServer
                 return r;
             }
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="MobileID"></param>
-        /// <param name="MobileKey"></param>
-        /// <returns></returns>
         private Response MobileIDToKey(int MobileID, out long MobileKey)
         {
             System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
@@ -776,6 +768,68 @@ namespace KServer
             }
             return r;
         }
+        private Response MobileGetVenue(int mobileID, DatabaseConnectivity db)
+        {
+            int venueID = -1;
+            Response r = new Response();
+            r = db.MobileGetVenue(mobileID);
+            if (r.error)
+                return r;
+
+            if (!int.TryParse(r.message.Trim(), out venueID))
+            {
+                r.error = true;
+                r.message = "Could not parse venueID from DB";
+                return r;
+            }
+
+            r.result = venueID;
+            return r;
+        }
+
+        public Response MobileJoinVenue(string QR, long userKey)
+        {
+            int mobileID = -1;
+            int venueID = -1;
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return r;
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Get the venue of this qr string.
+                r = db.GetVenueIDByQR(QR.Trim());
+                if (r.error)
+                    return r;
+
+                // Parse the venueID.
+                if (!int.TryParse(r.message.Trim(), out venueID))
+                {
+                    r.error = true;
+                    r.message = "Could not match QR code to a venue";
+                    return r;
+                }
+
+                // Set the venue of the client
+                r = db.MobileSetVenue(mobileID, venueID);
+                if (r.error)
+                    return r;
+
+                r = db.GetVenueName(venueID);
+                if (r.error)
+                    return r;
+                r.result = venueID;                
+            }
+            return r;
+        }
+
 
         public Response MobileGetWaitTime(long userKey)
         {
@@ -784,12 +838,7 @@ namespace KServer
             return r;
         }
 
-        public Response MobileJoinVenue(string QR, long userKey)
-        {
-            Response r = new Response();
-            r.error = true;
-            return r;
-        }
+
 
         public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
         {
@@ -822,6 +871,12 @@ namespace KServer
             Response r = new Response();
             r.error = true;
             return r;
+        }
+
+        public List<Playlist> MobileGetPlayLists(int venueID, long userKey)
+        {
+
+            return new List<Playlist>();
         }
 
         public Response MobileRateSong(int songID, int venueID, long userKey)

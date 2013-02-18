@@ -44,7 +44,22 @@ namespace DJTestClient
                     Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>,");
                     Console.WriteLine("listDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, listQueue<lq>,"); 
                     Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest(rr)");
-                    Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>");
+                    Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>, createSession<cs>");
+                }
+                else if (command.StartsWith("cs"))
+                {
+                    Response r;
+                    try
+                    {
+                        r = proxy.DJCreateSession(DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("gq"))
                 {
@@ -116,14 +131,22 @@ namespace DJTestClient
                 else if (command.StartsWith("id")) // INSERT DJ
                 {
                     Response r;
-                    string username, password;
-                    Console.Write("Username: ");
+                    string username, password, email;
+                    Venue venue = new Venue();
+                    Console.WriteLine("Username: ");
                     username = Console.ReadLine();
-                    Console.Write("Password: ");
+                    Console.WriteLine("Password: ");
                     password = Console.ReadLine();
+                    Console.WriteLine("Email:");
+                    email = Console.ReadLine();
+                    Console.WriteLine("Venue Name:");
+                    venue.venueName = Console.ReadLine();
+                    Console.WriteLine("Venue Address:");
+                    venue.venueAddress = Console.ReadLine();
+                    
                     try
                     {
-                        r = proxy.DJSignUp(username, password, new Venue(), String.Empty);
+                        r = proxy.DJSignUp(username, password, venue, email);
                         Console.WriteLine("Error: " + r.error);
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
@@ -304,7 +327,7 @@ namespace DJTestClient
                         User u = new User();
                         Console.WriteLine("Type ClientID, or 0 to type in Client Name, or -1 to add a temp user.");
                         u.userID = int.Parse(Console.ReadLine().Trim());
-                        if(u.userID == 0)
+                        if (u.userID == 0)
                         {
                             Console.WriteLine("Enter the client name:");
                             u.userName = Console.ReadLine().Trim();

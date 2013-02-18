@@ -99,6 +99,21 @@ namespace KServer
         public string userName { get; set; }
     }
 
+    [DataContract]
+    public class Playlist
+    {
+        [DataMember]
+        public string name { get; set; }
+        [DataMember]
+        public int ID { get; set; }
+        [DataMember]
+        public int venueID { get; set; }
+        [DataMember]
+        public List<Song> songs { get; set; }
+        [DataMember]
+        public DateTime dateCreated { get; set; }
+    }
+
     // Describe a song
     [DataContract]
     public class Song
