@@ -39,7 +39,9 @@ namespace JakubMobileClient
                     //Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>, \nlistDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, \nlistQueue<lq>, popQueue<pq>");
                     Console.WriteLine("help<h>, JSONOut<jo>, quit<q>, listMobile<lm>, signUp<su>, signIn<si>,");
                     Console.WriteLine("signOut<so>, songSearch<ss>,songBrowse<sb>, songRequest<sr>, listQueue<lq>,");
-                    Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>");
+                    Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>,");
+                    Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
+                    Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>");
                 }
                 else if (command.StartsWith("jo")) // TOGGLE JSON/OBJECT OUTPUT
                 {
@@ -338,6 +340,156 @@ namespace JakubMobileClient
                     {
                         Console.WriteLine("Exception: " + e.Message);
                     }
+                }
+                else if (command.StartsWith("cp"))
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter Name:");
+                        string name = Console.ReadLine().Trim();
+                        Console.WriteLine("Enter venueID or -1 to use last venue ID");
+                        int venueIDL = int.Parse(Console.ReadLine().Trim());
+                        if(venueIDL == -1)
+                            venueIDL = venueID;
+                        Stream data = client.OpenRead(baseAddress + "/MobileCreatePlaylist/?name=" + name + "&venueID=" + venueIDL + "&userKey=" + userKey);
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("dp"))
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter Playlist ID");
+                        int playListID = int.Parse(Console.ReadLine().Trim());
+                        Stream data = client.OpenRead(baseAddress + "/MobileDeletePlaylist/?playListID=" + playListID + "&userKey=" + userKey);
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("ap"))
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter SongID");
+                        int songID = int.Parse(Console.ReadLine().Trim());
+                        Console.WriteLine("Enter PlaylistID");
+                        int playlistID = int.Parse(Console.ReadLine().Trim());
+
+                        Stream data = client.OpenRead(baseAddress + "/MobileAddSongToPlaylist/?songID=" + songID + "&playListID=" + playlistID + "&userKey=" + userKey);
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("rp"))
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter SongID");
+                        int songID = int.Parse(Console.ReadLine().Trim());
+                        Console.WriteLine("Enter PlaylistID");
+                        int playlistID = int.Parse(Console.ReadLine().Trim());
+
+                        Stream data = client.OpenRead(baseAddress + "/MobileRemoveSongFromPlaylist/?songID=" + songID + "&playListID=" + playlistID + "&userKey=" + userKey);
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("lp"))
+                {
+                    try
+                    {
+                        Console.WriteLine("Enter venueID or -1 to use last venue ID");
+                        int venueIDL = int.Parse(Console.ReadLine().Trim());
+                        if (venueIDL == -1)
+                            venueIDL = venueID;
+                        Stream data = client.OpenRead(baseAddress + "/MobileGetPlayLists/?venueID=" + venueIDL + "&userKey=" + userKey);
+
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+
+                        if (s == "")
+                        {
+                            Console.WriteLine("An error occured");
+                            continue;
+                        }
+
+                        List<Playlist> r = strToJSON<List<Playlist>>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            foreach (Playlist p in r)
+                            {
+                                Console.WriteLine(p.ID + ", " + p.name + ", " + p.venueID + ", " + p.dateCreated);
+                                foreach (Song song in p.songs)
+                                    Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                // /MobileAddSongToPlaylist/?songID={songID}&playListID={playListID}&userKey={userKey}"
+                // /MobileRemoveSongFromPlaylist/?songID={songID}&playListID={playListID}&userKey={userKey}
+                // /MobileGetPlayLists/?venueID={venueID}&userKey={userKey}
+                else
+                {
+                    Console.WriteLine("Invalid Command");
                 }
             }
         }

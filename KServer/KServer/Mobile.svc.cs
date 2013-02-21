@@ -34,9 +34,7 @@ namespace KServer
                 {
                     Response listResponse = db.MobileListMembers();
                     if (listResponse.error)
-                        return listResponse;
-                    if (r.error)
-                        return r;
+                        return (Response) CommonMethods.LogError(listResponse.message, Environment.StackTrace, listResponse, 0);
                     return listResponse;
                 }
 
@@ -49,17 +47,17 @@ namespace KServer
                 }
 
                 // Validate that username and password are not too long.
-                if (username.Length > 10 || password.Length > 10)
+                if (username.Length > 20 || password.Length > 20)
                 {
                     r.error = true;
-                    r.message = "Username or password is longer than 10 characters.";
+                    r.message = "Username or password is longer than 20 characters.";
                     return r;
                 }
 
                 // Try to see if the username already exists. If it does, inform the client.
                 r = db.MobileValidateUsername(username);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 if (r.message.Trim() != string.Empty)
                 {
                     r.error = true;
@@ -69,11 +67,15 @@ namespace KServer
 
                 // Information seems valid, sign up client and return successfulness.
                 r = db.MobileSignUp(username, password);
+                if(r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 return r;
             }
         }
         public LogInResponse MobileSignIn(string username, string password)
         {
+            CommonMethods.LogError("HI", "Stack", null, 0);
+            CommonMethods.LogError("HI", "Stack", null, 1);
             int MobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
@@ -84,7 +86,7 @@ namespace KServer
                 // If it is not valid, r.message will be empty.
                 r = db.MobileValidateUsernamePassword(username, password);
                 if (r.error)
-                    return new LogInResponse(r);
+                    return (LogInResponse)CommonMethods.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
 
                 // If the username/password couldn't be found, inform user.
                 if (r.message.Trim() == string.Empty)
@@ -99,7 +101,7 @@ namespace KServer
                 {
                     r.error = true;
                     r.message = "Exception in MobileSignIn: Unable to parse MobileID from DB!";
-                    return new LogInResponse(r);
+                    return (LogInResponse)CommonMethods.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
                 }
 
                 // Make sure the client is not logged in. RIGHT NOW: JUST DON'T CHECK ANYTHING USEFUL TO ALLOW FOR LOGINS TO OCCUR WHEN LOGGED IN!
@@ -110,13 +112,13 @@ namespace KServer
                 // Information seems valid, attempt to sign in.
                 r = db.MobileSetStatus(MobileID, 1);
                 if (r.error)
-                    return new LogInResponse(r);
+                    return (LogInResponse)CommonMethods.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
 
                 // Attempt to change the MobileID into a userKey
                 long userKey;
                 r = MobileIDToKey(MobileID, out userKey);
                 if (r.error)
-                    return new LogInResponse(r);
+                    return (LogInResponse)CommonMethods.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
 
                 // If there was no error, create a loginResponse with the successful information.
                 LogInResponse lr = new LogInResponse();
@@ -138,7 +140,7 @@ namespace KServer
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out MobileID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Make sure the client isn't already logged out.
                 r = MobileCheckStatus(MobileID, "!0", db);
@@ -148,15 +150,17 @@ namespace KServer
                 // A sign out seems to be valid.
                 r = db.MobileSetStatus(MobileID, 0);
                 if(r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Remove the key from the DB.
                 r = db.MobileSetKey(MobileID, null);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Clear the venue from the DB
                 r = db.MobileSetVenue(MobileID, null);
+                if(r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 return r;
             }
         }
@@ -171,14 +175,14 @@ namespace KServer
                 // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
-                    return null;
+                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
-                    return null;
+                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 // Complete the search.
                 r = db.MobileSearchSongs(out songs, title.Trim(), artist.Trim(), venueID);
                 if (r.error)
-                    return null;
+                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 return songs;
             }
@@ -194,13 +198,13 @@ namespace KServer
                 // Check to make sure the venue exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
-                    return null;
+                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
-                    return null;
+                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 r = db.MobileBrowseSongs(out s, firstLetter, isArtist, start, count, venueID);
                 if (r.error)
-                    return null;
+                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 return s;
             }
@@ -217,17 +221,17 @@ namespace KServer
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Make sure the client isn't already logged out.
                 r = MobileCheckStatus(mobileID, "!0", db);
                 if (r.error)
-                    return r;
+                    return r ;
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
@@ -238,7 +242,7 @@ namespace KServer
                 // Check to see if song exists.
                 r = db.SongExists(venueID, songID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
                     r.error = true;
@@ -249,7 +253,7 @@ namespace KServer
                 // Get the current song Requests
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 string requests = r.message;
                 string newRequests = string.Empty;
@@ -265,7 +269,7 @@ namespace KServer
                 List<queueSinger> queue;
                 r = CommonMethods.DBToMinimalList(requests, out queue);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Search to see if the user is already in this list of singers.
                 for (int i = 0; i < queue.Count; i++)
@@ -289,7 +293,10 @@ namespace KServer
                         s.ID = songID;
                         queue[i].songs.Add(s);
                         CommonMethods.MinimalListToDB(queue, out newRequests);
-                        return db.SetSongRequests(venueID, newRequests);
+                        r = db.SetSongRequests(venueID, newRequests);
+                        if(r.error)
+                            return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                        return r;
                     }
                 }
 
@@ -306,7 +313,10 @@ namespace KServer
 
                 queue.Add(qs);
                 CommonMethods.MinimalListToDB(queue, out newRequests);
-                return db.SetSongRequests(venueID, newRequests);
+                r = db.SetSongRequests(venueID, newRequests);
+                if(r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                return r;
             }
         }
         public Response MobileChangeSongRequest(int oldSongID, int newSongID, long userKey)
@@ -322,7 +332,7 @@ namespace KServer
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Make sure the client isn't already logged out.
                 r = MobileCheckStatus(mobileID, "!0", db);
@@ -332,7 +342,7 @@ namespace KServer
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
@@ -343,7 +353,7 @@ namespace KServer
                 // Check to see if song exists.
                 r = db.SongExists(venueID, newSongID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
                     r.error = true;
@@ -354,7 +364,7 @@ namespace KServer
                 // Get the current song Requests
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 string requests = r.message;
                 string newRequests = string.Empty;
@@ -371,7 +381,7 @@ namespace KServer
                 List<queueSinger> queue;
                 r = CommonMethods.DBToMinimalList(requests, out queue);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Search to see if the user is already in this list of singers.
                 for (int i = 0; i < queue.Count; i++)
@@ -401,7 +411,10 @@ namespace KServer
                         if (songChangeMade)
                         {
                             CommonMethods.MinimalListToDB(queue, out newRequests);
-                            return db.SetSongRequests(venueID, newRequests);
+                            r = db.SetSongRequests(venueID, newRequests);
+                            if(r.error)
+                                return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                            return r;
                         }
                         // If we couldn't find the old song, inform user.
                         r.error = true;
@@ -427,7 +440,7 @@ namespace KServer
                 // Convert the userKey to MobileIDx
                 r = MobileKeyToID(userKey, out mobileID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Make sure the client isn't already logged out.
                 r = MobileCheckStatus(mobileID, "!0", db);
@@ -437,7 +450,7 @@ namespace KServer
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
@@ -448,7 +461,7 @@ namespace KServer
                 // Get the current song Requests
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 string requests = r.message;
                 string newRequests = string.Empty;
@@ -464,7 +477,7 @@ namespace KServer
                 List<queueSinger> queue;
                 r = CommonMethods.DBToMinimalList(requests, out queue);
                 if (r.error)
-                    return r;
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
                 // Search to see if the user is already in this list of singers.
                 for (int i = 0; i < queue.Count; i++)
@@ -481,7 +494,10 @@ namespace KServer
                                 if (queue[i].songs.Count == 0)
                                     queue.RemoveAt(i);
                                 CommonMethods.MinimalListToDB(queue, out newRequests);
-                                return db.SetSongRequests(venueID, newRequests);
+                                r = db.SetSongRequests(venueID, newRequests);
+                                if(r.error)
+                                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                                return r;
                             }
 
                         }
@@ -509,17 +525,17 @@ namespace KServer
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID);
                 if (r.error)
-                    return null;
+                    return (List<queueSinger>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 // Make sure the client isn't already logged out.
                 r = MobileCheckStatus(mobileID, "!0", db);
                 if (r.error)
-                    return null;
+                    return (List<queueSinger>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return null;
+                    return (List<queueSinger>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
@@ -529,7 +545,7 @@ namespace KServer
 
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return null;
+                    return (List<queueSinger>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 string raw = r.message;
                 if (raw.Trim() == "")
@@ -539,13 +555,56 @@ namespace KServer
 
                 r = DBToNearlyFullList(raw, out queue, venueID, db);
                 if (r.error)
-                    return null;
+                    return (List<queueSinger>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
                 return queue;
             }
         }
-       
+        public Response MobileJoinVenue(string QR, long userKey)
+        {
+            int mobileID = -1;
+            int venueID = -1;
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
-        public Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Get the venue of this qr string.
+                r = db.GetVenueIDByQR(QR.Trim());
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Parse the venueID.
+                if (!int.TryParse(r.message.Trim(), out venueID))
+                {
+                    r.error = true;
+                    r.message = "Could not match QR code to a venue";
+                    return r;
+                }
+
+                // Set the venue of the client
+                r = db.MobileSetVenue(mobileID, venueID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                r = db.GetVenueName(venueID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                r.result = venueID;
+            }
+            return r;
+        }
+
+
+
+        private Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
             int DJStatus, desired;
@@ -669,7 +728,7 @@ namespace KServer
             }
             return r;
         }
-        public static Response MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db)
+        private Response MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db)
                 {
                     Response r;
                     int MobileStatus, desired;
@@ -787,48 +846,6 @@ namespace KServer
             return r;
         }
 
-        public Response MobileJoinVenue(string QR, long userKey)
-        {
-            int mobileID = -1;
-            int venueID = -1;
-            Response r = new Response();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                // Convert the userKey to MobileID
-                r = MobileKeyToID(userKey, out mobileID);
-                if (r.error)
-                    return r;
-
-                // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
-                if (r.error)
-                    return r;
-
-                // Get the venue of this qr string.
-                r = db.GetVenueIDByQR(QR.Trim());
-                if (r.error)
-                    return r;
-
-                // Parse the venueID.
-                if (!int.TryParse(r.message.Trim(), out venueID))
-                {
-                    r.error = true;
-                    r.message = "Could not match QR code to a venue";
-                    return r;
-                }
-
-                // Set the venue of the client
-                r = db.MobileSetVenue(mobileID, venueID);
-                if (r.error)
-                    return r;
-
-                r = db.GetVenueName(venueID);
-                if (r.error)
-                    return r;
-                r.result = venueID;                
-            }
-            return r;
-        }
 
 
         public Response MobileGetWaitTime(long userKey)
@@ -838,8 +855,6 @@ namespace KServer
             return r;
         }
 
-
-
         public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
         {
             return new List<SongHistory>();
@@ -847,36 +862,288 @@ namespace KServer
 
         public Response MobileCreatePlaylist(string name, int venueID, long userKey)
         {
+            int mobileID = -1;
+            int venueStatus;
             Response r = new Response();
-            r.error = true;
-            return r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Make sure the venueID exists.
+                r = db.DJGetStatus(venueID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                if (!int.TryParse(r.message.Trim(), out venueStatus))
+                {
+                    r.error = true;
+                    r.message = "Could not validate venue";
+                    if (r.error)
+                        return r;
+                }
+
+                r = db.MobileCreatePlaylist(name, venueID, mobileID, DateTime.Now);
+                if(r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                return r;
+            }
         }
 
         public Response MobileDeletePlaylist(int playListID, long userKey)
         {
+            int mobileID = -1;
             Response r = new Response();
-            r.error = true;
-            return r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                r = db.MobileDeletePlaylist(playListID, mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                if (r.result == 0)
+                {
+                    r.error = true;
+                    r.message = "No playlist matched that criteria";
+                    return r;
+                }
+                return r;
+            }
         }
 
         public Response MobileAddSongToPlaylist(int songID, int playListID, long userKey)
         {
-            Response r = new Response();
-            r.error = true;
-            return r;
+            int venueID = -1;
+            int songExists;
+            int mobileID;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Get the venue information from the playlist in DB.
+                r = db.MobileGetVenueFromPlaylist(playListID, mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                if (!int.TryParse(r.message.Trim(), out venueID))
+                {
+                    r.error = true;
+                    r.message = "Could not figure out Venue from DB";
+                    return r;
+                }
+
+                // Check to see if song exists.
+                r = db.SongExists(venueID, songID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                if (!int.TryParse(r.message.Trim(), out songExists))
+                {
+                    r.error = true;
+                    r.message = "Could not find song in venue's library.";
+                    return r;
+                }
+
+                // Get the current songs in the playlist.
+                r = db.MobileGetSongsFromPlaylist(playListID, mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                string songsString = r.message.Trim();
+                string newSongsString = string.Empty;
+
+                // If there were no songs, simply add this one song and return.
+                if(songsString.Length == 0)
+                {
+                    newSongsString = songID.ToString();
+                    r = db.MobileSetPlaylistSongs(playListID, mobileID, newSongsString);
+                    if(r.error)
+                        return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                    return r;
+                }
+
+                // Check to see if the song already exists.
+                string[] splitSongs = songsString.Split('~');
+                foreach (string s in splitSongs)
+                {
+                    if (s.Equals(songID.ToString()))
+                    {
+                        r.error = true;
+                        r.message = "You already have that song in this playlist";
+                        return r;
+                    }
+                }
+
+                // If there are songs, append this song to the list.
+                newSongsString = songsString + "~" + songID.ToString();
+                r = db.MobileSetPlaylistSongs(playListID, mobileID, newSongsString);
+                if(r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                return r;
+            }
         }
 
         public Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey)
         {
-            Response r = new Response();
-            r.error = true;
-            return r;
+            int mobileID;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Get the current songs in the playlist.
+                r = db.MobileGetSongsFromPlaylist(playListID, mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                string songsString = r.message.Trim();
+                string newSongsString = string.Empty;
+
+                // Find the index of the song to remove.
+                string[] splitSongs = songsString.Split('~');
+
+                int songRemoveIndex = -1;
+                for (int i = 0; i < splitSongs.Length; i++)
+                    if (songID.ToString().CompareTo(splitSongs[i].Trim()) == 0)
+                        songRemoveIndex = i;
+
+                // If we didn't find a song to remove, return the error.
+                if (songRemoveIndex == -1)
+                {
+                    r.error = true;
+                    r.message = "Could not find the song in the playlist " + songsString;
+                    return r;
+                }
+
+                for (int i = 0; i < splitSongs.Length; i++)
+                    if (i != songRemoveIndex)
+                        newSongsString += splitSongs[i] + "~";
+
+                if (splitSongs.Length > 1)
+                    newSongsString = newSongsString.Substring(0, newSongsString.Length - 1);
+
+                r = db.MobileSetPlaylistSongs(playListID, mobileID, newSongsString);
+                if(r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                return r;
+            }
         }
 
         public List<Playlist> MobileGetPlayLists(int venueID, long userKey)
         {
+            int mobileID = -1;
+            int venueStatus;
+            List<Playlist> playLists = new List<Playlist>();
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
-            return new List<Playlist>();
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Make sure the venueID exists.
+                r = db.DJGetStatus(venueID);
+                if (r.error)
+                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+
+                if (!int.TryParse(r.message.Trim(), out venueStatus))
+                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+
+                r = db.MobileGetPlaylists(venueID, mobileID);
+                if (r.error)
+                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Case of empty playlists.
+                if (r.message.Trim().Length == 0)
+                    return playLists;
+
+                try
+                {
+                    string[] playlistLines = r.message.Trim().Split('\n');
+                    foreach (string playlistLine in playlistLines)
+                    {
+                        string[] playlistParts = playlistLine.Split(',');
+                        Playlist p = new Playlist();
+
+                        int id;
+                        if (!int.TryParse(playlistParts[0], out id))
+                            return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                        p.ID = id;
+
+                        p.name = playlistParts[1];
+                        p.dateCreated = Convert.ToDateTime(playlistParts[3]);
+
+                        int vid;
+                        if (!int.TryParse(playlistParts[4], out vid))
+                            return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                        p.venueID = vid;
+
+                        string[] songs = playlistParts[2].Trim().Split('~');
+                        p.songs = new List<Song>();
+                        foreach (string s in songs)
+                        {
+                            if (s.Trim().Length == 0)
+                                continue;
+                            Song song = new Song();
+                            song.ID = int.Parse(s);
+                            r = db.SongInformation(venueID, song.ID);
+                            if (r.error)
+                                return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                            if (r.message.Trim().Length < 4)
+                                return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                            string[] songParts = r.message.Split(',');
+                            song.title = songParts[0];
+                            song.artist = songParts[1];
+                            p.songs.Add(song);
+                        }
+                        playLists.Add(p);
+                    }
+                    return playLists;
+                }
+                catch (Exception e)
+                {
+                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                }
+            }
         }
 
         public Response MobileRateSong(int songID, int venueID, long userKey)

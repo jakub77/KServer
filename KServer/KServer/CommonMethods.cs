@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Web;
 
@@ -125,6 +126,37 @@ namespace KServer
             return r;
         }
 
+        /// <summary>
+        /// Log an error message.
+        /// </summary>
+        /// <param name="message">The message</param>
+        /// <param name="stack">The stack</param>
+        /// <param name="passThru">A parameter to return</param>
+        /// <param name="Case">0 = mobile_log, 1 = dj_log</param>
+        /// <returns></returns>
+        public static object LogError(string message, string stack, object passThru, int Case)
+        {
+            switch (Case)
+            {
+                case 0:
+                    writeToFile(message, stack, "C:\\inetpub\\ftproot\\log\\mobile_log.txt");
+                    break;
+                case 1:
+                    writeToFile(message, stack, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
+                    break;
+            }
+            return passThru;
+        }
 
+        private static void writeToFile(string message, string stack, string file)
+        {
+            StreamWriter w = File.AppendText(file);
+            w.WriteLine(DateTime.Now.ToString());
+            w.WriteLine(message);
+            w.WriteLine(stack);
+            w.WriteLine("--------------------------------------------------");
+            w.WriteLine();
+            w.Close();
+        }
     }
 }

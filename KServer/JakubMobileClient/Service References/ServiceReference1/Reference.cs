@@ -584,6 +584,115 @@ namespace JakubMobileClient.ServiceReference1 {
         }
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="Playlist", Namespace="http://schemas.datacontract.org/2004/07/KServer")]
+    [System.SerializableAttribute()]
+    public partial class Playlist : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
+        
+        [System.NonSerializedAttribute()]
+        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private int IDField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private System.DateTime dateCreatedField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string nameField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private JakubMobileClient.ServiceReference1.Song[] songsField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private int venueIDField;
+        
+        [global::System.ComponentModel.BrowsableAttribute(false)]
+        public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
+            get {
+                return this.extensionDataField;
+            }
+            set {
+                this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int ID {
+            get {
+                return this.IDField;
+            }
+            set {
+                if ((this.IDField.Equals(value) != true)) {
+                    this.IDField = value;
+                    this.RaisePropertyChanged("ID");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public System.DateTime dateCreated {
+            get {
+                return this.dateCreatedField;
+            }
+            set {
+                if ((this.dateCreatedField.Equals(value) != true)) {
+                    this.dateCreatedField = value;
+                    this.RaisePropertyChanged("dateCreated");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string name {
+            get {
+                return this.nameField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.nameField, value) != true)) {
+                    this.nameField = value;
+                    this.RaisePropertyChanged("name");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public JakubMobileClient.ServiceReference1.Song[] songs {
+            get {
+                return this.songsField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.songsField, value) != true)) {
+                    this.songsField = value;
+                    this.RaisePropertyChanged("songs");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int venueID {
+            get {
+                return this.venueIDField;
+            }
+            set {
+                if ((this.venueIDField.Equals(value) != true)) {
+                    this.venueIDField = value;
+                    this.RaisePropertyChanged("venueID");
+                }
+            }
+        }
+        
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        
+        protected void RaisePropertyChanged(string propertyName) {
+            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
+            if ((propertyChanged != null)) {
+                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="ServiceReference1.IMobile")]
     public interface IMobile {
@@ -638,6 +747,9 @@ namespace JakubMobileClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileRemoveSongFromPlaylist", ReplyAction="http://tempuri.org/IMobile/MobileRemoveSongFromPlaylistResponse")]
         JakubMobileClient.ServiceReference1.Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileGetPlayLists", ReplyAction="http://tempuri.org/IMobile/MobileGetPlayListsResponse")]
+        JakubMobileClient.ServiceReference1.Playlist[] MobileGetPlayLists(int venueID, long userKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileRateSong", ReplyAction="http://tempuri.org/IMobile/MobileRateSongResponse")]
         JakubMobileClient.ServiceReference1.Response MobileRateSong(int songID, int venueID, long userKey);
@@ -739,6 +851,10 @@ namespace JakubMobileClient.ServiceReference1 {
         
         public JakubMobileClient.ServiceReference1.Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey) {
             return base.Channel.MobileRemoveSongFromPlaylist(songID, playListID, userKey);
+        }
+        
+        public JakubMobileClient.ServiceReference1.Playlist[] MobileGetPlayLists(int venueID, long userKey) {
+            return base.Channel.MobileGetPlayLists(venueID, userKey);
         }
         
         public JakubMobileClient.ServiceReference1.Response MobileRateSong(int songID, int venueID, long userKey) {

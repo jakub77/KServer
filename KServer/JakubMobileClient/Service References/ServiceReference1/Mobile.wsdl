@@ -109,6 +109,12 @@
   <wsdl:message name="IMobile_MobileRemoveSongFromPlaylist_OutputMessage">
     <wsdl:part name="parameters" element="tns:MobileRemoveSongFromPlaylistResponse" />
   </wsdl:message>
+  <wsdl:message name="IMobile_MobileGetPlayLists_InputMessage">
+    <wsdl:part name="parameters" element="tns:MobileGetPlayLists" />
+  </wsdl:message>
+  <wsdl:message name="IMobile_MobileGetPlayLists_OutputMessage">
+    <wsdl:part name="parameters" element="tns:MobileGetPlayListsResponse" />
+  </wsdl:message>
   <wsdl:message name="IMobile_MobileRateSong_InputMessage">
     <wsdl:part name="parameters" element="tns:MobileRateSong" />
   </wsdl:message>
@@ -189,6 +195,10 @@
     <wsdl:operation name="MobileRemoveSongFromPlaylist">
       <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileRemoveSongFromPlaylist" message="tns:IMobile_MobileRemoveSongFromPlaylist_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileRemoveSongFromPlaylistResponse" message="tns:IMobile_MobileRemoveSongFromPlaylist_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="MobileGetPlayLists">
+      <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileGetPlayLists" message="tns:IMobile_MobileGetPlayLists_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IMobile/MobileGetPlayListsResponse" message="tns:IMobile_MobileGetPlayLists_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="MobileRateSong">
       <wsdl:input wsaw:Action="http://tempuri.org/IMobile/MobileRateSong" message="tns:IMobile_MobileRateSong_InputMessage" />

@@ -76,6 +76,9 @@
     <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.LogInResponse.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>
+    <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.Playlist.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
     <None Include="Service References\ServiceReference1\JakubMobileClient.ServiceReference1.queueSinger.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>
