@@ -74,8 +74,6 @@ namespace KServer
         }
         public LogInResponse MobileSignIn(string username, string password)
         {
-            CommonMethods.LogError("HI", "Stack", null, 0);
-            CommonMethods.LogError("HI", "Stack", null, 1);
             int MobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
@@ -177,7 +175,7 @@ namespace KServer
                 if (r.error)
                     return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
-                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                    return (List<Song>)CommonMethods.LogError("MobileSongSeach venueID parse fail (bad venueID given?)", Environment.StackTrace, null, 0);
 
                 // Complete the search.
                 r = db.MobileSearchSongs(out songs, title.Trim(), artist.Trim(), venueID);
@@ -200,7 +198,7 @@ namespace KServer
                 if (r.error)
                     return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
-                    return (List<Song>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                    return (List<Song>)CommonMethods.LogError("MobileSongBrose venueID parse fail (bad venueID given?)", Environment.StackTrace, null, 0);
 
                 r = db.MobileBrowseSongs(out s, firstLetter, isArtist, start, count, venueID);
                 if (r.error)
@@ -1086,7 +1084,7 @@ namespace KServer
                     return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
 
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
-                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                    return (List<Playlist>)CommonMethods.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
 
                 r = db.MobileGetPlaylists(venueID, mobileID);
                 if (r.error)
@@ -1106,7 +1104,7 @@ namespace KServer
 
                         int id;
                         if (!int.TryParse(playlistParts[0], out id))
-                            return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                            return (List<Playlist>)CommonMethods.LogError("MobileGetPlaylists songID parse fail.", Environment.StackTrace, null, 0);
                         p.ID = id;
 
                         p.name = playlistParts[1];
@@ -1114,7 +1112,7 @@ namespace KServer
 
                         int vid;
                         if (!int.TryParse(playlistParts[4], out vid))
-                            return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                            return (List<Playlist>)CommonMethods.LogError("MobileGetPlaylists venueID parse fail from playlist.", Environment.StackTrace, null, 0);
                         p.venueID = vid;
 
                         string[] songs = playlistParts[2].Trim().Split('~');
@@ -1129,7 +1127,7 @@ namespace KServer
                             if (r.error)
                                 return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
                             if (r.message.Trim().Length < 4)
-                                return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                                return (List<Playlist>)CommonMethods.LogError("MobiileGetPlaylists Failure to parse Song information: '" + r.message.Trim() + "'", Environment.StackTrace, null, 0);
                             string[] songParts = r.message.Split(',');
                             song.title = songParts[0];
                             song.artist = songParts[1];
@@ -1141,7 +1139,7 @@ namespace KServer
                 }
                 catch (Exception e)
                 {
-                    return (List<Playlist>)CommonMethods.LogError(r.message, Environment.StackTrace, null, 0);
+                    return (List<Playlist>)CommonMethods.LogError(e.Message, e.StackTrace, null, 0);
                 }
             }
         }
