@@ -359,6 +359,9 @@ namespace DJTestClient.ServiceReference1 {
         private string pathOnDiskField;
         
         [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private int ratingField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
         private string titleField;
         
         [global::System.ComponentModel.BrowsableAttribute(false)]
@@ -419,6 +422,19 @@ namespace DJTestClient.ServiceReference1 {
                 if ((object.ReferenceEquals(this.pathOnDiskField, value) != true)) {
                     this.pathOnDiskField = value;
                     this.RaisePropertyChanged("pathOnDisk");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int rating {
+            get {
+                return this.ratingField;
+            }
+            set {
+                if ((this.ratingField.Equals(value) != true)) {
+                    this.ratingField = value;
+                    this.RaisePropertyChanged("rating");
                 }
             }
         }

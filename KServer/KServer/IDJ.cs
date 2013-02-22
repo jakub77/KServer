@@ -107,7 +107,7 @@ namespace KServer
         [DataMember]
         public int ID { get; set; }
         [DataMember]
-        public int venueID { get; set; }
+        public Venue venue { get; set; }
         [DataMember]
         public List<Song> songs { get; set; }
         [DataMember]
@@ -118,6 +118,10 @@ namespace KServer
     [DataContract]
     public class Song
     {
+        public Song()
+        {
+            rating = -1;
+        }
         [DataMember]
         public string title { get; set; }
         [DataMember]
@@ -128,6 +132,10 @@ namespace KServer
         public string pathOnDisk {get; set; }
         [DataMember]
         public int duration { get; set; }
+        // -1 = not rated
+        // 0 - 5 = star rating
+        [DataMember]
+        public int rating { get; set; }
     }
 
     // Describe a session

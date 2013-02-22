@@ -22,6 +22,10 @@ namespace KServer
             r.result = s.Length;
             return r;
         }
+        public DateTime GetDateTime()
+        {
+            return DateTime.Now;
+        }
         public Response MobileSignUp(string username, string password)
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -600,8 +604,6 @@ namespace KServer
             return r;
         }
 
-
-
         private Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
@@ -844,25 +846,90 @@ namespace KServer
             return r;
         }
 
-
-
         public Response MobileGetWaitTime(long userKey)
         {
-            Response r = new Response();
-            r.error = true;
-            return r;
-        }
+            int venueID = -1;
+            int mobileID = -1;
+            List<queueSinger> queue = new List<queueSinger>();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+                
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
 
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Get the venueID
+                r = MobileGetVenue(mobileID, db);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+                venueID = r.result;
+
+                // Make sure the venue is accepting songs.
+                r = VenueCheckStatus(venueID, "2", db);
+                if (r.error)
+                    return r;
+
+                r = db.GetSongRequests(venueID);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                string raw = r.message;
+                if (raw.Trim() == "")
+                {
+                    r.error = false;
+                    r.message = "Empty Queue";
+                    r.result = 0;
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                r = CommonMethods.DBToMinimalList(raw, out queue);
+                if (r.error)
+                    return (Response)CommonMethods.LogError(r.message, Environment.StackTrace, r, 0);
+
+                int time = 0;
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    if (queue[i].user.userID == mobileID)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        time += queue[i].songs[0].duration;
+                    }
+                }
+
+                r.error = false;
+                r.message = "";
+                r.result = time;
+                return r;
+            }
+        }
         public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
         {
             return new List<SongHistory>();
         }
-
         public Response MobileCreatePlaylist(string name, int venueID, long userKey)
         {
+            Response r = new Response();
+            if (name.Length < 1 || name.Length > 20)
+            {
+                r.error = true;
+                r.message = "Name must be between 1 and 20 characters.";
+                return r;
+            }
+
             int mobileID = -1;
             int venueStatus;
-            Response r = new Response();
+            
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Convert the userKey to MobileID
@@ -894,7 +961,6 @@ namespace KServer
                 return r;
             }
         }
-
         public Response MobileDeletePlaylist(int playListID, long userKey)
         {
             int mobileID = -1;
@@ -924,7 +990,6 @@ namespace KServer
                 return r;
             }
         }
-
         public Response MobileAddSongToPlaylist(int songID, int playListID, long userKey)
         {
             int venueID = -1;
@@ -1004,7 +1069,6 @@ namespace KServer
                 return r;
             }
         }
-
         public Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey)
         {
             int mobileID;
@@ -1059,7 +1123,6 @@ namespace KServer
                 return r;
             }
         }
-
         public List<Playlist> MobileGetPlayLists(int venueID, long userKey)
         {
             int mobileID = -1;
@@ -1113,7 +1176,11 @@ namespace KServer
                         int vid;
                         if (!int.TryParse(playlistParts[4], out vid))
                             return (List<Playlist>)CommonMethods.LogError("MobileGetPlaylists venueID parse fail from playlist.", Environment.StackTrace, null, 0);
-                        p.venueID = vid;
+                        p.venue = new Venue();
+                        p.venue.venueID = vid;
+
+                        p.venue.venueName = "Temp Name";
+                        p.venue.venueAddress = "Temp address";
 
                         string[] songs = playlistParts[2].Trim().Split('~');
                         p.songs = new List<Song>();
@@ -1144,18 +1211,20 @@ namespace KServer
             }
         }
 
+        // Anytime songs are requested, put a set the rating field if applicable.
         public Response MobileRateSong(int songID, int venueID, long userKey)
         {
             Response r = new Response();
             r.error = true;
             return r;
         }
-
         public Response MobileViewSongRating(int songID, int venueID, long userKey)
         {
             Response r = new Response();
             r.error = true;
             return r;
         }
+
+        // GCM google push notifications.
     }
 }

@@ -45,6 +45,7 @@
       <xs:element minOccurs="0" name="artist" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="duration" type="xs:int" />
       <xs:element minOccurs="0" name="pathOnDisk" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="rating" type="xs:int" />
       <xs:element minOccurs="0" name="title" nillable="true" type="xs:string" />
     </xs:sequence>
   </xs:complexType>

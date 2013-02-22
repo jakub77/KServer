@@ -41,7 +41,7 @@ namespace JakubMobileClient
                     Console.WriteLine("signOut<so>, songSearch<ss>,songBrowse<sb>, songRequest<sr>, listQueue<lq>,");
                     Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>,");
                     Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
-                    Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>");
+                    Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>");
                 }
                 else if (command.StartsWith("jo")) // TOGGLE JSON/OBJECT OUTPUT
                 {
@@ -166,7 +166,7 @@ namespace JakubMobileClient
                         {
                             foreach (Song song in r)
                             {
-                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist);
+                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.rating);
                             }
                         }
                     }
@@ -205,7 +205,7 @@ namespace JakubMobileClient
                         {
                             foreach (Song song in r)
                             {
-                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist);
+                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.rating);
                             }
                         }
                     }
@@ -307,7 +307,7 @@ namespace JakubMobileClient
                             {
                                 Console.WriteLine("\nID: " + qs.user.userID + ", Name: " + qs.user.userName);
                                 foreach (Song song in qs.songs)
-                                    Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist);
+                                    Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist + ", " + song.rating);
                             }
                         }
                     }
@@ -473,10 +473,34 @@ namespace JakubMobileClient
                         {
                             foreach (Playlist p in r)
                             {
-                                Console.WriteLine(p.ID + ", " + p.name + ", " + p.venueID + ", " + p.dateCreated);
+                                Console.WriteLine(p.ID + ", " + p.name + ", " + p.venue.venueID + ", " + p.venue.venueName + ", " + p.dateCreated);
                                 foreach (Song song in p.songs)
-                                    Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist);
+                                    Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist + ", " + song.rating);
                             }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("gw"))
+                {
+                    try
+                    {
+                        Stream data = client.OpenRead(baseAddress + "/MobileGetWaitTime/?userKey=" + userKey);
+
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
                         }
                     }
                     catch (Exception e)
