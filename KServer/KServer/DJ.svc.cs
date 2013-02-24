@@ -389,7 +389,7 @@ namespace KServer
                 }
 
                 List<queueSinger> queue;
-                r = CommonMethods.DBToMinimalList(raw, out  queue);
+                r = Common.DBToMinimalList(raw, out  queue);
                 if (r.error)
                     return r;
 
@@ -424,7 +424,7 @@ namespace KServer
                 }
 
                 raw = string.Empty;
-                r = CommonMethods.MinimalListToDB(queue, out raw);
+                r = Common.MinimalListToDB(queue, out raw);
                 if (r.error)
                     return r;
                 return db.SetSongRequests(DJID, raw);
@@ -466,7 +466,7 @@ namespace KServer
                     return r;
                 }
 
-                r = CommonMethods.DBToFullList(raw, out queue, DJID, db);
+                r = Common.DBToFullList(raw, out queue, DJID, db);
                 if (r.error)
                     return r;
                 r.result = count;
@@ -602,7 +602,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = CommonMethods.DBToMinimalList(requests, out queue);
+                r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -627,7 +627,7 @@ namespace KServer
                         Song s = new Song();
                         s.ID = sr.songID;
                         queue[i].songs.Add(s);
-                        CommonMethods.MinimalListToDB(queue, out newRequests);
+                        Common.MinimalListToDB(queue, out newRequests);
                         return db.SetSongRequests(DJID, newRequests);
                     }
                 }
@@ -648,7 +648,7 @@ namespace KServer
                 if (queueIndex > queue.Count)
                     queueIndex = queue.Count;
                 queue.Insert(queueIndex, qs);
-                CommonMethods.MinimalListToDB(queue, out newRequests);
+                Common.MinimalListToDB(queue, out newRequests);
                 return db.SetSongRequests(DJID, newRequests);
             }
         }
@@ -693,7 +693,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = CommonMethods.DBToMinimalList(requests, out queue);
+                r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -719,7 +719,7 @@ namespace KServer
                                             return r;
                                     }
                                 }
-                                CommonMethods.MinimalListToDB(queue, out newRequests);
+                                Common.MinimalListToDB(queue, out newRequests);
                                 return db.SetSongRequests(DJID, newRequests);
                             }
 
@@ -813,7 +813,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = CommonMethods.DBToMinimalList(requests, out queue);
+                r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -843,7 +843,7 @@ namespace KServer
                         
                         if (songChangeMade)
                         {
-                            CommonMethods.MinimalListToDB(queue, out newRequests);
+                            Common.MinimalListToDB(queue, out newRequests);
                             return db.SetSongRequests(DJID, newRequests);
                         }
 
@@ -901,7 +901,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = CommonMethods.DBToMinimalList(requests, out queue);
+                r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -920,7 +920,7 @@ namespace KServer
                                 return r;
                         }
 
-                        CommonMethods.MinimalListToDB(queue, out newRequests);
+                        Common.MinimalListToDB(queue, out newRequests);
                         return db.SetSongRequests(DJID, newRequests);
                     }
                 }
@@ -972,7 +972,7 @@ namespace KServer
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
-                r = CommonMethods.DBToMinimalList(requests, out queue);
+                r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
                     return r;
 
@@ -989,7 +989,7 @@ namespace KServer
                         queueSinger tmp = queue[i];
                         queue.RemoveAt(i);
                         queue.Insert(index, tmp);
-                        CommonMethods.MinimalListToDB(queue, out newRequests);
+                        Common.MinimalListToDB(queue, out newRequests);
                         return db.SetSongRequests(DJID, newRequests);
                     }
                 }
@@ -1028,8 +1028,49 @@ namespace KServer
         }
         public Response DJNewUserWaitTime(long DJKey)
         {
-            Response r = new Response();
-            return r;
+            int DJID = -1;
+            List<queueSinger> queue = new List<queueSinger>();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ isn't logged out.
+                r = DJCheckStatus(DJID, "2", db);
+                if (r.error)
+                    return r;
+
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                string raw = r.message;
+                if (raw.Trim() == "")
+                {
+                    r.error = false;
+                    r.message = "Empty Queue";
+                    r.result = 0;
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                r = Common.DBToFullList(raw, out queue, DJID, db);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                int time = 0;
+                foreach (queueSinger qs in queue)
+                    time += qs.songs[0].duration + Common.TIME_BETWEEN_REQUESTS;
+
+                r.error = false;
+                r.message = time.ToString().Trim();
+                r.result = time;
+                return r;
+            }
         }
 
 

@@ -451,9 +451,9 @@ namespace JakubMobileClient
                 {
                     try
                     {
-                        Console.WriteLine("Enter venueID or -1 to use last venue ID");
+                        Console.WriteLine("Enter venueID or 0 to use last venue ID or -1 to not specify a venueID");
                         int venueIDL = int.Parse(Console.ReadLine().Trim());
-                        if (venueIDL == -1)
+                        if (venueIDL == 0)
                             venueIDL = venueID;
                         Stream data = client.OpenRead(baseAddress + "/MobileGetPlayLists/?venueID=" + venueIDL + "&userKey=" + userKey);
 
@@ -473,7 +473,7 @@ namespace JakubMobileClient
                         {
                             foreach (Playlist p in r)
                             {
-                                Console.WriteLine(p.ID + ", " + p.name + ", " + p.venue.venueID + ", " + p.venue.venueName + ", " + p.dateCreated);
+                                Console.WriteLine(p.ID + ", " + p.name + ", " + p.venue.venueID + ", " + p.venue.venueName + "," + p.venue.venueAddress + ", " + p.dateCreated);
                                 foreach (Song song in p.songs)
                                     Console.WriteLine("\t" + song.ID + ", " + song.title + ", " + song.artist + ", " + song.rating);
                             }

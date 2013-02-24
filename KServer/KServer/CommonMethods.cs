@@ -6,8 +6,10 @@ using System.Web;
 
 namespace KServer
 {
-    public static class CommonMethods
+    public static class Common
     {
+        public static readonly int TIME_BETWEEN_REQUESTS = 30;
+
         public static Response MinimalListToDB(List<queueSinger> queue, out string raw)
         {
             raw = string.Empty;
@@ -93,7 +95,7 @@ namespace KServer
                 if (r.message.Trim().Length == 0)
                 {
                     r.error = true;
-                    r.message = "DB Username lookup exception in DJGetQueue!";
+                    r.message = "DB Username lookup exception in DBToFullList!";
                     return r;
                 }
 
@@ -110,13 +112,22 @@ namespace KServer
                     if (r.message.Trim().Length == 0)
                     {
                         r.error = true;
-                        r.message = "DB Song lookup exception in DJGETQUEUE!";
+                        r.message = "DB Song lookup exception in DBToFullList!";
                         return r;
                     }
                     string[] songParts = r.message.Split(',');
                     s.title = songParts[0];
                     s.artist = songParts[1];
                     s.pathOnDisk = songParts[2];
+                    int duration;
+                    if (!int.TryParse(songParts[3], out duration))
+                    {
+                        r.error = true;
+                        r.message = "DBToFullList failed to parse song duration";
+                        return r;
+                    }
+
+                    s.duration = duration;
                     qs.songs.Add(s);
 
                 }
@@ -132,7 +143,7 @@ namespace KServer
         /// <param name="message">The message</param>
         /// <param name="stack">The stack</param>
         /// <param name="passThru">A parameter to return</param>
-        /// <param name="Case">0 = mobile_log, 1 = dj_log</param>
+        /// <param name="Case">0 = mobile_log, 1 = dj_log, 2 = debug</param>
         /// <returns></returns>
         public static object LogError(string message, string stack, object passThru, int Case)
         {
@@ -143,6 +154,9 @@ namespace KServer
                     break;
                 case 1:
                     writeToFile(message, stack, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
+                    break;
+                case 2:
+                    writeToFile(message, stack, "C:\\inetpub\\ftproot\\log\\debug.txt");
                     break;
             }
             return passThru;

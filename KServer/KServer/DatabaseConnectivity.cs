@@ -116,10 +116,10 @@ namespace KServer
         }
         public Response SongInformation(int DJID, int SongID)
         {
-            SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk from DJSongs where SongID = @songID and DJListID = @DJID;");
+            SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk, Duration from DJSongs where SongID = @songID and DJListID = @DJID;");
             cmd.Parameters.AddWithValue("@songID", SongID);
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBQuery(cmd, new string[3] { "Title", "Artist", "PathOnDisk" });
+            return DBQuery(cmd, new string[4] { "Title", "Artist", "PathOnDisk", "Duration" });
         }
         public Response DJListMembers()
         {
@@ -616,6 +616,13 @@ namespace KServer
             SqlCommand cmd = new SqlCommand("select VenueName from DJUsers where ID = @ID;");
             cmd.Parameters.AddWithValue("@ID", venueID);
             return DBQuery(cmd, new string[1] { "Venuename" });
+        }
+
+        public Response GetVenueAddress(int venueID)
+        {
+            SqlCommand cmd = new SqlCommand("select VenueAddress from DJUsers where ID = @ID;");
+            cmd.Parameters.AddWithValue("@ID", venueID);
+            return DBQuery(cmd, new string[1] { "VenueAddress" });
         }
 
         public Response MobileSetVenue(int MobileID, object Venue)
