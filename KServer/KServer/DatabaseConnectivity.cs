@@ -52,7 +52,6 @@ namespace KServer
                 return r;
             }
         }
-
         private Response DBScalar(SqlCommand cmd)
         {
             Response r = new Response();
@@ -74,7 +73,6 @@ namespace KServer
                 return r;
             }
         }
-
         private Response DBQuery(SqlCommand cmd, string[] columns)
         {
             Response r = new Response();
@@ -107,6 +105,7 @@ namespace KServer
                 return r;
             }
         }
+
         public Response SongExists(int DJID, int SongID)
         {
             SqlCommand cmd = new SqlCommand("select SongID from DJSongs where SongID = @songID and DJListID = @DJID;");
@@ -121,6 +120,8 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBQuery(cmd, new string[4] { "Title", "Artist", "PathOnDisk", "Duration" });
         }
+
+
         public Response DJListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from DJUsers;");
@@ -403,7 +404,6 @@ namespace KServer
             }
         }
 
-
         public Response MobileListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from MobileUsers;");
@@ -610,21 +610,18 @@ namespace KServer
             cmd.Parameters.AddWithValue("@QR", QR);
             return DBQuery(cmd, new string[1] { "ID" });
         }
-
         public Response GetVenueName(int venueID)
         {
             SqlCommand cmd = new SqlCommand("select VenueName from DJUsers where ID = @ID;");
             cmd.Parameters.AddWithValue("@ID", venueID);
             return DBQuery(cmd, new string[1] { "Venuename" });
         }
-
         public Response GetVenueAddress(int venueID)
         {
             SqlCommand cmd = new SqlCommand("select VenueAddress from DJUsers where ID = @ID;");
             cmd.Parameters.AddWithValue("@ID", venueID);
             return DBQuery(cmd, new string[1] { "VenueAddress" });
         }
-
         public Response MobileSetVenue(int MobileID, object Venue)
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set Venue = @Venue where ID = @MobileID;");
@@ -670,7 +667,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBNonQuery(cmd);
         }
-
         public Response MobileCreatePlaylist(string name, int venueID, int userID, DateTime time)
         {
             SqlCommand cmd = new SqlCommand("insert into PlayLists (VenueID, MobileID, Name, Songs, DateCreated) Values (@venueID, @userID, @name, '', @time); select SCOPE_IDENTITY();");
@@ -680,7 +676,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@time", time);
             return DBScalar(cmd);
         }
-
         public Response MobileDeletePlaylist(int playListID, int userID)
         {
             SqlCommand cmd = new SqlCommand("delete from PlayLists where ID = @playListID and MobileID = @userID;");
@@ -688,7 +683,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@userID", userID);
             return DBNonQuery(cmd);
         }
-
         public Response MobileGetVenueFromPlaylist(int playListID, int userID)
         {
             SqlCommand cmd = new SqlCommand("select VenueID from PlayLists where ID = @playListID and MobileID = @userID;");
@@ -696,7 +690,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@userID", userID);
             return DBQuery(cmd, new string[1] { "VenueID" });
         }
-
         public Response MobileGetSongsFromPlaylist(int playListID, int userID)
         {
             SqlCommand cmd = new SqlCommand("select Songs from PlayLists where ID = @playListID and MobileID = @userID;");
@@ -704,7 +697,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@userID", userID);
             return DBQuery(cmd, new string[1] { "Songs" });
         }
-
         public Response MobileSetPlaylistSongs(int playListID, int userID, string songString)
         {
             SqlCommand cmd = new SqlCommand("update PlayLists set Songs = @songs where ID = @playListID and MobileID = @userID;");
@@ -713,7 +705,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@userID", userID);
             return DBNonQuery(cmd);
         }
-
         public Response MobileGetPlaylists(int venueID, int userID)
         {
             SqlCommand cmd = new SqlCommand("select ID, Name, Songs, DateCreated, VenueID from PlayLists where MobileID = @userID");
@@ -725,6 +716,23 @@ namespace KServer
             }
             cmd.CommandText += ";";
             return DBQuery(cmd, new string[5] { "ID", "Name", "Songs", "DateCreated", "VenueID" });
+        }
+        public Response MobileGetSongHistory(int userID, int start, int count)
+        {
+            SqlCommand cmd = new SqlCommand("select A.* from MobileSongHistory A inner join (select ROW_NUMBER() over(order by DateSung DESC) as 'RN', * from MobileSongHistory where MobileID = @userID) B on A.ID = B.ID and B.rn between @start and @count order by DateSung DESC;");
+            cmd.Parameters.AddWithValue("@userID", userID);
+            cmd.Parameters.AddWithValue("@start", start + 1);
+            cmd.Parameters.AddWithValue("@count", start + count);
+            return DBQuery(cmd, new string[5] { "ID", "VenueID", "MobileID", "SongID", "DateSung" });
+        }
+        public Response MobileAddSongHistory(int mobileID, int venueID, int songID, DateTime dateSung)
+        {
+            SqlCommand cmd = new SqlCommand("insert into MobileSongHistory (VenueID, MobileID, SongID, DateSung) values (@venueID, @mobileID, @songID, @dateSung);");
+            cmd.Parameters.AddWithValue("@venueID", venueID);
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+            cmd.Parameters.AddWithValue("@songID", songID);
+            cmd.Parameters.AddWithValue("@dateSung", dateSung);
+            return DBNonQuery(cmd);
         }
     }
 }

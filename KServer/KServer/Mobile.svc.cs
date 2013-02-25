@@ -918,10 +918,6 @@ namespace KServer
                 return r;
             }
         }
-        public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
-        {
-            return new List<SongHistory>();
-        }
         public Response MobileCreatePlaylist(string name, int venueID, long userKey)
         {
             Response r = new Response();
@@ -1209,9 +1205,9 @@ namespace KServer
                             r = db.SongInformation(vid, song.ID);
                             if (r.error)
                                 return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
-                            if (r.message.Trim().Length < 4)
-                                return (List<Playlist>)Common.LogError("MobiileGetPlaylists Failure to parse Song information: '" + r.message.Trim() + "'", Environment.StackTrace, null, 0);
                             string[] songParts = r.message.Split(',');
+                            if (songParts.Length < 4)
+                                return (List<Playlist>)Common.LogError("MobiileGetPlaylists Failure to parse Song information: '" + r.message.Trim() + "'", Environment.StackTrace, null, 0);
                             song.title = songParts[0];
                             song.artist = songParts[1];
                             p.songs.Add(song);
@@ -1226,6 +1222,97 @@ namespace KServer
                 }
             }
         }
+
+        
+        
+        public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
+        {
+            int mobileID = -1;
+            List<SongHistory> songHistory = new List<SongHistory>();
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                r = db.MobileGetSongHistory(mobileID, start, count);
+                if (r.error)
+                    return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Case of empty playlists.
+                if (r.message.Trim().Length == 0)
+                    return songHistory;
+
+                //"ID", "VenueID", "MobileID", "SongID", "DateSung"
+                try
+                {
+                    string[] songHistoryLines = r.message.Trim().Split('\n');
+                    foreach (string songHistoryLine in songHistoryLines)
+                    {
+                        string[] songHistoryParts = songHistoryLine.Split(',');
+                        SongHistory sh = new SongHistory();
+
+                        int vid;
+                        if (!int.TryParse(songHistoryParts[1], out vid))
+                            return (List<SongHistory>)Common.LogError("MobileGetSongHistory venueID parse fail from MobileSongHistory.", Environment.StackTrace, null, 0);
+                        sh.venue = new Venue();
+                        sh.venue.venueID = vid;
+
+                        r = db.GetVenueName(vid);
+                        if (r.error)
+                            return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        sh.venue.venueName = r.message.Trim();
+
+                        r = db.GetVenueAddress(vid);
+                        if (r.error)
+                            return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        sh.venue.venueAddress = r.message.Trim();
+
+                        sh.song = new Song();
+                        int songID;
+                        if(!int.TryParse(songHistoryParts[3], out songID))
+                            return (List<SongHistory>)Common.LogError("MobileGetSongHistory songID parse fail from MobileSongHistory.", Environment.StackTrace, null, 0);
+
+                        sh.song.ID = songID;
+
+                        r = db.SongInformation(vid, songID);
+                        if(r.error)
+                            return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                        Common.LogError("SongID: " + songID + " VID: " + vid, "SongInfo: " + r.message, null, 2);
+
+                        string[] songParts = r.message.Split(',');
+
+                        if(songParts.Length < 4)
+                            return (List<SongHistory>)Common.LogError("MobileGetSongHistory Failure to parse Song information: '" + r.message.Trim() + "'", Environment.StackTrace, null, 0);
+
+                        sh.song.title = songParts[0];
+                        sh.song.artist = songParts[1];
+                        sh.song.duration = int.Parse(songParts[3]);
+
+                        sh.date = Convert.ToDateTime(songHistoryParts[4]);
+
+                        songHistory.Add(sh); 
+                    }
+                    return songHistory;
+                }
+                catch (Exception e)
+                {
+                    return (List<SongHistory>)Common.LogError(e.Message, e.StackTrace, null, 0);
+                }
+            }
+        }
+
+
+
+
 
         // Anytime songs are requested, put a set the rating field if applicable.
         public Response MobileRateSong(int songID, int venueID, long userKey)

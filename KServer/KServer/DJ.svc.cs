@@ -427,7 +427,13 @@ namespace KServer
                 r = Common.MinimalListToDB(queue, out raw);
                 if (r.error)
                     return r;
-                return db.SetSongRequests(DJID, raw);
+                r = db.SetSongRequests(DJID, raw);
+                if (r.error)
+                    return r;
+                r = db.MobileAddSongHistory(sr.user.userID, DJID, sr.songID, DateTime.Now);
+                if (r.error)
+                    Common.LogError(r.message, Environment.StackTrace, r, 1);
+                return r;
             }
         }
         /// <summary>
@@ -1074,6 +1080,8 @@ namespace KServer
         }
 
 
+
+
         /// <summary>
         /// Done
         /// </summary>
@@ -1192,6 +1200,5 @@ namespace KServer
             }
             return r;
         }
-
     }
 }

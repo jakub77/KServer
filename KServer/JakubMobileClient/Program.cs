@@ -41,7 +41,7 @@ namespace JakubMobileClient
                     Console.WriteLine("signOut<so>, songSearch<ss>,songBrowse<sb>, songRequest<sr>, listQueue<lq>,");
                     Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>,");
                     Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
-                    Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>");
+                    Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>, songHistory<sh>,");
                 }
                 else if (command.StartsWith("jo")) // TOGGLE JSON/OBJECT OUTPUT
                 {
@@ -320,8 +320,12 @@ namespace JakubMobileClient
                 {
                     try
                     {
-                        Console.WriteLine("Enter QR string:");
+                        Console.WriteLine("Enter QR string: or j to auto join Jakub, or h to auto join Hugo");
                         string QR = Console.ReadLine().Trim();
+                        if (QR.Equals("j"))
+                            QR = "04e0df5f";
+                        else if (QR.Equals("h"))
+                            QR = "aaaaaaaa";
                         Stream data = client.OpenRead(baseAddress + "/MobileJoinVenue/?QR=" + QR + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
@@ -508,9 +512,44 @@ namespace JakubMobileClient
                         Console.WriteLine("Exception: " + e.Message);
                     }
                 }
-                // /MobileAddSongToPlaylist/?songID={songID}&playListID={playListID}&userKey={userKey}"
-                // /MobileRemoveSongFromPlaylist/?songID={songID}&playListID={playListID}&userKey={userKey}
-                // /MobileGetPlayLists/?venueID={venueID}&userKey={userKey}
+                else if (command.StartsWith("sh"))
+                {
+                    try
+                    {
+                        Console.WriteLine("Start index:");
+                        int start = int.Parse(Console.ReadLine());
+                        Console.WriteLine("Count: ");
+                        int count = int.Parse(Console.ReadLine());
+                        Stream data = client.OpenRead(baseAddress + "/MobileViewSongHistory/?start=" + start + "&count=" + count + " &userKey=" + userKey);
+
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+
+                        if (s.Trim().Length == 0)
+                        {
+                            Console.WriteLine("An error occured");
+                            break;
+                        }
+
+                        List<SongHistory> r = strToJSON<List<SongHistory>>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            foreach (SongHistory sh in r)
+                            {
+                                Console.WriteLine(sh.venue.venueID +", " + sh.venue.venueName + ", " + sh.venue.venueAddress);
+                                Console.WriteLine("\t" + sh.song.ID + ", " + sh.song.title  + ", " + sh.song.artist  + ", " + sh.song.duration  + ", " + sh.date);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                /// /MobileViewSongHistory/?start={start}&count={count}&userKey={userKey}
+
                 else
                 {
                     Console.WriteLine("Invalid Command");

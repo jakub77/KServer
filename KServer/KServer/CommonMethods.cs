@@ -137,6 +137,12 @@ namespace KServer
             return r;
         }
 
+        public static Response GetSongInformation(int songID, int venueID, out Song song, DatabaseConnectivity db)
+        {
+            song = new Song();
+            return null;
+        }
+
         /// <summary>
         /// Log an error message.
         /// </summary>
