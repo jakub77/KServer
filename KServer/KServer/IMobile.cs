@@ -21,6 +21,10 @@ namespace KServer
         DateTime GetDateTime();
 
         [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/TestPushNotification/?DeviceId={deviceID}")]
+        string TestPushNotification(string deviceID);
+
+        [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSignUp/?username={username}&password={password}")]
         Response MobileSignUp(string username, string password);
 

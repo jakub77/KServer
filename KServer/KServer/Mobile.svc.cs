@@ -26,6 +26,12 @@ namespace KServer
         {
             return DateTime.Now;
         }
+        public string TestPushNotification(string deviceID)
+        {
+            string response = GCMPush.send(deviceID, "Hello there, did you know the time is " + DateTime.Now.ToShortTimeString() + "?");
+            Common.LogError("Google Server Reply for push notification", response, null, 2);
+            return "Googles servers told me: " + response;
+        }
         public Response MobileSignUp(string username, string password)
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -1286,7 +1292,7 @@ namespace KServer
                         if(r.error)
                             return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
-                        Common.LogError("SongID: " + songID + " VID: " + vid, "SongInfo: " + r.message, null, 2);
+                        //Common.LogError("SongID: " + songID + " VID: " + vid, "SongInfo: " + r.message, null, 2);
 
                         string[] songParts = r.message.Split(',');
 
