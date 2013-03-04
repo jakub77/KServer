@@ -42,6 +42,28 @@ namespace JakubMobileClient
                     Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>,");
                     Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
                     Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>, songHistory<sh>,");
+                    Console.WriteLine("RateSong<rs>, GetRating<gr>");
+                }
+                else if (command.StartsWith("xx"))
+                {
+                    try
+                    {
+                        Stream data = client.OpenRead(baseAddress + "/GetDateTime/");
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+                        DateTime r = strToJSON<DateTime>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine(r.ToString());
+                            Console.WriteLine(r.ToShortDateString());
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("jo")) // TOGGLE JSON/OBJECT OUTPUT
                 {
@@ -51,7 +73,7 @@ namespace JakubMobileClient
                 {
                     return;
                 }
-                else if(command.StartsWith("lm"))
+                else if (command.StartsWith("lm"))
                 {
                     Stream data = client.OpenRead(baseAddress + "/MobileSignUp/?username=list&password=ignore");
                     StreamReader reader = new StreamReader(data);
@@ -84,7 +106,7 @@ namespace JakubMobileClient
 
                     // Since MobileSignUp returns a Response object. Convert the JSON to a Response object.
                     Response r = strToJSON<Response>(s);
-                    
+
                     // If we are diplaying JSON, simply display the original string returned.
                     if (displayJSON)
                         Console.WriteLine("JSON: " + s);
@@ -116,7 +138,7 @@ namespace JakubMobileClient
                         Console.WriteLine("Key: " + r.userKey);
                         Console.WriteLine("Message:\n" + r.message);
                     }
-                    userKey = r.userKey; 
+                    userKey = r.userKey;
                 }
                 else if (command.StartsWith("so")) // SIGN OUT
                 {
@@ -149,11 +171,11 @@ namespace JakubMobileClient
                         title = Console.ReadLine();
                         Console.Write("Artist: ");
                         artist = Console.ReadLine();
-                        Stream data = client.OpenRead(baseAddress + "/MobileSongSearch/?title=" + title.Trim() + "&artist=" + artist.Trim() + "&venueID=" + venueID);
+                        Stream data = client.OpenRead(baseAddress + "/MobileSongSearch/?title=" + title.Trim() + "&artist=" + artist.Trim() + "&venueID=" + venueID + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
 
-                        if(s == "")
+                        if (s == "")
                         {
                             Console.WriteLine("An error occured");
                             continue;
@@ -166,7 +188,7 @@ namespace JakubMobileClient
                         {
                             foreach (Song song in r)
                             {
-                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.rating);
+                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.duration + ", " + song.rating);
                             }
                         }
                     }
@@ -188,7 +210,7 @@ namespace JakubMobileClient
                         start = Console.ReadLine();
                         Console.Write("count: ");
                         count = Console.ReadLine();
-                        Stream data = client.OpenRead(baseAddress + "/MobileSongBrowse/?firstLetter=" + firstLetter + "&isArtist=" + isArtist + "&start=" + start + "&count=" + count + "&venueID=" + venueID);
+                        Stream data = client.OpenRead(baseAddress + "/MobileSongBrowse/?firstLetter=" + firstLetter + "&isArtist=" + isArtist + "&start=" + start + "&count=" + count + "&venueID=" + venueID + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
 
@@ -205,7 +227,7 @@ namespace JakubMobileClient
                         {
                             foreach (Song song in r)
                             {
-                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.rating);
+                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.duration + ", " + song.rating);
                             }
                         }
                     }
@@ -248,7 +270,7 @@ namespace JakubMobileClient
                         oldSongID = Console.ReadLine();
                         Console.Write("New Song ID: ");
                         newSongID = Console.ReadLine();
-                        Stream data = client.OpenRead(baseAddress + "/MobileChangeSongRequest/?oldSongID=" + oldSongID + "&newSongID=" + newSongID + "&userKey="+ userKey);
+                        Stream data = client.OpenRead(baseAddress + "/MobileChangeSongRequest/?oldSongID=" + oldSongID + "&newSongID=" + newSongID + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
                         Response r = strToJSON<Response>(s);
@@ -353,7 +375,7 @@ namespace JakubMobileClient
                         string name = Console.ReadLine().Trim();
                         Console.WriteLine("Enter venueID or -1 to use last venue ID");
                         int venueIDL = int.Parse(Console.ReadLine().Trim());
-                        if(venueIDL == -1)
+                        if (venueIDL == -1)
                             venueIDL = venueID;
                         Stream data = client.OpenRead(baseAddress + "/MobileCreatePlaylist/?name=" + name + "&venueID=" + venueIDL + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
@@ -538,8 +560,8 @@ namespace JakubMobileClient
                         {
                             foreach (SongHistory sh in r)
                             {
-                                Console.WriteLine(sh.venue.venueID +", " + sh.venue.venueName + ", " + sh.venue.venueAddress);
-                                Console.WriteLine("\t" + sh.song.ID + ", " + sh.song.title  + ", " + sh.song.artist  + ", " + sh.song.duration  + ", " + sh.date);
+                                Console.WriteLine(sh.venue.venueID + ", " + sh.venue.venueName + ", " + sh.venue.venueAddress);
+                                Console.WriteLine("\t" + sh.song.ID + ", " + sh.song.title + ", " + sh.song.artist + ", " + sh.song.duration + ", " + sh.date);
                             }
                         }
                     }
@@ -548,8 +570,61 @@ namespace JakubMobileClient
                         Console.WriteLine("Exception: " + e.Message);
                     }
                 }
-                /// /MobileViewSongHistory/?start={start}&count={count}&userKey={userKey}
+                else if (command.StartsWith("rs"))
+                {
+                    try
+                    {
+                        Console.WriteLine("SongID:");
+                        int songID = int.Parse(Console.ReadLine());
+                        Console.WriteLine("Rating:");
+                        int rating = int.Parse(Console.ReadLine());
+                        Stream data = client.OpenRead(baseAddress + "/MobileRateSong/?songID=" + songID + "&rating=" + rating + "&venueID=" + venueID + "&userKey=" + userKey);
 
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+
+                }
+                else if (command.StartsWith("gr"))
+                {
+                    try
+                    {
+                        Console.WriteLine("SongID:");
+                        int songID = int.Parse(Console.ReadLine());
+                        Stream data = client.OpenRead(baseAddress + "/MobileViewSongRating/?songID=" + songID + "&venueID=" + venueID + "&userKey=" + userKey);
+
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
                 else
                 {
                     Console.WriteLine("Invalid Command");

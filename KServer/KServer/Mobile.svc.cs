@@ -172,13 +172,23 @@ namespace KServer
                 return r;
             }
         }
-        public List<Song> MobileSongSearch(string title, string artist, int venueID)
+        public List<Song> MobileSongSearch(string title, string artist, int venueID, long userKey)
         {
             int venueStatus;
-            List<Song> songs;
+            int mobileID = -1;
+            List<Song> songs = new List<Song>();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 Response r = new Response();
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
                 // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
@@ -188,20 +198,51 @@ namespace KServer
                     return (List<Song>)Common.LogError("MobileSongSeach venueID parse fail (bad venueID given?)", Environment.StackTrace, null, 0);
 
                 // Complete the search.
-                r = db.MobileSearchSongs(out songs, title.Trim(), artist.Trim(), venueID);
+                r = db.MobileSearchSongs(title.Trim(), artist.Trim(), venueID);
                 if (r.error)
                     return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
+                if (r.message.Trim() == string.Empty)
+                    return songs;
+
+                int count = 0;
+                string[] songLines = r.message.Trim().Split('\n');
+                foreach (string songLine in songLines)
+                {
+                    string[] songParts = Common.splitByDel(songLine);
+                    Song song = new Song();
+                    int id;
+                    if (!int.TryParse(songParts[0], out id))
+                        return (List<Song>)Common.LogError("Exception in MobileListSongsSQL: could not parse song id", Environment.StackTrace, null, 0);
+                    song.ID = id;
+                    song.title = songParts[1];
+                    song.artist = songParts[2];
+                    song.duration = int.Parse(songParts[3]);
+                    Common.LoadSongRating(ref song, mobileID, db);
+                    song.pathOnDisk = "";
+                    songs.Add(song);
+                    count++;
+                }
                 return songs;
             }
         }
-        public List<Song> MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID)
+        public List<Song> MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID, long userKey)
         {
             int venueStatus;
-            List<Song> s;
+            int mobileID = -1;
+            List<Song> songs = new List<Song>();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 Response r = new Response();
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
                 // Check to make sure the venue exists.
                 r = db.DJGetStatus(venueID);
@@ -210,11 +251,32 @@ namespace KServer
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
                     return (List<Song>)Common.LogError("MobileSongBrose venueID parse fail (bad venueID given?)", Environment.StackTrace, null, 0);
 
-                r = db.MobileBrowseSongs(out s, firstLetter, isArtist, start, count, venueID);
+                r = db.MobileBrowseSongs(firstLetter, isArtist, start, count, venueID);
                 if (r.error)
                     return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
-                return s;
+                if (r.message.Trim() == string.Empty)
+                    return songs;
+
+                int count2 = 0;
+                string[] songLines = r.message.Trim().Split('\n');
+                foreach (string songLine in songLines)
+                {
+                    string[] songParts = Common.splitByDel(songLine);
+                    Song song = new Song();
+                    int id;
+                    if (!int.TryParse(songParts[0], out id))
+                        return (List<Song>)Common.LogError("Exception in MobileListSongsSQL: could not parse song id", Environment.StackTrace, null, 0);
+                    song.ID = id;
+                    song.title = songParts[1];
+                    song.artist = songParts[2];
+                    song.duration = int.Parse(songParts[3]);
+                    Common.LoadSongRating(ref song, mobileID, db);
+                    song.pathOnDisk = "";
+                    songs.Add(song);
+                    count2++;
+                }
+                return songs;
             }
         }
         public Response MobileSongRequest(int songID, long userKey)
@@ -234,7 +296,7 @@ namespace KServer
                 // Make sure the client isn't already logged out.
                 r = MobileCheckStatus(mobileID, "!0", db);
                 if (r.error)
-                    return r ;
+                    return r;
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
@@ -561,7 +623,7 @@ namespace KServer
                     return queue;
                 }
 
-                r = DBToNearlyFullList(raw, out queue, venueID, db);
+                r = DBToNearlyFullList(raw, out queue, venueID, mobileID, db);
                 if (r.error)
                     return (List<queueSinger>)Common.LogError(r.message, Environment.StackTrace, null, 0);
                 return queue;
@@ -670,7 +732,7 @@ namespace KServer
             r.result = DJStatus;
             return r;
         }
-        private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
+        private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, int mobileID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
             Response r = new Response();
@@ -711,31 +773,11 @@ namespace KServer
 
                 for (int j = 1; j < parts.Length; j++)
                 {
-                    Song s = new Song();
-                    s.ID = int.Parse(parts[j]);
-                    r = db.SongInformation(DJID, s.ID);
+                    Song song;
+                    r = Common.GetSongInformation(int.Parse(parts[j]), DJID, mobileID, out song, db);
                     if (r.error)
                         return r;
-                    if (r.message.Trim().Length == 0)
-                    {
-                        r.error = true;
-                        r.message = "DB Song lookup exception in DJGETQUEUE!";
-                        return r;
-                    }
-                    string[] songParts = r.message.Split(',');
-                    s.title = songParts[0];
-                    s.artist = songParts[1];
-                    s.pathOnDisk = string.Empty;
-                    int duration;
-                    if (!int.TryParse(songParts[3], out duration))
-                    {
-                        r.error = true;
-                        r.message = "DBToFullList failed to parse song duration";
-                        return r;
-                    }
-
-                    s.duration = duration;
-                    qs.songs.Add(s);
+                    qs.songs.Add(song);
 
                 }
                 queue.Add(qs);
@@ -905,7 +947,7 @@ namespace KServer
                 }
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
-                r = DBToNearlyFullList(raw, out queue, venueID, db);
+                r = DBToNearlyFullList(raw, out queue, venueID, mobileID, db);
                 if (r.error)
                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
 
@@ -1173,7 +1215,7 @@ namespace KServer
                     string[] playlistLines = r.message.Trim().Split('\n');
                     foreach (string playlistLine in playlistLines)
                     {
-                        string[] playlistParts = playlistLine.Split(',');
+                        string[] playlistParts = Common.splitByDel(playlistLine);
                         Playlist p = new Playlist();
 
                         int id;
@@ -1207,15 +1249,9 @@ namespace KServer
                             if (s.Trim().Length == 0)
                                 continue;
                             Song song = new Song();
-                            song.ID = int.Parse(s);
-                            r = db.SongInformation(vid, song.ID);
-                            if (r.error)
+                            r = Common.GetSongInformation(int.Parse(s), vid, mobileID, out song, db);
+                            if(r.error)
                                 return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
-                            string[] songParts = r.message.Split(',');
-                            if (songParts.Length < 4)
-                                return (List<Playlist>)Common.LogError("MobiileGetPlaylists Failure to parse Song information: '" + r.message.Trim() + "'", Environment.StackTrace, null, 0);
-                            song.title = songParts[0];
-                            song.artist = songParts[1];
                             p.songs.Add(song);
                         }
                         playLists.Add(p);
@@ -1262,7 +1298,7 @@ namespace KServer
                     string[] songHistoryLines = r.message.Trim().Split('\n');
                     foreach (string songHistoryLine in songHistoryLines)
                     {
-                        string[] songHistoryParts = songHistoryLine.Split(',');
+                        string[] songHistoryParts = Common.splitByDel(songHistoryLine);
                         SongHistory sh = new SongHistory();
 
                         int vid;
@@ -1281,30 +1317,16 @@ namespace KServer
                             return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
                         sh.venue.venueAddress = r.message.Trim();
 
-                        sh.song = new Song();
                         int songID;
                         if(!int.TryParse(songHistoryParts[3], out songID))
                             return (List<SongHistory>)Common.LogError("MobileGetSongHistory songID parse fail from MobileSongHistory.", Environment.StackTrace, null, 0);
 
-                        sh.song.ID = songID;
-
-                        r = db.SongInformation(vid, songID);
+                        Song song;
+                        r = Common.GetSongInformation(songID, vid, mobileID,out song, db, false);
                         if(r.error)
                             return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
-
-                        //Common.LogError("SongID: " + songID + " VID: " + vid, "SongInfo: " + r.message, null, 2);
-
-                        string[] songParts = r.message.Split(',');
-
-                        if(songParts.Length < 4)
-                            return (List<SongHistory>)Common.LogError("MobileGetSongHistory Failure to parse Song information: '" + r.message.Trim() + "'", Environment.StackTrace, null, 0);
-
-                        sh.song.title = songParts[0];
-                        sh.song.artist = songParts[1];
-                        sh.song.duration = int.Parse(songParts[3]);
-
+                        sh.song = song;
                         sh.date = Convert.ToDateTime(songHistoryParts[4]);
-
                         songHistory.Add(sh); 
                     }
                     return songHistory;
@@ -1321,17 +1343,121 @@ namespace KServer
 
 
         // Anytime songs are requested, put a set the rating field if applicable.
-        public Response MobileRateSong(int songID, int venueID, long userKey)
+        public Response MobileRateSong(int songID, int rating, int venueID, long userKey)
         {
+            int mobileID = -1;
+            int venueStatus;
+            int songExists;
+            List<Playlist> playLists = new List<Playlist>();
             Response r = new Response();
-            r.error = true;
-            return r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the venueID exists.
+                r = db.DJGetStatus(venueID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                if (!int.TryParse(r.message.Trim(), out venueStatus))
+                {
+                    r.error = true;
+                    r.message= "MobileGetPlayLists venueID parse fail (Bad venueID given?)";
+                    return r;
+                }
+
+                // Check to see if song exists.
+                r = db.SongExists(venueID, songID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                if (!int.TryParse(r.message.Trim(), out songExists))
+                {
+                    r.error = true;
+                    r.message = "Could not find song";
+                    return r;
+                }
+
+                // Set the song rating.
+                r = db.MobileSetSongRating(mobileID, songID, rating);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                return r;
+            }
         }
         public Response MobileViewSongRating(int songID, int venueID, long userKey)
         {
+            int mobileID = -1;
+            int venueStatus;
+            int songExists;
+            int rating;
+            List<Playlist> playLists = new List<Playlist>();
             Response r = new Response();
-            r.error = true;
-            return r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the venueID exists.
+                r = db.DJGetStatus(venueID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                if (!int.TryParse(r.message.Trim(), out venueStatus))
+                {
+                    r.error = true;
+                    r.message = "MobileGetPlayLists venueID parse fail (Bad venueID given?)";
+                    return r;
+                }
+
+                // Check to see if song exists.
+                r = db.SongExists(venueID, songID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                if (!int.TryParse(r.message.Trim(), out songExists))
+                {
+                    r.error = true;
+                    r.message = "Could not find song";
+                    return r;
+                }
+
+                // Set the song rating.
+                r = db.MobileGetSongRating(mobileID, songID);
+                if(r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                if (r.message.Trim().Length == 0)
+                {
+                    r.message = "-1";
+                    r.result = -1;
+                    return r;
+                }
+
+                if (!int.TryParse(r.message.Trim(), out rating))
+                {
+                    r.error = true;
+                    r.message = "Could not parse rating";
+                    return r;
+                }
+
+                r.message = rating.ToString();
+                r.result = rating;
+                return r;
+            }
         }
 
         // GCM google push notifications.

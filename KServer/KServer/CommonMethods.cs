@@ -9,7 +9,11 @@ namespace KServer
     public static class Common
     {
         public static readonly int TIME_BETWEEN_REQUESTS = 30;
-
+        public static readonly string deliminator = "#~Q";
+        public static string[] splitByDel(string s)
+        {
+            return s.Split(new string[] { deliminator }, StringSplitOptions.None);
+        }
         public static Response MinimalListToDB(List<queueSinger> queue, out string raw)
         {
             raw = string.Empty;
@@ -26,7 +30,6 @@ namespace KServer
                 raw = raw.Substring(0, raw.Length - 1);
             return new Response();
         }
-
         public static Response DBToMinimalList(string raw, out List<queueSinger> queue)
         {
             int count = 0;
@@ -62,7 +65,6 @@ namespace KServer
             }
             return r;
         }
-
         public static Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
@@ -105,29 +107,10 @@ namespace KServer
                 for (int j = 1; j < parts.Length; j++)
                 {
                     Song s = new Song();
-                    s.ID = int.Parse(parts[j]);
-                    r = db.SongInformation(DJID, s.ID);
+                    r = GetSongInformation(int.Parse(parts[j]), DJID, -1, out s, db, true);
                     if (r.error)
                         return r;
-                    if (r.message.Trim().Length == 0)
-                    {
-                        r.error = true;
-                        r.message = "DB Song lookup exception in DBToFullList!";
-                        return r;
-                    }
-                    string[] songParts = r.message.Split(',');
-                    s.title = songParts[0];
-                    s.artist = songParts[1];
-                    s.pathOnDisk = songParts[2];
-                    int duration;
-                    if (!int.TryParse(songParts[3], out duration))
-                    {
-                        r.error = true;
-                        r.message = "DBToFullList failed to parse song duration";
-                        return r;
-                    }
 
-                    s.duration = duration;
                     qs.songs.Add(s);
 
                 }
@@ -136,12 +119,75 @@ namespace KServer
             }
             return r;
         }
-
-        public static Response GetSongInformation(int songID, int venueID, out Song song, DatabaseConnectivity db)
+        public static Response GetSongInformation(int songID, int venueID, int mobileID, out Song song, DatabaseConnectivity db, bool includePath = false)
         {
             song = new Song();
-            return null;
+            Response r = db.SongInformation(venueID, songID);
+            if (r.error)
+                return r;
+
+            if(r.message.Trim().Length == 0)
+            {
+                r.error = true;
+                r.message = "Could not find song.";
+                return r;
+            }
+
+            string[] songParts = splitByDel(r.message);
+            if (songParts.Length < 4)
+            {
+                r.error = true;
+                r.message = "Song did not have 4 parts";
+                return r;
+            }
+
+            song.ID = songID;
+            song.title = songParts[0];
+            song.artist = songParts[1];
+            if (includePath)
+                song.pathOnDisk = songParts[2];
+
+            int duration;
+            if (!int.TryParse(songParts[3], out duration))
+            {
+                r.error = true;
+                r.message = "Could not parse the duration";
+                return r;
+            }
+            song.duration = duration;
+
+            if (mobileID == -1)
+                return r;
+
+            return LoadSongRating(ref song, mobileID, db);
         }
+        public static Response LoadSongRating(ref Song song, int mobileID, DatabaseConnectivity db)
+        {
+            int rating;
+            Response r = db.MobileGetSongRating(mobileID, song.ID);
+            if (r.error)
+                return r;
+
+            if (r.message.Trim().Length == 0)
+            {
+                song.rating = -1;
+                return r;
+            }
+
+            if (!int.TryParse(r.message.Trim(), out rating))
+            {
+                LogError("The message is: '" + r.message.Trim() + "'", "", null, 2);
+                r.error = true;
+                r.message = "Could not parse rating";
+                return r;
+            }
+            song.rating = rating;
+            r.message = rating.ToString();
+            r.result = rating;
+            return r;
+        }
+
+ 
 
         /// <summary>
         /// Log an error message.
@@ -167,7 +213,6 @@ namespace KServer
             }
             return passThru;
         }
-
         private static void writeToFile(string message, string stack, string file)
         {
             StreamWriter w = File.AppendText(file);
