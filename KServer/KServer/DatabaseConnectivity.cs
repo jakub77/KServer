@@ -89,7 +89,7 @@ namespace KServer
                         {
                             r.result++;
                             for (int i = 0; i < columns.Length - 1; i++)
-                                r.message += reader[columns[i]].ToString().Trim() + ",";
+                                r.message += reader[columns[i]].ToString().Trim() + Common.deliminator;
                             if (columns.Length > 0)
                                 r.message += reader[columns[columns.Length - 1]].ToString().Trim();
                             r.message += "\n";
@@ -125,7 +125,9 @@ namespace KServer
         public Response DJListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from DJUsers;");
-            return DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            Response r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            r.message = r.message.Replace(Common.deliminator, ",");
+            return r;
         }
         // Check to see if a DJ's username and password are valid.
         // If credentials are valid, returns the unique DJID in message.
@@ -356,58 +358,19 @@ namespace KServer
             r.result = songsRemoved;
             return r;
         }
-        public Response DJListSongs(out List<Song> songs, int DJID)
+        public Response DJListSongs(int DJID)
         {
-            Response r = new Response();
-            songs = new List<Song>();
             SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            r = DBQuery(cmd, new string[4] { "SongID", "Title", "Artist", "PathOnDisk" });
-            if (r.error)
-                return r;
-
-            if (r.message.Trim() == string.Empty)
-            {
-                r.message = "Warning: No songs were found";
-                return r;
-            }
-
-            try
-            {
-                string[] songLines = r.message.Trim().Split('\n');
-                foreach (string songLine in songLines)
-                {
-                    string[] songParts = songLine.Split(',');
-                    Song song = new Song();
-                    int id;
-                    if (!int.TryParse(songParts[0], out id))
-                    {
-                        r.error = true;
-                        r.message = "Exception in SongListSQL: could not parse song id";
-                        return r;
-                    }
-                    song.ID = id;
-                    song.title = songParts[1];
-                    song.artist = songParts[2];
-                    song.pathOnDisk = songParts[3];
-                    songs.Add(song);
-                }
-                r.message = "";
-                return r;
-            }
-            catch (Exception e)
-            {
-
-                r.message = "Exception " + e.ToString();
-                r.error = true;
-                return r;
-            }
+            return DBQuery(cmd, new string[5] { "SongID", "Title", "Artist", "PathOnDisk", "Duration" });
         }
 
         public Response MobileListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from MobileUsers;");
-            return DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            Response r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            r.message = r.message.Replace(Common.deliminator, ",");
+            return r;
         }
         // Check to see if a mobile username is valid.
         // If username is valid, returns the unique DJID in message.
@@ -459,150 +422,63 @@ namespace KServer
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
             return DBNonQuery(cmd);
         }
-        public Response MobileSearchSongs(out List<Song> songs, string title, string artist, int DJID)
+        public Response MobileSearchSongs(string title, string artist, int DJID)
         {
-            Response r = new Response();
-            songs = new List<Song>();
-            try
+            SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            if (title.Trim().Length > 0)
             {
-                SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID");
-                cmd.Parameters.AddWithValue("@DJID", DJID);
-                if (title.Trim().Length > 0)
-                {
-                    cmd.CommandText += " and Title like @title";
-                    cmd.Parameters.AddWithValue("@title", ("%" + title + "%").Trim());
-                }
-                if (artist.Trim().Length > 0)
-                {
-                    cmd.CommandText += " and Artist like @artist";
-                    cmd.Parameters.AddWithValue("@artist", ("%" + artist + "%").Trim());
-                }
-
-                if (title.Trim().Length > 0 && artist.Trim().Length == 0)
-                    cmd.CommandText += " order by Title";
-                else
-                    cmd.CommandText += " order by Artist";
-
-                cmd.CommandText += ";";
-
-                r = DBQuery(cmd, new string[3] { "SongID", "Title", "Artist" });
-
-                if (r.error)
-                    return r;
-
-                if (r.message.Trim() == string.Empty)
-                {
-                    r.result = 0;
-                    return r;
-                }
-
-                int count = 0;
-                string[] songLines = r.message.Trim().Split('\n');
-                foreach (string songLine in songLines)
-                {
-                    string[] songParts = songLine.Split(',');
-                    Song song = new Song();
-                    int id;
-                    if (!int.TryParse(songParts[0], out id))
-                    {
-                        r.error = true;
-                        r.message = "Exception in MobileListSongsSQL: could not parse song id";
-                        return r;
-                    }
-                    song.ID = id;
-                    song.title = songParts[1];
-                    song.artist = songParts[2];
-                    song.pathOnDisk = "";
-                    songs.Add(song);
-                    count++;
-                }
-                r.message = "";
-                r.result = count;
-                return r;
+                cmd.CommandText += " and Title like @title";
+                cmd.Parameters.AddWithValue("@title", ("%" + title + "%").Trim());
             }
-            catch (Exception e)
+            if (artist.Trim().Length > 0)
             {
-                r.message = "Exception " + e.Message;
-                r.error = true;
-                return r;
+                cmd.CommandText += " and Artist like @artist";
+                cmd.Parameters.AddWithValue("@artist", ("%" + artist + "%").Trim());
             }
+
+            if (title.Trim().Length > 0 && artist.Trim().Length == 0)
+                cmd.CommandText += " order by Title";
+            else
+                cmd.CommandText += " order by Artist";
+
+            cmd.CommandText += ";";
+
+            return DBQuery(cmd, new string[4] { "SongID", "Title", "Artist", "Duration" });
         }
-        public Response MobileBrowseSongs(out List<Song> songs, string firstLetter, bool isArtist, int start, int count, int DJID)
+        public Response MobileBrowseSongs(string firstLetter, bool isArtist, int start, int count, int DJID)
         {
-            Response r = new Response();
-            songs = new List<Song>();
             int length = firstLetter.Length;
-            try
+
+            // select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * 
+            // from DJSongs where DJListID = '1') B on A.SongID = B.SongID and B.rn between 7 and 10;
+            SqlCommand cmd = new SqlCommand("select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by ");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            if (isArtist)
+                cmd.CommandText += "Artist";
+            else
+                cmd.CommandText += "Title";
+
+            cmd.CommandText += (") as 'RN', * from DJSongs where DJListID = @DJID");
+
+            if (isArtist && length > 0)
             {
-                // select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * 
-                // from DJSongs where DJListID = '1') B on A.SongID = B.SongID and B.rn between 7 and 10;
-                SqlCommand cmd = new SqlCommand("select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by ");
-                cmd.Parameters.AddWithValue("@DJID", DJID);
-                if (isArtist)
-                    cmd.CommandText += "Artist";
-                else
-                    cmd.CommandText += "Title";
-
-                cmd.CommandText += (") as 'RN', * from DJSongs where DJListID = @DJID");
-
-                if (isArtist && length > 0)
-                {
-                    cmd.CommandText += " and LEFT([Artist], @length) = @firstLetter";
-                    cmd.Parameters.AddWithValue("@length", length);
-                    cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
-                }
-                else if (length > 0)
-                {
-                    cmd.CommandText += " and LEFT([Title], @length) = @firstLetter";
-                    cmd.Parameters.AddWithValue("@length", length);
-                    cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
-                }
-
-                cmd.CommandText += ") B on A.SongID = B.SongID and B.rn between @start and @end;";
-                cmd.Parameters.AddWithValue("@start", (start + 1));
-                cmd.Parameters.AddWithValue("@end", (start + count));
-
-                r = DBQuery(cmd, new string[3] { "SongID", "Title", "Artist" });
-
-                if (r.error)
-                    return r;
-
-                if (r.message.Trim() == string.Empty)
-                {
-                    r.result = 0;
-                    return r;
-                }
-
-                int count2 = 0;
-                string[] songLines = r.message.Trim().Split('\n');
-                foreach (string songLine in songLines)
-                {
-                    string[] songParts = songLine.Split(',');
-                    Song song = new Song();
-                    int id;
-                    if (!int.TryParse(songParts[0], out id))
-                    {
-                        r.error = true;
-                        r.message = "Exception in MobileListSongsSQL: could not parse song id";
-                        return r;
-                    }
-                    song.ID = id;
-                    song.title = songParts[1];
-                    song.artist = songParts[2];
-                    song.pathOnDisk = "";
-                    songs.Add(song);
-                    count2++;
-                }
-                r.message = "";
-                r.result = count2;
-                return r;
+                cmd.CommandText += " and LEFT([Artist], @length) = @firstLetter";
+                cmd.Parameters.AddWithValue("@length", length);
+                cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
             }
-            catch (Exception e)
+            else if (length > 0)
             {
-                r.message = "Exception in MobileSongBrowse " + e.ToString();
-                r.error = true;
-                return r;
+                cmd.CommandText += " and LEFT([Title], @length) = @firstLetter";
+                cmd.Parameters.AddWithValue("@length", length);
+                cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
             }
+
+            cmd.CommandText += ") B on A.SongID = B.SongID and B.rn between @start and @end;";
+            cmd.Parameters.AddWithValue("@start", (start + 1));
+            cmd.Parameters.AddWithValue("@end", (start + count));
+
+            return DBQuery(cmd, new string[4] { "SongID", "Title", "Artist", "Duration" });
         }
         public Response GetVenueIDByQR(string QR)
         {
@@ -733,6 +609,41 @@ namespace KServer
             cmd.Parameters.AddWithValue("@songID", songID);
             cmd.Parameters.AddWithValue("@dateSung", dateSung);
             return DBNonQuery(cmd);
+        }
+        public Response MobileSetSongRating(int mobileID, int songID, int rating)
+        {
+            Response r;
+            SqlCommand cmd = new SqlCommand("select ID from MobileSongRatings where MobileID = @mobileID and SongID = @songID;");
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+            cmd.Parameters.AddWithValue("@songID", songID);
+            r = DBQuery(cmd, new string[1] { "ID" });
+            if (r.error)
+                return r;
+            // We are adding a new song rating.
+            if (r.message.Trim().Length == 0)
+            {
+                cmd = new SqlCommand("insert into MobileSongRatings (SongID, MobileID, Rating) values (@songID, @mobileID, @rating);");
+                cmd.Parameters.AddWithValue("@songID", songID);
+                cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                cmd.Parameters.AddWithValue("@rating", rating);
+                return DBNonQuery(cmd);
+            }
+            // We are updating a new song rating.
+            else
+            {
+                cmd = new SqlCommand("update MobileSongRatings set Rating = @rating where SongID = @songID and MobileID = @mobileID;");
+                cmd.Parameters.AddWithValue("@rating", rating);
+                cmd.Parameters.AddWithValue("@songID", songID);
+                cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                return DBNonQuery(cmd);
+            }
+        }
+        public Response MobileGetSongRating(int mobileID, int songID)
+        {
+            SqlCommand cmd = new SqlCommand("select Rating from MobileSongRatings where MobileID = @mobileID and SongID = @songID;");
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+            cmd.Parameters.AddWithValue("@songID", songID);
+            return DBQuery(cmd, new string[1] { "Rating" });
         }
     }
 }

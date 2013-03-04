@@ -339,7 +339,7 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response DJListSongs(out List<Song> songs, long DJKey)
         {
-            songs = null;
+            songs = new List<Song>();
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
@@ -355,9 +355,44 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Information seems valid, list the songs.
-                r = db.DJListSongs(out songs, DJID);
-                return r;
+                r = db.DJListSongs(DJID);
+
+                if (r.message.Trim() == string.Empty)
+                {
+                    r.message = "Warning: No songs were found";
+                    return r;
+                }
+
+                try
+                {
+                    string[] songLines = r.message.Trim().Split('\n');
+                    foreach (string songLine in songLines)
+                    {
+                        string[] songParts = Common.splitByDel(songLine);
+                        Song song = new Song();
+                        int id;
+                        if (!int.TryParse(songParts[0], out id))
+                        {
+                            r.error = true;
+                            r.message = "Exception in SongListSQL: could not parse song id";
+                            return r;
+                        }
+                        song.ID = id;
+                        song.title = songParts[1];
+                        song.artist = songParts[2];
+                        song.pathOnDisk = songParts[3];
+                        songs.Add(song);
+                    }
+                    r.message = "";
+                    return r;
+                }
+                catch (Exception e)
+                {
+
+                    r.message = "Exception " + e.ToString();
+                    r.error = true;
+                    return r;
+                }
             }
         }
         public Response DJPopQueue(SongRequest sr, long DJKey)
@@ -1078,8 +1113,6 @@ namespace KServer
                 return r;
             }
         }
-
-
 
 
         /// <summary>
