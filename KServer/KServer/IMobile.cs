@@ -57,6 +57,10 @@ namespace KServer
         Response MobileRemoveSongRequest(int songID, long userKey);
 
         [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileMoveSongRequestToTop/?songID={songID}&userKey={userKey}")]
+        Response MobileMoveSongRequestToTop(int songID, long userKey);
+
+        [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileViewQueue/?userKey={userKey}")]
         List<queueSinger> MobileViewQueue(long userKey);
 

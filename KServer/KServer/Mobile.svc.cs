@@ -437,6 +437,10 @@ namespace KServer
                 return r;
             }
         }
+        public Response MobileMoveSongRequestToTop(int songID, long userKey)
+        {
+            return null;
+        }
         public Response MobileRemoveSongRequest(int songID, long userKey)
         {
             int venueID = -1;
