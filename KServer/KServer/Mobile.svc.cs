@@ -501,7 +501,99 @@ namespace KServer
         }
         public Response MobileMoveSongRequestToTop(int songID, long userKey)
         {
-            return null;
+            int venueID = -1;
+            int songExists;
+            int mobileID;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Make sure the client isn't already logged out.
+                r = MobileCheckStatus(mobileID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Get the venueID
+                r = MobileGetVenue(mobileID, db);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                venueID = r.result;
+
+                // Make sure the venue is accepting songs.
+                r = VenueCheckStatus(venueID, "2", db);
+                if (r.error)
+                    return r;
+
+                // Check to see if song exists.
+                r = db.SongExists(venueID, songID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                if (!int.TryParse(r.message.Trim(), out songExists))
+                {
+                    r.error = true;
+                    r.message = "Could not find song in venue library.";
+                    return r;
+                }
+
+                // Get the current song Requests
+                r = db.GetSongRequests(venueID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                string requests = r.message;
+                string newRequests = string.Empty;
+
+                // If there are no song requests.
+                if (requests.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "There are no song requests.";
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                List<queueSinger> queue;
+                r = Common.DBToMinimalList(requests, out queue);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Search to see if the user is already in this list of singers.
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    // We found the userID already in here.
+                    if (queue[i].user.userID == mobileID)
+                    {
+                        // Loop through the songs to find the song.
+                        for (int j = 0; j < queue[i].songs.Count; j++)
+                        {
+                            // Remove this song, and add them to the front of the queue.
+                            if (queue[i].songs[j].ID == songID)
+                            {
+                                Song s = queue[i].songs[j];
+                                queue[i].songs.RemoveAt(j);
+                                queue[i].songs.Insert(0, s);
+                                r = Common.MinimalListToDB(queue, out newRequests);
+                                if(r.error)
+                                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                                r = db.SetSongRequests(venueID, newRequests);
+                                if (r.error)
+                                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                                return r;
+                            }
+                        }  
+                    }
+                }
+
+                // If we couldn't find the user.
+                r.error = true;
+                r.message = "Could not find that song in your queue.";
+                return r;
+            }
         }
         public Response MobileRemoveSongRequest(int songID, long userKey)
         {
@@ -1356,6 +1448,13 @@ namespace KServer
             Response r = new Response();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
+                if (rating < -1 || rating > 5)
+                {
+                    r.error = true;
+                    r.message = "Rating must be between -1 and 5 (inclusive).";
+                    return r;
+                }
+
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID);
                 if (r.error)

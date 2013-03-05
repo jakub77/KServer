@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Web;
+//Adding songs increase speed. Combine queries into one. Use a single connections instead of opening/closing.
 
 namespace KServer
 {
@@ -253,6 +254,10 @@ namespace KServer
             cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBNonQuery(cmd);
         }
+
+
+        
+
         /// <summary>
         /// Add songs to a DJ's library. If a song already exists in that library, it is not added.
         /// If the song exists in the library, but the path is different than the path supplied, the path in the library is updated.
@@ -278,7 +283,10 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
                 r = DBQuery(cmd, new string[1] { "SongID" });
                 if (r.error)
+                {
+                    r.message = "In checking to see if a song matched exactly " + r.message;
                     return r;
+                }
 
                 // If a song matched exactly, no need to add it again/modify it.
                 if (r.message.Trim() != string.Empty)
@@ -294,7 +302,10 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@artist", s.artist);
                 r = DBQuery(cmd, new string[1] { "SongID" });
                 if (r.error)
+                {
+                    r.message = "In checking to see if a song matched except pathOnDisk " + r.message;
                     return r;
+                }
 
                 // If a song just has a differnt path on disk, update the path on disk.
                 if (r.message.Trim() != string.Empty)
@@ -306,7 +317,10 @@ namespace KServer
                     cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
                     r = DBNonQuery(cmd);
                     if (r.error)
+                    {
+                        r.message = "In updating the song to the new pathOnDisk " + r.message;
                         return r;
+                    }
                     songPathsUpdated++;
                     continue;
                 }
@@ -320,7 +334,10 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@Duration", s.duration);
                 r = DBNonQuery(cmd);
                 if (r.error)
+                {
+                    r.message = "In inserting the new song " + r.message;
                     return r;
+                }
                 songsAdded++;
             }
 

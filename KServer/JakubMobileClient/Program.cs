@@ -42,7 +42,7 @@ namespace JakubMobileClient
                     Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>,");
                     Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
                     Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>, songHistory<sh>,");
-                    Console.WriteLine("RateSong<rs>, GetRating<gr>");
+                    Console.WriteLine("RateSong<rs>, GetRating<gr>, MoveSongRequestToTop<st>");
                 }
                 else if (command.StartsWith("xx"))
                 {
@@ -607,6 +607,32 @@ namespace JakubMobileClient
                         int songID = int.Parse(Console.ReadLine());
                         Stream data = client.OpenRead(baseAddress + "/MobileViewSongRating/?songID=" + songID + "&venueID=" + venueID + "&userKey=" + userKey);
 
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+
+                        Response r = strToJSON<Response>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            Console.WriteLine("Error: " + r.error);
+                            Console.WriteLine("Result: " + r.result);
+                            Console.WriteLine("Message:\n" + r.message);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("st"))
+                {
+                    ///MobileMoveSongRequestToTop/?songID={songID}&userKey={userKey}
+                    try
+                    {
+                        Console.WriteLine("SongID:");
+                        int songID = int.Parse(Console.ReadLine());
+                        Stream data = client.OpenRead(baseAddress + "/MobileMoveSongRequestToTop/?songID=" + songID + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
 
