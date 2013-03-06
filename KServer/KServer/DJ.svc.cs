@@ -9,6 +9,13 @@ using System.Security.Permissions;
 using System.Security.Cryptography;
 using System.Diagnostics;
 
+
+// Notes:
+// Change it so playlist songs are in their own table, so cascading works.
+// Change it so queue singer/songs are in their own table, so cascading works.
+// Implement GCM
+
+
 namespace KServer
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Multiple, IncludeExceptionDetailInFaults = true)]
@@ -324,7 +331,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ is not logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJCheckStatus(DJID, "1", db);
                 if (r.error)
                     return r;
 
@@ -1118,6 +1125,39 @@ namespace KServer
                 r.message = time.ToString().Trim();
                 r.result = time;
                 return r;
+            }
+        }
+        public Response DJTestQueueFill(long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                if (DJID != 5)
+                {
+                    r.error = true;
+                    r.message = "You are not the rick account";
+                    return r;
+                }
+
+                // Make sure the DJ isn't logged out.
+                r = DJCheckStatus(DJID, "2", db);
+                if (r.error)
+                    return r;
+
+                // Get the current song Requests
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                string newRequests = "1~32066~31846`3~23565~23504`1002~37516~36965`2~41440~41193";
+                return db.SetSongRequests(DJID, newRequests);
             }
         }
 

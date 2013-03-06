@@ -45,7 +45,22 @@ namespace DJTestClient
                     Console.WriteLine("listDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, listQueue<lq>,"); 
                     Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest(rr)");
                     Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>, createSession<cs>");
-                    Console.WriteLine("newUserWaitTime<nw>");
+                    Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>");
+                }
+                else if (command.StartsWith("tf"))
+                {
+                    Response r;
+                    try
+                    {
+                        r = proxy.DJTestQueueFill(DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("nw"))
                 {

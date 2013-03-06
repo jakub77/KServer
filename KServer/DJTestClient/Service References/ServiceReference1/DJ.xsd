@@ -256,4 +256,18 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="DJTestQueueFill">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJTestQueueFillResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q28="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJTestQueueFillResult" nillable="true" type="q28:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

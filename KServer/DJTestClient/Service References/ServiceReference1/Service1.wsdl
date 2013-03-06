@@ -109,6 +109,12 @@
   <wsdl:message name="IDJ_DJNewUserWaitTime_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJNewUserWaitTimeResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJTestQueueFill_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJTestQueueFill" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJTestQueueFill_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJTestQueueFillResponse" />
+  </wsdl:message>
   <wsdl:portType name="IDJ">
     <wsdl:operation name="DJSignUp">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJSignUp" message="tns:IDJ_DJSignUp_InputMessage" />
@@ -177,6 +183,10 @@
     <wsdl:operation name="DJNewUserWaitTime">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJNewUserWaitTime" message="tns:IDJ_DJNewUserWaitTime_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJNewUserWaitTimeResponse" message="tns:IDJ_DJNewUserWaitTime_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJTestQueueFill">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJTestQueueFill" message="tns:IDJ_DJTestQueueFill_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJTestQueueFillResponse" message="tns:IDJ_DJTestQueueFill_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IDJ" type="tns:IDJ">
@@ -327,6 +337,15 @@
     </wsdl:operation>
     <wsdl:operation name="DJNewUserWaitTime">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJNewUserWaitTime" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJTestQueueFill">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJTestQueueFill" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

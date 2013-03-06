@@ -638,6 +638,9 @@ namespace DJTestClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJNewUserWaitTime", ReplyAction="http://tempuri.org/IDJ/DJNewUserWaitTimeResponse")]
         DJTestClient.ServiceReference1.Response DJNewUserWaitTime(long DJKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJTestQueueFill", ReplyAction="http://tempuri.org/IDJ/DJTestQueueFillResponse")]
+        DJTestClient.ServiceReference1.Response DJTestQueueFill(long DJKey);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -733,6 +736,10 @@ namespace DJTestClient.ServiceReference1 {
         
         public DJTestClient.ServiceReference1.Response DJNewUserWaitTime(long DJKey) {
             return base.Channel.DJNewUserWaitTime(DJKey);
+        }
+        
+        public DJTestClient.ServiceReference1.Response DJTestQueueFill(long DJKey) {
+            return base.Channel.DJTestQueueFill(DJKey);
         }
     }
 }

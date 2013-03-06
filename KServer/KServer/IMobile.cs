@@ -37,8 +37,8 @@ namespace KServer
         Response MobileSignOut(long userKey);
 
         [OperationContract]
-        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongSearch/?title={title}&artist={artist}&venueID={venueID}&userKey={userKey}")]
-        List<Song> MobileSongSearch(string title, string artist, int venueID, long userKey);
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongSearch/?title={title}&artist={artist}&start={start}&count={count}&venueID={venueID}&userKey={userKey}")]
+        List<Song> MobileSongSearch(string title, string artist, int start, int count, int venueID, long userKey);
 
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSongBrowse/?firstLetter={firstLetter}&isArtist={isArtist}&start={start}&count={count}&venueID={venueID}&userKey={userKey}")]

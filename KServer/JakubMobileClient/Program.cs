@@ -171,7 +171,12 @@ namespace JakubMobileClient
                         title = Console.ReadLine();
                         Console.Write("Artist: ");
                         artist = Console.ReadLine();
-                        Stream data = client.OpenRead(baseAddress + "/MobileSongSearch/?title=" + title.Trim() + "&artist=" + artist.Trim() + "&venueID=" + venueID + "&userKey=" + userKey);
+                        Console.WriteLine("Start: ");
+                        int start = int.Parse(Console.ReadLine());
+                        Console.WriteLine("Count: ");
+                        int count = int.Parse(Console.ReadLine());
+                        ///MobileSongSearch/?title={title}&artist={artist}&start={start}&count={count}&venueID={venueID}&userKey={userKey}
+                        Stream data = client.OpenRead(baseAddress + "/MobileSongSearch/?title=" + title.Trim() + "&artist=" + artist.Trim() + "&start=" + start + "&count=" + count + "&venueID=" + venueID + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
 

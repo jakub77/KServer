@@ -172,7 +172,7 @@ namespace KServer
                 return r;
             }
         }
-        public List<Song> MobileSongSearch(string title, string artist, int venueID, long userKey)
+        public List<Song> MobileSongSearch(string title, string artist, int start, int count, int venueID, long userKey)
         {
             int venueStatus;
             int mobileID = -1;
@@ -198,14 +198,13 @@ namespace KServer
                     return (List<Song>)Common.LogError("MobileSongSeach venueID parse fail (bad venueID given?)", Environment.StackTrace, null, 0);
 
                 // Complete the search.
-                r = db.MobileSearchSongs(title.Trim(), artist.Trim(), venueID);
+                r = db.MobileSearchSongs(title.Trim(), artist.Trim(), venueID, start, count);
                 if (r.error)
                     return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
                 if (r.message.Trim() == string.Empty)
                     return songs;
 
-                int count = 0;
                 string[] songLines = r.message.Trim().Split('\n');
                 foreach (string songLine in songLines)
                 {
@@ -221,7 +220,6 @@ namespace KServer
                     Common.LoadSongRating(ref song, mobileID, db);
                     song.pathOnDisk = "";
                     songs.Add(song);
-                    count++;
                 }
                 return songs;
             }

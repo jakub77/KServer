@@ -275,11 +275,7 @@ namespace KServer
                 using (SqlConnection con = new SqlConnection(connectionString))
                 {
                     con.Open();
-                    SqlCommand cmd = new SqlCommand();
-
-                    foreach (Song s in songs)
-                    {
-                        cmd.CommandText = @"Merge DJSongs as target
+                    string cmdText = @"Merge DJSongs as target
                                             using (values(@pathOnDisk, @duration))
 	                                            as source (PathOnDisk, Duration)
 	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
@@ -288,7 +284,11 @@ namespace KServer
                                             when not matched then
 	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
 	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
+                    SqlCommand cmd = new SqlCommand(cmdText, con);
 
+                    foreach (Song s in songs)
+                    {
+                        cmd.Parameters.Clear();
                         cmd.Parameters.AddWithValue("@DJID", DJID);
                         cmd.Parameters.AddWithValue("@title", s.title);
                         cmd.Parameters.AddWithValue("@artist", s.artist);
@@ -299,6 +299,33 @@ namespace KServer
                     }
                     return r;
                 }
+
+//                using (SqlConnection con = new SqlConnection(connectionString))
+//                {
+//                    con.Open();
+//                    SqlCommand cmd = new SqlCommand();
+//                    cmd.CommandText = @"Merge DJSongs as target
+//                                            using (values(@pathOnDisk, @duration))
+//	                                            as source (PathOnDisk, Duration)
+//	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
+//                                            when matched then
+//	                                            update set PathOnDisk = source.PathOnDisk, Duration = source.Duration
+//                                            when not matched then
+//	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
+//	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
+
+//                    foreach (Song s in songs)
+//                    {
+//                        cmd.Parameters.AddWithValue("@DJID", DJID);
+//                        cmd.Parameters.AddWithValue("@title", s.title);
+//                        cmd.Parameters.AddWithValue("@artist", s.artist);
+//                        cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+//                        cmd.Parameters.AddWithValue("@duration", s.duration);
+//                        cmd.Connection = con;
+//                        r.result += cmd.ExecuteNonQuery();
+//                    }
+//                    return r;
+//                }
             }
             catch (Exception e)
             {
@@ -549,28 +576,32 @@ namespace KServer
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
             return DBNonQuery(cmd);
         }
-        public Response MobileSearchSongs(string title, string artist, int DJID)
+        public Response MobileSearchSongs(string title, string artist, int DJID, int start, int count)
         {
-            SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID");
+            title = title.Trim();
+            artist = artist.Trim();
+            SqlCommand cmd = new SqlCommand("select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by");
+            if (title.Length > 0 && artist.Length == 0)
+                cmd.CommandText += " Title";
+            else
+                cmd.CommandText += " Artist";
+
+            cmd.CommandText += (") as 'RN', * from DJSongs where DJListID = @DJID");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            if (title.Trim().Length > 0)
+
+            if (title.Length > 0)
             {
                 cmd.CommandText += " and Title like @title";
-                cmd.Parameters.AddWithValue("@title", ("%" + title + "%").Trim());
+                cmd.Parameters.AddWithValue("@title", "%" + title + "%");
             }
-            if (artist.Trim().Length > 0)
+            if (artist.Length > 0)
             {
                 cmd.CommandText += " and Artist like @artist";
-                cmd.Parameters.AddWithValue("@artist", ("%" + artist + "%").Trim());
+                cmd.Parameters.AddWithValue("@artist", "%" + artist + "%");
             }
-
-            if (title.Trim().Length > 0 && artist.Trim().Length == 0)
-                cmd.CommandText += " order by Title";
-            else
-                cmd.CommandText += " order by Artist";
-
-            cmd.CommandText += ";";
-
+            cmd.CommandText += ") B on A.SongID = B.SongID and B.rn between @start and @end;";
+            cmd.Parameters.AddWithValue("@start", (start + 1));
+            cmd.Parameters.AddWithValue("@end", (start + count));
             return DBQuery(cmd, new string[4] { "SongID", "Title", "Artist", "Duration" });
         }
         public Response MobileBrowseSongs(string firstLetter, bool isArtist, int start, int count, int DJID)

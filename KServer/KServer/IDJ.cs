@@ -58,6 +58,8 @@ namespace KServer
         Response DJPopQueue(SongRequest sr, long DJKey);
         [OperationContract]
         Response DJNewUserWaitTime(long DJKey);
+        [OperationContract]
+        Response DJTestQueueFill(long DJKey);
 
 
     }
