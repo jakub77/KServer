@@ -7,6 +7,7 @@ using System.ServiceModel.Web;
 using System.Text;
 using System.Security.Permissions;
 using System.Security.Cryptography;
+using System.Diagnostics;
 
 namespace KServer
 {
@@ -272,9 +273,11 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        /// Add the given songs to the list of songs for the given DJ.
-        /// Response.result contains the number of songs successfully added.
+        /// Add songs to a DJ's library. If a song with a matching artist and title exists,
+        /// the path on disk and duration are updated to the new values. Otherwise, a new
+        /// song is added to the library.
         /// </summary>
         /// <param name="songs">Songs to add.</param>
         /// <param name="DJKey">Unique DJKey that describes the DJ.</param>
@@ -332,13 +335,14 @@ namespace KServer
         }
         /// <summary>
         /// Get all the songs that belong to the given DJ.
-        /// Response.result contains the number of songs.
         /// </summary>
         /// <param name="songs">OUT parameter that holds the list of songs.</param>
         /// <param name="DJKey">Unique Key that describes the DJ.</param>
         /// <returns>The outcome of the operation.</returns>
         public Response DJListSongs(out List<Song> songs, long DJKey)
         {
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             songs = new List<Song>();
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -355,44 +359,47 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                r = db.DJListSongs(DJID);
+                r = db.DJListSongs(DJID, out songs);
+                sw.Stop();
+                r.result = (int)sw.ElapsedMilliseconds;
+                return r;
 
-                if (r.message.Trim() == string.Empty)
-                {
-                    r.message = "Warning: No songs were found";
-                    return r;
-                }
+                //if (r.message.Trim() == string.Empty)
+                //{
+                //    r.message = "Warning: No songs were found";
+                //    return r;
+                //}
 
-                try
-                {
-                    string[] songLines = r.message.Trim().Split('\n');
-                    foreach (string songLine in songLines)
-                    {
-                        string[] songParts = Common.splitByDel(songLine);
-                        Song song = new Song();
-                        int id;
-                        if (!int.TryParse(songParts[0], out id))
-                        {
-                            r.error = true;
-                            r.message = "Exception in SongListSQL: could not parse song id";
-                            return r;
-                        }
-                        song.ID = id;
-                        song.title = songParts[1];
-                        song.artist = songParts[2];
-                        song.pathOnDisk = songParts[3];
-                        songs.Add(song);
-                    }
-                    r.message = "";
-                    return r;
-                }
-                catch (Exception e)
-                {
+                //try
+                //{
+                //    string[] songLines = r.message.Trim().Split('\n');
+                //    foreach (string songLine in songLines)
+                //    {
+                //        string[] songParts = Common.splitByDel(songLine);
+                //        Song song = new Song();
+                //        int id;
+                //        if (!int.TryParse(songParts[0], out id))
+                //        {
+                //            r.error = true;
+                //            r.message = "Exception in SongListSQL: could not parse song id";
+                //            return r;
+                //        }
+                //        song.ID = id;
+                //        song.title = songParts[1];
+                //        song.artist = songParts[2];
+                //        song.pathOnDisk = songParts[3];
+                //        songs.Add(song);
+                //    }
+                //    r.message = "";
 
-                    r.message = "Exception " + e.ToString();
-                    r.error = true;
-                    return r;
-                }
+                //}
+                //catch (Exception e)
+                //{
+
+                //    r.message = "Exception " + e.ToString();
+                //    r.error = true;
+                //    return r;
+                //}
             }
         }
         public Response DJPopQueue(SongRequest sr, long DJKey)

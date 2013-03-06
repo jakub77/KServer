@@ -210,20 +210,23 @@ namespace DJTestClient
                 }
                 else if (command.StartsWith("as")) // Add a song
                 {
-                    Response r;
-                    string title, artist, pathOnDisk;
-                    Console.WriteLine("Title: ");
-                    title = Console.ReadLine();
-                    Console.WriteLine("Artist: ");
-                    artist = Console.ReadLine();
-                    Console.WriteLine("Path on Disk: ");
-                    pathOnDisk = Console.ReadLine();
                     try
                     {
+                        Response r;
+                        string title, artist, pathOnDisk;
+                        Console.WriteLine("Title: ");
+                        title = Console.ReadLine();
+                        Console.WriteLine("Artist: ");
+                        artist = Console.ReadLine();
+                        Console.WriteLine("Path on Disk: ");
+                        pathOnDisk = Console.ReadLine();
+                        Console.WriteLine("Duration: ");
+                        int duration = int.Parse(Console.ReadLine());
                         Song s = new Song();
                         s.artist = artist;
                         s.title = title;
                         s.pathOnDisk = pathOnDisk;
+                        s.duration = duration;
                         List<Song> songs = new List<Song>();
                         songs.Add(s);
                         r = proxy.DJAddSongs(songs.ToArray(), DJKey);
@@ -276,7 +279,8 @@ namespace DJTestClient
                         Console.WriteLine("Songs: ");
                         if (!r.error)
                             foreach (Song s in songs)
-                                Console.WriteLine(s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk);
+                                Console.WriteLine(s.ID + ", " + s.title + ", " + s.artist + ", " + s.pathOnDisk + ", " + s.duration);
+                        Console.WriteLine("Result: " + r.result);
                     }
                     catch (Exception e)
                     {

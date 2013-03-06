@@ -342,12 +342,14 @@ namespace JakubMobileClient
                 {
                     try
                     {
-                        Console.WriteLine("Enter QR string: or j to auto join Jakub, or h to auto join Hugo");
+                        Console.WriteLine("Enter QR string: or j to auto join Jakub, or h to auto join Hugo, r for rick");
                         string QR = Console.ReadLine().Trim();
                         if (QR.Equals("j"))
                             QR = "04e0df5f";
                         else if (QR.Equals("h"))
                             QR = "aaaaaaaa";
+                        else if (QR.Equals("r"))
+                            QR = "1eba658f";
                         Stream data = client.OpenRead(baseAddress + "/MobileJoinVenue/?QR=" + QR + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();

@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Web;
+using System.Diagnostics;
 //Adding songs increase speed. Combine queries into one. Use a single connections instead of opening/closing.
 
 namespace KServer
@@ -257,97 +258,172 @@ namespace KServer
 
 
         
-
         /// <summary>
-        /// Add songs to a DJ's library. If a song already exists in that library, it is not added.
-        /// If the song exists in the library, but the path is different than the path supplied, the path in the library is updated.
-        /// Returns the number of songs actually added in Response.result.
+        /// Add songs to a DJ's library. If a song with a matching artist and title exists,
+        /// the path on disk and duration are updated to the new values. Otherwise, a new
+        /// song is added to the library.
         /// </summary>
-        /// <param name="songs">Songs to add</param>
-        /// <param name="DJID">DJ's ID.</param>
-        /// <returns></returns>
+        /// <param name="songs">List of songs to add to library</param>
+        /// <param name="DJID">DJ unique identifier</param>
+        /// <returns>Response encoding the sucess of the operation</returns>
         public Response DJAddSongsIgnoringDuplicates(List<Song> songs, int DJID)
         {
-            int songsAlreadyExisted = 0;
-            int songPathsUpdated = 0;
-            int songsAdded = 0;
             Response r = new Response();
             r.result = 0;
-            foreach (Song s in songs)
+            try
             {
-                // Get any song that matches exactly.
-                SqlCommand cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist and PathOnDisk = @pathOnDisk;");
-                cmd.Parameters.AddWithValue("@DJID", DJID);
-                cmd.Parameters.AddWithValue("@title", s.title);
-                cmd.Parameters.AddWithValue("@artist", s.artist);
-                cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                r = DBQuery(cmd, new string[1] { "SongID" });
-                if (r.error)
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    r.message = "In checking to see if a song matched exactly " + r.message;
-                    return r;
-                }
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand();
 
-                // If a song matched exactly, no need to add it again/modify it.
-                if (r.message.Trim() != string.Empty)
-                {
-                    songsAlreadyExisted++;
-                    continue;
-                }
-
-                // Get any song that matches all criteria except path on disk.
-                cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist;");
-                cmd.Parameters.AddWithValue("@DJID", DJID);
-                cmd.Parameters.AddWithValue("@title", s.title);
-                cmd.Parameters.AddWithValue("@artist", s.artist);
-                r = DBQuery(cmd, new string[1] { "SongID" });
-                if (r.error)
-                {
-                    r.message = "In checking to see if a song matched except pathOnDisk " + r.message;
-                    return r;
-                }
-
-                // If a song just has a differnt path on disk, update the path on disk.
-                if (r.message.Trim() != string.Empty)
-                {
-                    cmd = new SqlCommand("update DJSongs set PathOnDisk = @pathOnDisk where DJListID = @DJID and Title = @title and Artist = @artist;");
-                    cmd.Parameters.AddWithValue("@DJID", DJID);
-                    cmd.Parameters.AddWithValue("@title", s.title);
-                    cmd.Parameters.AddWithValue("@artist", s.artist);
-                    cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                    r = DBNonQuery(cmd);
-                    if (r.error)
+                    foreach (Song s in songs)
                     {
-                        r.message = "In updating the song to the new pathOnDisk " + r.message;
-                        return r;
-                    }
-                    songPathsUpdated++;
-                    continue;
-                }
+                        cmd.CommandText = @"Merge DJSongs as target
+                                            using (values(@pathOnDisk, @duration))
+	                                            as source (PathOnDisk, Duration)
+	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
+                                            when matched then
+	                                            update set PathOnDisk = source.PathOnDisk, Duration = source.Duration
+                                            when not matched then
+	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
+	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
 
-                // Otherwise, add the new song.
-                cmd = new SqlCommand("insert into DJSongs (DJListID, Title, Artist, PathOnDisk, Duration) Values (@DJID, @title, @artist, @pathOnDisk, @Duration);");
-                cmd.Parameters.AddWithValue("@DJID", DJID);
-                cmd.Parameters.AddWithValue("@title", s.title);
-                cmd.Parameters.AddWithValue("@artist", s.artist);
-                cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                cmd.Parameters.AddWithValue("@Duration", s.duration);
-                r = DBNonQuery(cmd);
-                if (r.error)
-                {
-                    r.message = "In inserting the new song " + r.message;
+                        cmd.Parameters.AddWithValue("@DJID", DJID);
+                        cmd.Parameters.AddWithValue("@title", s.title);
+                        cmd.Parameters.AddWithValue("@artist", s.artist);
+                        cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+                        cmd.Parameters.AddWithValue("@duration", s.duration);
+                        cmd.Connection = con;
+                        r.result += cmd.ExecuteNonQuery();
+                    }
                     return r;
                 }
-                songsAdded++;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in AddSongs: " + e.Message;
+                return r;
             }
 
-            r.message = string.Empty;
-            if (songsAlreadyExisted > 0)
-                r.message += "Warning: " + songsAlreadyExisted + " song(s) were not added since they already existed\n";
-            if (songPathsUpdated > 0)
-                r.message += "Warning: " + songPathsUpdated + " song(s) were not added, but instead had pathOnDisk updated";
-            r.result = songsAdded;
-            return r;
+            //Response r = new Response();
+            //songs = new List<Song>();
+            //SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;");
+            //cmd.Parameters.AddWithValue("@DJID", DJID);
+
+            //try
+            //{
+            //    using (SqlConnection con = new SqlConnection(connectionString))
+            //    {
+            //        con.Open();
+            //        cmd.Connection = con;
+            //        using (SqlDataReader reader = cmd.ExecuteReader())
+            //        {
+            //            while (reader.Read())
+            //            {
+            //                Song song = new Song();
+            //                song.ID = int.Parse(reader["SongID"].ToString());
+            //                song.title = reader["Title"].ToString();
+            //                song.artist = reader["Artist"].ToString();
+            //                song.pathOnDisk = reader["PathOnDisk"].ToString();
+            //                song.duration = int.Parse(reader["Duration"].ToString());
+            //                songs.Add(song);
+            //            }
+            //        }
+            //    }
+            //    return r;
+            //}
+            //catch (Exception e)
+            //{
+            //    r.error = true;
+            //    r.message = "Exception in DBQuery: " + e.Message;
+            //    return r;
+            //}
+
+
+
+
+            //int songsAlreadyExisted = 0;
+            //int songPathsUpdated = 0;
+            //int songsAdded = 0;
+            //Response r = new Response();
+            //r.result = 0;
+            //foreach (Song s in songs)
+            //{
+            //    // Get any song that matches exactly.
+            //    SqlCommand cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist and PathOnDisk = @pathOnDisk;");
+            //    cmd.Parameters.AddWithValue("@DJID", DJID);
+            //    cmd.Parameters.AddWithValue("@title", s.title);
+            //    cmd.Parameters.AddWithValue("@artist", s.artist);
+            //    cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+            //    r = DBQuery(cmd, new string[1] { "SongID" });
+            //    if (r.error)
+            //    {
+            //        r.message = "In checking to see if a song matched exactly " + r.message;
+            //        return r;
+            //    }
+
+            //    // If a song matched exactly, no need to add it again/modify it.
+            //    if (r.message.Trim() != string.Empty)
+            //    {
+            //        songsAlreadyExisted++;
+            //        continue;
+            //    }
+
+            //    // Get any song that matches all criteria except path on disk.
+            //    cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist;");
+            //    cmd.Parameters.AddWithValue("@DJID", DJID);
+            //    cmd.Parameters.AddWithValue("@title", s.title);
+            //    cmd.Parameters.AddWithValue("@artist", s.artist);
+            //    r = DBQuery(cmd, new string[1] { "SongID" });
+            //    if (r.error)
+            //    {
+            //        r.message = "In checking to see if a song matched except pathOnDisk " + r.message;
+            //        return r;
+            //    }
+
+            //    // If a song just has a differnt path on disk, update the path on disk.
+            //    if (r.message.Trim() != string.Empty)
+            //    {
+            //        cmd = new SqlCommand("update DJSongs set PathOnDisk = @pathOnDisk where DJListID = @DJID and Title = @title and Artist = @artist;");
+            //        cmd.Parameters.AddWithValue("@DJID", DJID);
+            //        cmd.Parameters.AddWithValue("@title", s.title);
+            //        cmd.Parameters.AddWithValue("@artist", s.artist);
+            //        cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+            //        r = DBNonQuery(cmd);
+            //        if (r.error)
+            //        {
+            //            r.message = "In updating the song to the new pathOnDisk " + r.message;
+            //            return r;
+            //        }
+            //        songPathsUpdated++;
+            //        continue;
+            //    }
+
+            //    // Otherwise, add the new song.
+            //    cmd = new SqlCommand("insert into DJSongs (DJListID, Title, Artist, PathOnDisk, Duration) Values (@DJID, @title, @artist, @pathOnDisk, @Duration);");
+            //    cmd.Parameters.AddWithValue("@DJID", DJID);
+            //    cmd.Parameters.AddWithValue("@title", s.title);
+            //    cmd.Parameters.AddWithValue("@artist", s.artist);
+            //    cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+            //    cmd.Parameters.AddWithValue("@Duration", s.duration);
+            //    r = DBNonQuery(cmd);
+            //    if (r.error)
+            //    {
+            //        r.message = "In inserting the new song " + r.message;
+            //        return r;
+            //    }
+            //    songsAdded++;
+            //}
+
+            //r.message = string.Empty;
+            //if (songsAlreadyExisted > 0)
+            //    r.message += "Warning: " + songsAlreadyExisted + " song(s) were not added since they already existed\n";
+            //if (songPathsUpdated > 0)
+            //    r.message += "Warning: " + songPathsUpdated + " song(s) were not added, but instead had pathOnDisk updated";
+            //r.result = songsAdded;
+            //return r;
         }
         public Response DJRemoveSongs(List<Song> songs, int DJID)
         {
@@ -361,6 +437,9 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@title", s.title);
                 cmd.Parameters.AddWithValue("@artist", s.artist);
                 cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+
+
+
                 r = DBNonQuery(cmd);
                 if (r.error)
                     return r;
@@ -375,11 +454,42 @@ namespace KServer
             r.result = songsRemoved;
             return r;
         }
-        public Response DJListSongs(int DJID)
+
+        public Response DJListSongs(int DJID , out List<Song> songs)
         {
+            Response r = new Response();
+            songs = new List<Song>();
             SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBQuery(cmd, new string[5] { "SongID", "Title", "Artist", "PathOnDisk", "Duration" });
+
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    cmd.Connection = con;
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            Song song = new Song();
+                            song.ID = int.Parse(reader["SongID"].ToString());
+                            song.title = reader["Title"].ToString();
+                            song.artist = reader["Artist"].ToString();
+                            song.pathOnDisk = reader["PathOnDisk"].ToString();
+                            song.duration = int.Parse(reader["Duration"].ToString());
+                            songs.Add(song);
+                        }
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJListSongs: " + e.Message;
+                return r;
+            }
         }
 
         public Response MobileListMembers()
