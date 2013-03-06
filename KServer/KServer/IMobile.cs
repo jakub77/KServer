@@ -25,12 +25,16 @@ namespace KServer
         string TestPushNotification(string deviceID);
 
         [OperationContract]
-        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSignUp/?username={username}&password={password}")]
-        Response MobileSignUp(string username, string password);
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/TestPushToMobile/?message={message}&userKey={userKey}")]
+        Response TestPushToMobile(long userKey, string message);
 
         [OperationContract]
-        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSignIn/?username={username}&password={password}")]
-        LogInResponse MobileSignIn(string username, string password);
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSignUp/?username={username}&password={password}&email={email}")]
+        Response MobileSignUp(string username, string password, string email);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSignIn/?username={username}&password={password}&deviceID={deviceID}")]
+        LogInResponse MobileSignIn(string username, string password, string deviceID);
 
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSignOut/?userKey={userKey}")]

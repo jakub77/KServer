@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Text;
 using System.Web;
 
 namespace KServer
@@ -10,6 +12,9 @@ namespace KServer
     {
         public static readonly int TIME_BETWEEN_REQUESTS = 30;
         public static readonly string deliminator = "#~Q";
+        public static readonly string SENDER_ID = "599874388677";
+        public static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
+
         public static string[] splitByDel(string s)
         {
             return s.Split(new string[] { deliminator }, StringSplitOptions.None);
@@ -187,6 +192,55 @@ namespace KServer
             return r;
         }
 
+        public static Response PushMessageToMobile(int mobileID, string message)
+        {
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                string deviceID;
+                r = db.MobileGetDeviceID(mobileID, out deviceID);
+                if (r.error)
+                    return r;
+
+                if (deviceID.Trim().Length == 0)
+                {
+                    r.message = "Warning: No DeviceID was registered for this device";
+                    return r;
+                }
+
+                r = PushAndroidNotification(deviceID, message);
+                if (r.message.ToLower().Contains("error"))
+                    r.error = true;
+                return r;
+            }
+        }
+        public static Response PushAndroidNotification(string deviceID, string message)
+        {
+            Response r = new Response();
+            var value = message;
+            WebRequest tRequest;
+            tRequest = WebRequest.Create("https://android.googleapis.com/gcm/send");
+            tRequest.Method = "post";
+            tRequest.ContentType = " application/x-www-form-urlencoded;charset=UTF-8";
+            tRequest.Headers.Add(string.Format("Authorization: key={0}", APPLICATION_ID));
+            tRequest.Headers.Add(string.Format("Sender: id={0}", SENDER_ID));
+            string postData = "collapse_key=score_update&time_to_live=108&delay_while_idle=1&data.message=" + value + "&data.time=" + System.DateTime.Now.ToString() + "&registration_id=" + deviceID + "";
+            Console.WriteLine(postData);
+            Byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+            tRequest.ContentLength = byteArray.Length;
+            Stream dataStream = tRequest.GetRequestStream();
+            dataStream.Write(byteArray, 0, byteArray.Length);
+            dataStream.Close();
+            WebResponse tResponse = tRequest.GetResponse();
+            dataStream = tResponse.GetResponseStream();
+            StreamReader tReader = new StreamReader(dataStream);
+            String sResponseFromServer = tReader.ReadToEnd();
+            tReader.Close();
+            dataStream.Close();
+            tResponse.Close();
+            r.message = sResponseFromServer;
+            return r;
+        }
  
 
         /// <summary>

@@ -14,6 +14,7 @@ using System.Diagnostics;
 // Change it so playlist songs are in their own table, so cascading works.
 // Change it so queue singer/songs are in their own table, so cascading works.
 // Implement GCM
+// Have MobileSignOut remove the deviceID from the device.
 
 
 namespace KServer
@@ -307,7 +308,7 @@ namespace KServer
                     return r;
 
                 // Adding songs seems to be valid, add the list of songs to the DJ.
-                r = db.DJAddSongsIgnoringDuplicates(songs, DJID);
+                r = db.DJAddSongsUpdatingDuplicates(songs, DJID);
                 return r;
             }
         }
@@ -451,6 +452,9 @@ namespace KServer
                     return r;
                 }
 
+                r = Common.PushMessageToMobile(queue[0].user.userID, "turn");
+                if (r.error)
+                    Common.LogError(r.message, Environment.StackTrace, r, 1);
                 queue[0].songs.RemoveAt(0);
                 if (queue[0].songs.Count == 0)
                 {
@@ -470,6 +474,13 @@ namespace KServer
                     queueSinger temp = queue[0];
                     queue.RemoveAt(0);
                     queue.Add(temp);
+                }
+
+                if (queue.Count > 1)
+                {
+                    r = Common.PushMessageToMobile(queue[0].user.userID, "next");
+                    if (r.error)
+                        Common.LogError(r.message, Environment.StackTrace, r, 1);
                 }
 
                 raw = string.Empty;

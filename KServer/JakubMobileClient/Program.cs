@@ -92,14 +92,16 @@ namespace JakubMobileClient
                 else if (command.StartsWith("su")) // SIGN UP
                 {
                     // Get the username/password from the user.
-                    string username, password;
+                    string username, password, email;
                     Console.Write("Username: ");
                     username = Console.ReadLine();
                     Console.Write("Password: ");
                     password = Console.ReadLine();
+                    Console.Write("Email: ");
+                    email = Console.ReadLine();
 
                     // Form the URL and get results from the server.
-                    Stream data = client.OpenRead(baseAddress + "/MobileSignUp/?username=" + username.Trim() + "&password=" + password.Trim());
+                    Stream data = client.OpenRead(baseAddress + "/MobileSignUp/?username=" + username.Trim() + "&password=" + password.Trim() + "&email=" + email.Trim());
                     // Read the raw results and turn into a string.
                     StreamReader reader = new StreamReader(data);
                     string s = reader.ReadToEnd();
@@ -125,7 +127,7 @@ namespace JakubMobileClient
                     username = Console.ReadLine();
                     Console.Write("Password: ");
                     password = Console.ReadLine();
-                    Stream data = client.OpenRead(baseAddress + "/MobileSignIn/?username=" + username.Trim() + "&password=" + password.Trim());
+                    Stream data = client.OpenRead(baseAddress + "/MobileSignIn/?username=" + username.Trim() + "&password=" + password.Trim() + "&deviceID=");
                     StreamReader reader = new StreamReader(data);
                     string s = reader.ReadToEnd();
                     LogInResponse r = strToJSON<LogInResponse>(s);

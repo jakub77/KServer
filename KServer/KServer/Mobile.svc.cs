@@ -28,11 +28,29 @@ namespace KServer
         }
         public string TestPushNotification(string deviceID)
         {
-            string response = GCMPush.send(deviceID, "Hello there, did you know the time is " + DateTime.Now.ToShortTimeString() + "?");
-            Common.LogError("Google Server Reply for push notification", response, null, 2);
-            return "Googles servers told me: " + response;
+            Response r = Common.PushAndroidNotification(deviceID, "Hello there, did you know the time is " + DateTime.Now.ToShortTimeString() + "?");
+            Common.LogError("Google Server Reply for push notification", r.message, null, 2);
+            return "Googles servers told me: " + r.message;
         }
-        public Response MobileSignUp(string username, string password)
+
+        public Response TestPushToMobile(long userKey, string message)
+        {
+            int mobileID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                return Common.PushMessageToMobile(mobileID, "You sent me: \"" + message + "\"");
+            }
+
+        }
+
+        public Response MobileSignUp(string username, string password, string email)
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
@@ -64,6 +82,18 @@ namespace KServer
                     return r;
                 }
 
+                // Validate the email address.
+                try
+                {
+                    var address = new System.Net.Mail.MailAddress(email);
+                }
+                catch
+                {
+                    r.error = true;
+                    r.message = "Email address is not valid";
+                    return r;
+                }
+
                 // Try to see if the username already exists. If it does, inform the client.
                 r = db.MobileValidateUsername(username);
                 if (r.error)
@@ -76,13 +106,13 @@ namespace KServer
                 }
 
                 // Information seems valid, sign up client and return successfulness.
-                r = db.MobileSignUp(username, password);
+                r = db.MobileSignUp(username, password, email);
                 if(r.error)
                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
                 return r;
             }
         }
-        public LogInResponse MobileSignIn(string username, string password)
+        public LogInResponse MobileSignIn(string username, string password, string deviceID)
         {
             int MobileID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -117,8 +147,7 @@ namespace KServer
                 if (r.error)
                     return new LogInResponse(r);
 
-                // Information seems valid, attempt to sign in.
-                r = db.MobileSetStatus(MobileID, 1);
+                r = db.MobileSignIn(MobileID, deviceID);
                 if (r.error)
                     return (LogInResponse)Common.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
 

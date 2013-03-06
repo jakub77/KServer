@@ -76,7 +76,6 @@
   <ItemGroup>
     <Compile Include="CommonMethods.cs" />
     <Compile Include="DatabaseConnectivity.cs" />
-    <Compile Include="GCMPush.cs" />
     <Compile Include="IMobile.cs" />
     <Compile Include="Mobile.svc.cs">
       <DependentUpon>Mobile.svc</DependentUpon>

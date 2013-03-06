@@ -266,7 +266,7 @@ namespace KServer
         /// <param name="songs">List of songs to add to library</param>
         /// <param name="DJID">DJ unique identifier</param>
         /// <returns>Response encoding the sucess of the operation</returns>
-        public Response DJAddSongsIgnoringDuplicates(List<Song> songs, int DJID)
+        public Response DJAddSongsUpdatingDuplicates(List<Song> songs, int DJID)
         {
             Response r = new Response();
             r.result = 0;
@@ -299,33 +299,6 @@ namespace KServer
                     }
                     return r;
                 }
-
-//                using (SqlConnection con = new SqlConnection(connectionString))
-//                {
-//                    con.Open();
-//                    SqlCommand cmd = new SqlCommand();
-//                    cmd.CommandText = @"Merge DJSongs as target
-//                                            using (values(@pathOnDisk, @duration))
-//	                                            as source (PathOnDisk, Duration)
-//	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
-//                                            when matched then
-//	                                            update set PathOnDisk = source.PathOnDisk, Duration = source.Duration
-//                                            when not matched then
-//	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
-//	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
-
-//                    foreach (Song s in songs)
-//                    {
-//                        cmd.Parameters.AddWithValue("@DJID", DJID);
-//                        cmd.Parameters.AddWithValue("@title", s.title);
-//                        cmd.Parameters.AddWithValue("@artist", s.artist);
-//                        cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-//                        cmd.Parameters.AddWithValue("@duration", s.duration);
-//                        cmd.Connection = con;
-//                        r.result += cmd.ExecuteNonQuery();
-//                    }
-//                    return r;
-//                }
             }
             catch (Exception e)
             {
@@ -333,124 +306,6 @@ namespace KServer
                 r.message = "Exception in AddSongs: " + e.Message;
                 return r;
             }
-
-            //Response r = new Response();
-            //songs = new List<Song>();
-            //SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;");
-            //cmd.Parameters.AddWithValue("@DJID", DJID);
-
-            //try
-            //{
-            //    using (SqlConnection con = new SqlConnection(connectionString))
-            //    {
-            //        con.Open();
-            //        cmd.Connection = con;
-            //        using (SqlDataReader reader = cmd.ExecuteReader())
-            //        {
-            //            while (reader.Read())
-            //            {
-            //                Song song = new Song();
-            //                song.ID = int.Parse(reader["SongID"].ToString());
-            //                song.title = reader["Title"].ToString();
-            //                song.artist = reader["Artist"].ToString();
-            //                song.pathOnDisk = reader["PathOnDisk"].ToString();
-            //                song.duration = int.Parse(reader["Duration"].ToString());
-            //                songs.Add(song);
-            //            }
-            //        }
-            //    }
-            //    return r;
-            //}
-            //catch (Exception e)
-            //{
-            //    r.error = true;
-            //    r.message = "Exception in DBQuery: " + e.Message;
-            //    return r;
-            //}
-
-
-
-
-            //int songsAlreadyExisted = 0;
-            //int songPathsUpdated = 0;
-            //int songsAdded = 0;
-            //Response r = new Response();
-            //r.result = 0;
-            //foreach (Song s in songs)
-            //{
-            //    // Get any song that matches exactly.
-            //    SqlCommand cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist and PathOnDisk = @pathOnDisk;");
-            //    cmd.Parameters.AddWithValue("@DJID", DJID);
-            //    cmd.Parameters.AddWithValue("@title", s.title);
-            //    cmd.Parameters.AddWithValue("@artist", s.artist);
-            //    cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-            //    r = DBQuery(cmd, new string[1] { "SongID" });
-            //    if (r.error)
-            //    {
-            //        r.message = "In checking to see if a song matched exactly " + r.message;
-            //        return r;
-            //    }
-
-            //    // If a song matched exactly, no need to add it again/modify it.
-            //    if (r.message.Trim() != string.Empty)
-            //    {
-            //        songsAlreadyExisted++;
-            //        continue;
-            //    }
-
-            //    // Get any song that matches all criteria except path on disk.
-            //    cmd = new SqlCommand("select SongID from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist;");
-            //    cmd.Parameters.AddWithValue("@DJID", DJID);
-            //    cmd.Parameters.AddWithValue("@title", s.title);
-            //    cmd.Parameters.AddWithValue("@artist", s.artist);
-            //    r = DBQuery(cmd, new string[1] { "SongID" });
-            //    if (r.error)
-            //    {
-            //        r.message = "In checking to see if a song matched except pathOnDisk " + r.message;
-            //        return r;
-            //    }
-
-            //    // If a song just has a differnt path on disk, update the path on disk.
-            //    if (r.message.Trim() != string.Empty)
-            //    {
-            //        cmd = new SqlCommand("update DJSongs set PathOnDisk = @pathOnDisk where DJListID = @DJID and Title = @title and Artist = @artist;");
-            //        cmd.Parameters.AddWithValue("@DJID", DJID);
-            //        cmd.Parameters.AddWithValue("@title", s.title);
-            //        cmd.Parameters.AddWithValue("@artist", s.artist);
-            //        cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-            //        r = DBNonQuery(cmd);
-            //        if (r.error)
-            //        {
-            //            r.message = "In updating the song to the new pathOnDisk " + r.message;
-            //            return r;
-            //        }
-            //        songPathsUpdated++;
-            //        continue;
-            //    }
-
-            //    // Otherwise, add the new song.
-            //    cmd = new SqlCommand("insert into DJSongs (DJListID, Title, Artist, PathOnDisk, Duration) Values (@DJID, @title, @artist, @pathOnDisk, @Duration);");
-            //    cmd.Parameters.AddWithValue("@DJID", DJID);
-            //    cmd.Parameters.AddWithValue("@title", s.title);
-            //    cmd.Parameters.AddWithValue("@artist", s.artist);
-            //    cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-            //    cmd.Parameters.AddWithValue("@Duration", s.duration);
-            //    r = DBNonQuery(cmd);
-            //    if (r.error)
-            //    {
-            //        r.message = "In inserting the new song " + r.message;
-            //        return r;
-            //    }
-            //    songsAdded++;
-            //}
-
-            //r.message = string.Empty;
-            //if (songsAlreadyExisted > 0)
-            //    r.message += "Warning: " + songsAlreadyExisted + " song(s) were not added since they already existed\n";
-            //if (songPathsUpdated > 0)
-            //    r.message += "Warning: " + songPathsUpdated + " song(s) were not added, but instead had pathOnDisk updated";
-            //r.result = songsAdded;
-            //return r;
         }
         public Response DJRemoveSongs(List<Song> songs, int DJID)
         {
@@ -561,14 +416,17 @@ namespace KServer
         }
         // Adds a new mobile client user to the DB.
         // Returns whether it occured successfully.
-        public Response MobileSignUp(string username, string password)
+        public Response MobileSignUp(string username, string password, string email)
         {
-            SqlCommand cmd = new SqlCommand("insert into MobileUsers (Username, Password, Status) Values (@username, @password, @status);");
+            SqlCommand cmd = new SqlCommand("insert into MobileUsers (Username, Password, Status, Email, DeviceID) Values (@username, @password, @status, @email, @deviceID);");
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
             cmd.Parameters.AddWithValue("@status", 0);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@deviceID", String.Empty);
             return DBNonQuery(cmd);
         }
+
         public Response MobileSetStatus(int MobileID, int status)
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set Status = @status where ID = @mobileID;");
@@ -576,6 +434,75 @@ namespace KServer
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
             return DBNonQuery(cmd);
         }
+
+        /// <summary>
+        /// Signs a Mobile user into the sytem. Updates the deviceID and updates status to be logged in.
+        /// </summary>
+        /// <param name="mobileID">The mobile client ID.</param>
+        /// <param name="deviceID">The device id of the phone<./param>
+        /// <returns>Response indicating the success of the operation.</returns>
+        public Response MobileSignIn(int mobileID, string deviceID)
+        {
+            Response r = new Response();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = @deviceID, Status = '1' where ID = @mobileID", con);
+                    cmd.Parameters.AddWithValue("@deviceID", deviceID);
+                    cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                    r.result = cmd.ExecuteNonQuery();
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileSetDeviceID: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Get the Device ID of a Mobile Client's phone.
+        /// </summary>
+        /// <param name="mobileID">The mobile client id.</param>
+        /// <param name="deviceID">Outputs the device id of the phone.</param>
+        /// <returns>Response indicating the success of the operation.</returns>
+        public Response MobileGetDeviceID(int mobileID, out string deviceID)
+        {
+            deviceID = String.Empty;
+            Response r = new Response();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("select DeviceID from MobileUsers where ID = @mobileID", con);
+                    cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            deviceID = reader["DeviceID"].ToString(); ;
+                            return r;
+                        }
+                        r.error = true;
+                        r.message = "MobileID invalid in MobileGetDeviceID";
+                        return r;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileSetDeviceID: " + e.Message;
+                return r;
+            }
+
+        }
+
         public Response MobileSearchSongs(string title, string artist, int DJID, int start, int count)
         {
             title = title.Trim();
