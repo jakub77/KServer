@@ -32,7 +32,6 @@ namespace KServer
             Common.LogError("Google Server Reply for push notification", r.message, null, 2);
             return "Googles servers told me: " + r.message;
         }
-
         public Response TestPushToMobile(long userKey, string message)
         {
             int mobileID = -1;
@@ -49,6 +48,7 @@ namespace KServer
             }
 
         }
+
 
         public Response MobileSignUp(string username, string password, string email)
         {
@@ -794,238 +794,6 @@ namespace KServer
             }
             return r;
         }
-
-        private Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
-        {
-            Response r;
-            int DJStatus, desired;
-            bool notStatus = false;
-            // Get the status of the DJ.
-            r = db.DJGetStatus(venueID);
-            if (r.error)
-                return r;
-
-            // Attempt to parse that status of the DJ.
-            if (!int.TryParse(r.message.Trim(), out DJStatus))
-            {
-                r.error = true;
-                r.message = "Exception in VenueCheckStatus: Unable to parse status from DB!";
-                return r;
-            }
-
-            if (desiredStatus[0] == '!')
-            {
-                notStatus = true;
-                desiredStatus = desiredStatus.Substring(1);
-            }
-
-            if (!int.TryParse(desiredStatus, out desired))
-            {
-                r.error = true;
-                r.message = "Exception in VenueCheckStatus: Cannot parse desired Status";
-                return r;
-            }
-
-            if (!notStatus)
-            {
-                if (DJStatus != desired)
-                {
-                    r.error = true;
-                    if (desired == 0)
-                        r.message = "Venue is online.";
-                    else if (desired == 1)
-                        r.message = "Venue is not online.";
-                    else
-                        r.message = "Venue does not have a session running";
-                    return r;
-                }
-            }
-            else if (DJStatus == desired)
-            {
-                r.error = true;
-                if (desired == 0)
-                    r.message = "Venue is not online.";
-                else if (desired == 1)
-                    r.message = "Venue is online.";
-                else
-                    r.message = "Venue has a session running.";
-                return r;
-            }
-
-            r.result = DJStatus;
-            return r;
-        }
-        private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, int mobileID, DatabaseConnectivity db)
-        {
-            queue = new List<queueSinger>();
-            Response r = new Response();
-            int count = 0;
-
-            string[] clientRequests = raw.Split('`');
-            for (int i = 0; i < clientRequests.Length; i++)
-            {
-                string[] parts = clientRequests[i].Split('~');
-                if (parts.Length == 0)
-                {
-                    r.error = true;
-                    r.message = "Error in DBtoList 1";
-                    return r;
-                }
-
-                queueSinger qs = new queueSinger();
-                qs.songs = new List<Song>();
-                User u = new User();
-                u.userID = int.Parse(parts[0]);
-
-                if (u.userID < 0)
-                    r = db.DJGetTempUserName(u.userID, DJID);
-                else
-                    r = db.MobileIDtoUsername(u.userID);
-
-                if (r.error)
-                    return r;
-                if (r.message.Trim().Length == 0)
-                {
-                    r.error = true;
-                    r.message = "DB Username lookup exception in DJGetQueue!";
-                    return r;
-                }
-
-                u.userName = r.message.Trim();
-                qs.user = u;
-
-                for (int j = 1; j < parts.Length; j++)
-                {
-                    Song song;
-                    r = Common.GetSongInformation(int.Parse(parts[j]), DJID, mobileID, out song, db);
-                    if (r.error)
-                        return r;
-                    qs.songs.Add(song);
-
-                }
-                queue.Add(qs);
-                count++;
-            }
-            return r;
-        }
-        private Response MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db)
-                {
-                    Response r;
-                    int MobileStatus, desired;
-                    bool notStatus = false;
-                    // Get the status of the DJ.
-                    r = db.MobileGetStatus(mobileID);
-                    if (r.error)
-                        return r;
-
-                    // Attempt to parse that status of the DJ.
-                    if (!int.TryParse(r.message.Trim(), out MobileStatus))
-                    {
-                        r.error = true;
-                        r.message = "Exception in MobileCheckStatus: Unable to parse status from DB!";
-                        return r;
-                    }
-
-                    if (desiredStatus[0] == '!')
-                    {
-                        notStatus = true;
-                        desiredStatus = desiredStatus.Substring(1);
-                    }
-
-                    if (!int.TryParse(desiredStatus, out desired))
-                    {
-                        r.error = true;
-                        r.message = "Exception in MobileCheckStatus: Cannot parse desired Status";
-                        return r;
-                    }
-
-                    if (!notStatus)
-                    {
-                        if (MobileStatus != desired)
-                        {
-                            r.error = true;
-                            if (desired == 0)
-                                r.message = "You are not signed out.";
-                            else if (desired == 1)
-                                r.message = "You are not signed in.";
-                            else
-                                r.message = "You are in the wrong state, do you have a venue selected?";
-                            return r;
-                        }
-                    }
-                    else if (MobileStatus == desired)
-                    {
-                        r.error = true;
-                        if (desired == 0)
-                            r.message = "You are signed out and cannot do that.";
-                        else if (desired == 1)
-                            r.message = "You are signed in and cannot do that.";
-                        else
-                            r.message = "You are in the wrong state, do you have a venue selected?";
-                        return r;
-                    }
-
-                    r.result = MobileStatus;
-                    return r;
-                }
-        private Response MobileKeyToID(long MobileKey, out int MobileID)
-        {
-            MobileID = -1;
-            Response r = new Response();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                r = db.MobileGetIDFromKey(MobileKey);
-                if (r.error)
-                    return r;
-                if (r.message.Trim().Length == 0)
-                {
-                    r.error = true;
-                    r.message = "MobileKey is not valid.";
-                    return r;
-                }
-                if (!int.TryParse(r.message.Trim(), out MobileID))
-                {
-                    r.error = true;
-                    r.message = "Exception in MobileKeyToID: MobileKey Parse Fail";
-                    return r;
-                }
-                return r;
-            }
-        }
-        private Response MobileIDToKey(int MobileID, out long MobileKey)
-        {
-            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
-            byte[] res = sha.ComputeHash(BitConverter.GetBytes(MobileID));
-            MobileKey = BitConverter.ToInt64(res, 0);
-
-            Response r = new Response();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                r = db.MobileSetKey(MobileID, MobileKey);
-                if (r.error)
-                    return r;
-            }
-            return r;
-        }
-        private Response MobileGetVenue(int mobileID, DatabaseConnectivity db)
-        {
-            int venueID = -1;
-            Response r = new Response();
-            r = db.MobileGetVenue(mobileID);
-            if (r.error)
-                return r;
-
-            if (!int.TryParse(r.message.Trim(), out venueID))
-            {
-                r.error = true;
-                r.message = "Could not parse venueID from DB";
-                return r;
-            }
-
-            r.result = venueID;
-            return r;
-        }
-
         public Response MobileGetWaitTime(long userKey)
         {
             int venueID = -1;
@@ -1386,10 +1154,7 @@ namespace KServer
                     return (List<Playlist>)Common.LogError(e.Message, e.StackTrace, null, 0);
                 }
             }
-        }
-
-        
-        
+        }    
         public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
         {
             int mobileID = -1;
@@ -1460,12 +1225,6 @@ namespace KServer
                 }
             }
         }
-
-
-
-
-
-        // Anytime songs are requested, put a set the rating field if applicable.
         public Response MobileRateSong(int songID, int rating, int venueID, long userKey)
         {
             int mobileID = -1;
@@ -1590,6 +1349,236 @@ namespace KServer
             }
         }
 
-        // GCM google push notifications.
+
+        private Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
+        {
+            Response r;
+            int DJStatus, desired;
+            bool notStatus = false;
+            // Get the status of the DJ.
+            r = db.DJGetStatus(venueID);
+            if (r.error)
+                return r;
+
+            // Attempt to parse that status of the DJ.
+            if (!int.TryParse(r.message.Trim(), out DJStatus))
+            {
+                r.error = true;
+                r.message = "Exception in VenueCheckStatus: Unable to parse status from DB!";
+                return r;
+            }
+
+            if (desiredStatus[0] == '!')
+            {
+                notStatus = true;
+                desiredStatus = desiredStatus.Substring(1);
+            }
+
+            if (!int.TryParse(desiredStatus, out desired))
+            {
+                r.error = true;
+                r.message = "Exception in VenueCheckStatus: Cannot parse desired Status";
+                return r;
+            }
+
+            if (!notStatus)
+            {
+                if (DJStatus != desired)
+                {
+                    r.error = true;
+                    if (desired == 0)
+                        r.message = "Venue is online.";
+                    else if (desired == 1)
+                        r.message = "Venue is not online.";
+                    else
+                        r.message = "Venue does not have a session running";
+                    return r;
+                }
+            }
+            else if (DJStatus == desired)
+            {
+                r.error = true;
+                if (desired == 0)
+                    r.message = "Venue is not online.";
+                else if (desired == 1)
+                    r.message = "Venue is online.";
+                else
+                    r.message = "Venue has a session running.";
+                return r;
+            }
+
+            r.result = DJStatus;
+            return r;
+        }
+        private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, int mobileID, DatabaseConnectivity db)
+        {
+            queue = new List<queueSinger>();
+            Response r = new Response();
+            int count = 0;
+
+            string[] clientRequests = raw.Split('`');
+            for (int i = 0; i < clientRequests.Length; i++)
+            {
+                string[] parts = clientRequests[i].Split('~');
+                if (parts.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Error in DBtoList 1";
+                    return r;
+                }
+
+                queueSinger qs = new queueSinger();
+                qs.songs = new List<Song>();
+                User u = new User();
+                u.userID = int.Parse(parts[0]);
+
+                if (u.userID < 0)
+                    r = db.DJGetTempUserName(u.userID, DJID);
+                else
+                    r = db.MobileIDtoUsername(u.userID);
+
+                if (r.error)
+                    return r;
+                if (r.message.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "DB Username lookup exception in DJGetQueue!";
+                    return r;
+                }
+
+                u.userName = r.message.Trim();
+                qs.user = u;
+
+                for (int j = 1; j < parts.Length; j++)
+                {
+                    Song song;
+                    r = Common.GetSongInformation(int.Parse(parts[j]), DJID, mobileID, out song, db);
+                    if (r.error)
+                        return r;
+                    qs.songs.Add(song);
+
+                }
+                queue.Add(qs);
+                count++;
+            }
+            return r;
+        }
+        private Response MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db)
+        {
+            Response r;
+            int MobileStatus, desired;
+            bool notStatus = false;
+            // Get the status of the DJ.
+            r = db.MobileGetStatus(mobileID);
+            if (r.error)
+                return r;
+
+            // Attempt to parse that status of the DJ.
+            if (!int.TryParse(r.message.Trim(), out MobileStatus))
+            {
+                r.error = true;
+                r.message = "Exception in MobileCheckStatus: Unable to parse status from DB!";
+                return r;
+            }
+
+            if (desiredStatus[0] == '!')
+            {
+                notStatus = true;
+                desiredStatus = desiredStatus.Substring(1);
+            }
+
+            if (!int.TryParse(desiredStatus, out desired))
+            {
+                r.error = true;
+                r.message = "Exception in MobileCheckStatus: Cannot parse desired Status";
+                return r;
+            }
+
+            if (!notStatus)
+            {
+                if (MobileStatus != desired)
+                {
+                    r.error = true;
+                    if (desired == 0)
+                        r.message = "You are not signed out.";
+                    else if (desired == 1)
+                        r.message = "You are not signed in.";
+                    else
+                        r.message = "You are in the wrong state, do you have a venue selected?";
+                    return r;
+                }
+            }
+            else if (MobileStatus == desired)
+            {
+                r.error = true;
+                if (desired == 0)
+                    r.message = "You are signed out and cannot do that.";
+                else if (desired == 1)
+                    r.message = "You are signed in and cannot do that.";
+                else
+                    r.message = "You are in the wrong state, do you have a venue selected?";
+                return r;
+            }
+
+            r.result = MobileStatus;
+            return r;
+        }
+        private Response MobileKeyToID(long MobileKey, out int MobileID)
+        {
+            MobileID = -1;
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                r = db.MobileGetIDFromKey(MobileKey);
+                if (r.error)
+                    return r;
+                if (r.message.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "MobileKey is not valid.";
+                    return r;
+                }
+                if (!int.TryParse(r.message.Trim(), out MobileID))
+                {
+                    r.error = true;
+                    r.message = "Exception in MobileKeyToID: MobileKey Parse Fail";
+                    return r;
+                }
+                return r;
+            }
+        }
+        private Response MobileIDToKey(int MobileID, out long MobileKey)
+        {
+            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+            byte[] res = sha.ComputeHash(BitConverter.GetBytes(MobileID));
+            MobileKey = BitConverter.ToInt64(res, 0);
+
+            Response r = new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                r = db.MobileSetKey(MobileID, MobileKey);
+                if (r.error)
+                    return r;
+            }
+            return r;
+        }
+        private Response MobileGetVenue(int mobileID, DatabaseConnectivity db)
+        {
+            int venueID = -1;
+            Response r = new Response();
+            r = db.MobileGetVenue(mobileID);
+            if (r.error)
+                return r;
+
+            if (!int.TryParse(r.message.Trim(), out venueID))
+            {
+                r.error = true;
+                r.message = "Could not parse venueID from DB";
+                return r;
+            }
+
+            r.result = venueID;
+            return r;
+        }
     }
 }

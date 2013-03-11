@@ -173,7 +173,7 @@ namespace KServer
                 }
 
                 // Make sure the DJ is not logged in. RIGHT NOW: JUST DON'T CHECK ANYTHING USEFUL TO ALLOW FOR LOGINS TO OCCUR WHEN LOGGED IN!
-                r = DJCheckStatus(DJID, "!4", db);
+                r = DJValidateStatus(DJID, "!4", db);
                 if (r.error)
                     return new LogInResponse(r);
 
@@ -217,7 +217,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ is not logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJValidateStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
 
@@ -228,6 +228,11 @@ namespace KServer
 
                 // Remove the key from the DB.
                 r = db.DJSetKey(DJID, null);
+                if (r.error)
+                    return r;
+
+                // Close out the song requests for this DJ.
+                r = db.DJCloseSongRequests(DJID);
                 return r;
             }
         }
@@ -310,7 +315,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ is not logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJValidateStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
 
@@ -322,6 +327,7 @@ namespace KServer
 
         /// <summary>
         /// Remove given songs from list of songs belonging to the given DJ.
+        /// DJ must be logged in, without a session running to successfully call this method.
         /// </summary>
         /// <param name="songs">The list of songs to Remove.</param>
         /// <param name="DJKey">The Unique DJKey describing the DJ</param>
@@ -338,8 +344,8 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // Make sure the DJ is not logged out.
-                r = DJCheckStatus(DJID, "1", db);
+                // Make sure the DJ is logged in, without a session running.
+                r = DJValidateStatus(DJID, "1", db);
                 if (r.error)
                     return r;
 
@@ -371,7 +377,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJValidateStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
 
@@ -437,7 +443,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -462,8 +468,6 @@ namespace KServer
                 {
                     r.error = true;
                     r.message = "Song Request to Pop did not match first song Request, is your queue out of date?";
-                    r.message += "\nDBUID: " + queue[0].user.userID + ", GUID: " + sr.user.userID;
-                    r.message += "\nDBSID: " + queue[0].songs[0].ID + ", GSID: " + sr.songID;
                     return r;
                 }
 
@@ -532,7 +536,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ is not logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -582,7 +586,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -762,7 +766,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -857,7 +861,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -972,7 +976,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -1044,7 +1048,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -1112,7 +1116,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ is not logged out.
-                r = DJCheckStatus(DJID, "!0", db);
+                r = DJValidateStatus(DJID, "!0", db);
                 if (r.error)
                     return r;
 
@@ -1130,7 +1134,7 @@ namespace KServer
         /// Close a DJ's session. The DJ must have a session running for this to work.
         /// </summary>
         /// <param name="DJKey">The DJKey assigned to the DJ.</param>
-        /// <returns>The outcome of the operation.</returns>
+        /// <returns>The outcome of the operation.b</returns>
         public Response DJStopSession(long DJKey)
         {
             int DJID = -1;
@@ -1144,7 +1148,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ has a session running.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -1178,7 +1182,7 @@ namespace KServer
                     return r;
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -1236,7 +1240,7 @@ namespace KServer
                 }
 
                 // Make sure the DJ isn't logged out.
-                r = DJCheckStatus(DJID, "2", db);
+                r = DJValidateStatus(DJID, "2", db);
                 if (r.error)
                     return r;
 
@@ -1250,7 +1254,6 @@ namespace KServer
             }
         }
 
-
         /// <summary>
         /// Check the status of the DJ. Returns whether the desired status was found.
         /// </summary>
@@ -1258,7 +1261,7 @@ namespace KServer
         /// <param name="desiredStatus">The desired status, 2 or !1 etc.</param>
         /// <param name="db">The database object to use.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
+        private Response DJValidateStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
             int DJStatus, desired;
