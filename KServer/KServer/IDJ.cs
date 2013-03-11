@@ -29,6 +29,8 @@ namespace KServer
         [OperationContract]
         Response DJCreateSession(long DJKey);
         [OperationContract]
+        Response DJStopSession(long DJKey);
+        [OperationContract]
         Response DJGetQRNumber(long DJKey);
         [OperationContract]
         Response DJGenerateNewQRNumber(long DJKey);

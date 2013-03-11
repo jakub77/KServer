@@ -13,8 +13,8 @@ using System.Diagnostics;
 // Notes:
 // Change it so playlist songs are in their own table, so cascading works.
 // Change it so queue singer/songs are in their own table, so cascading works.
-// Implement GCM
 // Have MobileSignOut remove the deviceID from the device.
+// Have a DJ stop session.
 
 
 namespace KServer
@@ -24,12 +24,14 @@ namespace KServer
     public class Service1 : IDJ
     {
         /// <summary>
-        /// Sign a DJ up for the service.
-        /// If an error occurs, the Response will have error set to true, and the error message will be in message.
+        /// Registers a DJ for the Mobioke service.
+        /// If an error occurs, the response will describe the error.
         /// </summary>
-        /// <param name="username">The requested username.</param>
-        /// <param name="password">The requested password.</param>
-        /// <returns>The success of the operation.</returns>
+        /// <param name="username">The username to use. Must not be in use by the service already</param>
+        /// <param name="password">The password to use.</param>
+        /// <param name="venue">Object that describes the DJ's venue.</param>
+        /// <param name="email">The email address of the DJ</param>
+        /// <returns>A Response object indicating the result of the operation.</returns>
         public Response DJSignUp(string username, string password, Venue venue, string email)
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -131,6 +133,7 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
         /// Attempts to sign in the DJ using the given credentials.
         /// If an error occurs, the LogInResponse will have the error field as true, and the error will be in message.
@@ -138,6 +141,7 @@ namespace KServer
         /// <param name="username">Username to sign in with.</param>
         /// <param name="password">Password to sign in with.</param>
         /// <returns>LogInReponse returns the outcome. The UserKey sent back is used for all communicaiton in further methods.</returns>
+        /// 
         public LogInResponse DJSignIn(string username, string password)
         {
             int DJID = -1;
@@ -194,10 +198,11 @@ namespace KServer
                 return lr;
             }
         }
+
         /// <summary>
-        /// Attempt to sign out the DJ belonging to the DJKey.
+        /// Attempt to sign out the DJ. 
         /// </summary>
-        /// <param name="DJKey">The Unique DJKey that describes the DJ.</param>
+        /// <param name="DJKey">The DJKey of the DJ.</param>
         /// <returns>The outcome of the operation.</returns>
         public Response DJSignOut(long DJKey)
         {
@@ -226,11 +231,12 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        /// Completed
+        /// Discard the current QR code for the DJ and generate a new QR code.
         /// </summary>
-        /// <param name="DJKey"></param>
-        /// <returns></returns>
+        /// <param name="DJKey">The DJKey of the DJ.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJGenerateNewQRNumber(long DJKey)
         {
             Response r;
@@ -253,10 +259,11 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        ///  Complete
+        /// Get the QR Code belonging the the DJ. Returned in Response.message.
         /// </summary>
-        /// <param name="DJKey"></param>
+        /// <param name="DJKey">The DJKey of the DJ.</param>
         /// <returns></returns>
         public Response DJGetQRNumber(long DJKey)
         {
@@ -284,8 +291,8 @@ namespace KServer
 
         /// <summary>
         /// Add songs to a DJ's library. If a song with a matching artist and title exists,
-        /// the path on disk and duration are updated to the new values. Otherwise, a new
-        /// song is added to the library.
+        /// the song is updated to the newly supplied duration and path on disk, otherwise
+        /// a new song is added to the DJ's library.
         /// </summary>
         /// <param name="songs">Songs to add.</param>
         /// <param name="DJKey">Unique DJKey that describes the DJ.</param>
@@ -312,13 +319,13 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
         /// Remove given songs from list of songs belonging to the given DJ.
-        /// Response.result contains the number of songs successfully removed.
         /// </summary>
         /// <param name="songs">The list of songs to Remove.</param>
         /// <param name="DJKey">The Unique DJKey describing the DJ</param>
-        /// <returns></returns>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJRemoveSongs(List<Song> songs, long DJKey)
         {
             int DJID = -1;
@@ -341,6 +348,7 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
         /// Get all the songs that belong to the given DJ.
         /// </summary>
@@ -410,6 +418,13 @@ namespace KServer
                 //}
             }
         }
+
+        /// <summary>
+        /// Pop the top song off the queue and updates the queue.
+        /// </summary>
+        /// <param name="sr">A Song request that represents the top song off the queue. Must match what the server believes is the top of the queue. Used to make sure the queues are in sync.</param>
+        /// <param name="DJKey">The DJKey given to the DJ.</param>
+        /// <returns>The outcome of the operaton.</returns>
         public Response DJPopQueue(SongRequest sr, long DJKey)
         {
             int DJID = -1;
@@ -496,12 +511,13 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        /// Done
+        /// Get the DJ's queue from the server.
         /// </summary>
-        /// <param name="queue"></param>
-        /// <param name="DJKey"></param>
-        /// <returns></returns>
+        /// <param name="queue">The out parameter that represents the queue.</param>
+        /// <param name="DJKey">The DJKey assigned to the DJ.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJGetQueue(out List<queueSinger> queue, long DJKey)
         {
             queue = new List<queueSinger>();
@@ -539,13 +555,18 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        /// Done
+        /// Add a song request to the queue. Automatically figures out of the user is already in the queue or not.
+        /// If the song request userID is > 0, matches based on registered user id.
+        /// If the song request userID is 0, matches based in registered user name.
+        /// If the song request uesrID is less than 0, matches based on temporary user name.
+        /// Automaticlaly creates the temporary user if needed.
         /// </summary>
-        /// <param name="sr"></param>
-        /// <param name="queueIndex"></param>
-        /// <param name="DJKey"></param>
-        /// <returns></returns>
+        /// <param name="sr">The song request to add.</param>
+        /// <param name="queueIndex">The position to add the user in, if they don't already have song requests in the queue.</param>
+        /// <param name="DJKey">The DJ's assigned key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey)
         {
             int DJID = -1;
@@ -577,6 +598,9 @@ namespace KServer
                     r.message = "Could not find song";
                     return r;
                 }
+
+                if (sr.user.userID < -1)
+                    sr.user.userID = -1;
 
                 // when userID == -1, we are dealing with creating an anonmymous user.
                 if (sr.user.userID == -1)
@@ -718,12 +742,13 @@ namespace KServer
                 return db.SetSongRequests(DJID, newRequests);
             }
         }
+
         /// <summary>
-        /// Done
+        /// Remove a song request from the queue. If the user has multiple song requests, only removes the specified one.
         /// </summary>
-        /// <param name="sr"></param>
-        /// <param name="DJKey"></param>
-        /// <returns></returns>
+        /// <param name="sr">The song request to remove.</param>
+        /// <param name="DJKey">The DJ's assigned key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJRemoveSongRequest(SongRequest sr, long DJKey)
         {
             int DJID = -1;
@@ -802,13 +827,14 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        /// Done
+        /// Changes a user's song request.
         /// </summary>
-        /// <param name="newSR"></param>
-        /// <param name="oldSR"></param>
-        /// <param name="DJKey"></param>
-        /// <returns></returns>
+        /// <param name="newSR">The new song request to user.</param>
+        /// <param name="oldSR">The old song request to replace.</param>
+        /// <param name="DJKey">The DJ's assigned key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, long DJKey)
         {
             int DJID = -1;
@@ -926,12 +952,13 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        /// Done
+        /// Remove a user from the queue. All of the user's song requests are removed.
         /// </summary>
-        /// <param name="userID"></param>
-        /// <param name="DJKey"></param>
-        /// <returns></returns>
+        /// <param name="userID">The userID of the user</param>
+        /// <param name="DJKey">The DJ's assigned key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJRemoveUser(int userID, long DJKey)
         {
             int DJID = -1;
@@ -996,13 +1023,14 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
-        /// Done
+        /// Move the user to a new position in the queue (Zero based).
         /// </summary>
-        /// <param name="userID"></param>
-        /// <param name="index"></param>
-        /// <param name="DJKey"></param>
-        /// <returns></returns>
+        /// <param name="userID">The user's ID.</param>
+        /// <param name="index">The new index of the user.</param>
+        /// <param name="DJKey">The DJ's assigned key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJMoveUser(int userID, int index, long DJKey)
         {
             int DJID = -1;
@@ -1065,6 +1093,12 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Starts a DJ session up. Mobile users can now make song requests, The DJ can now control the queue.
+        /// </summary>
+        /// <param name="DJKey">The DJ's assigned key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJCreateSession(long DJKey)
         {
             int DJID = -1;
@@ -1089,9 +1123,47 @@ namespace KServer
                 // Create a new field for song requests.
                 r = db.DJOpenSongRequests(DJID);
                 return r;
-
             }
         }
+
+        /// <summary>
+        /// Close a DJ's session. The DJ must have a session running for this to work.
+        /// </summary>
+        /// <param name="DJKey">The DJKey assigned to the DJ.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response DJStopSession(long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ has a session running.
+                r = DJCheckStatus(DJID, "2", db);
+                if (r.error)
+                    return r;
+
+                // Set the status of the DJ to logged in.
+                r = db.DJSetStatus(DJID, 1);
+                if (r.error)
+                    return r;
+
+                // Delete the song request field.
+                r = db.DJCloseSongRequests(DJID);
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Get the approximate wait time for a new user if they were to join the queue. If no error occures, result stored in result and message.
+        /// </summary>
+        /// <param name="DJKey">The DJ key assigned to the DJ.</param>
+        /// <returns>The outcome of the opeartion.</returns>
         public Response DJNewUserWaitTime(long DJKey)
         {
             int DJID = -1;
@@ -1138,6 +1210,12 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Create a test Queue for the Rick account. Does not work with any other account.
+        /// </summary>
+        /// <param name="DJKey">The DJ Key assigned to the Rick account.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJTestQueueFill(long DJKey)
         {
             int DJID = -1;
@@ -1174,12 +1252,12 @@ namespace KServer
 
 
         /// <summary>
-        /// Done
+        /// Check the status of the DJ. Returns whether the desired status was found.
         /// </summary>
-        /// <param name="DJID"></param>
-        /// <param name="desiredStatus"></param>
-        /// <param name="db"></param>
-        /// <returns></returns>
+        /// <param name="DJID">The DJID for the DJ.</param>
+        /// <param name="desiredStatus">The desired status, 2 or !1 etc.</param>
+        /// <param name="db">The database object to use.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response DJCheckStatus(int DJID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
@@ -1240,6 +1318,7 @@ namespace KServer
             r.result = DJStatus;
             return r;
         }
+
         /// <summary>
         /// Convert a DJKey to a DJID.
         /// </summary>
@@ -1270,6 +1349,7 @@ namespace KServer
                 return r;
             }
         }
+
         /// <summary>
         /// Convert a DJID to a DJKey.
         /// </summary>

@@ -223,6 +223,12 @@ namespace KServer
             cmd.Parameters.AddWithValue("@venue", DJID);
             return DBNonQuery(cmd);
         }
+        public Response DJCloseSongRequests(int DJID)
+        {
+            SqlCommand cmd = new SqlCommand("delete from DJSongRequests where ListDJID = @DJID;");
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBNonQuery(cmd);
+        }
         public Response DJOpenSongRequests(int DJID)
         {
             SqlCommand cmd = new SqlCommand("delete from DJSongRequests where ListDJID = @DJID;");
