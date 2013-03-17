@@ -13,8 +13,6 @@ using System.Diagnostics;
 // Notes:
 // Change it so playlist songs are in their own table, so cascading works.
 // Change it so queue singer/songs are in their own table, so cascading works.
-// Have MobileSignOut remove the deviceID from the device.
-// Have a DJ stop session.
 
 
 namespace KServer

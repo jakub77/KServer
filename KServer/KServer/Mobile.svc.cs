@@ -185,7 +185,7 @@ namespace KServer
                     return r;
 
                 // A sign out seems to be valid.
-                r = db.MobileSetStatus(MobileID, 0);
+                r = db.MobileSignOut(MobileID);
                 if(r.error)
                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
 

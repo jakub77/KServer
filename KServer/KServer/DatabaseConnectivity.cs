@@ -442,6 +442,33 @@ namespace KServer
         }
 
         /// <summary>
+        /// Signs a Mobile user out of the sytem. Update the deviceID to be empty and sets the status to be logged out.
+        /// </summary>
+        /// <param name="mobileID">The mobile client ID.</param>
+        /// <returns>The success of the operation.</returns>
+        public Response MobileSignOut(int mobileID)
+        {
+            Response r = new Response();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = '', Status = '0' where ID = @mobileID;", con);
+                    cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                    r.result = cmd.ExecuteNonQuery();
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileSignOut: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
         /// Signs a Mobile user into the sytem. Updates the deviceID and updates status to be logged in.
         /// </summary>
         /// <param name="mobileID">The mobile client ID.</param>
@@ -465,7 +492,7 @@ namespace KServer
             catch (Exception e)
             {
                 r.error = true;
-                r.message = "Exception in MobileSetDeviceID: " + e.Message;
+                r.message = "Exception in MobileSignIn: " + e.Message;
                 return r;
             }
         }
