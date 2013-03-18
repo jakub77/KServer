@@ -9,11 +9,9 @@ using System.Security.Permissions;
 using System.Security.Cryptography;
 using System.Diagnostics;
 
-
 // Notes:
 // Change it so playlist songs are in their own table, so cascading works.
 // Change it so queue singer/songs are in their own table, so cascading works.
-
 
 namespace KServer
 {
@@ -568,7 +566,7 @@ namespace KServer
         /// <param name="sr">The song request to add.</param>
         /// <param name="queueIndex">The position to add the user in, if they don't already have song requests in the queue.</param>
         /// <param name="DJKey">The DJ's assigned key.</param>
-        /// <returns>The outcome of the operation.</returns>
+        /// <returns>The outcome of the operation. If the operation is sucessful, the client ID number is returned in result and message.</returns>
         public Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey)
         {
             int DJID = -1;
@@ -720,7 +718,12 @@ namespace KServer
                         s.ID = sr.songID;
                         queue[i].songs.Add(s);
                         Common.MinimalListToDB(queue, out newRequests);
-                        return db.SetSongRequests(DJID, newRequests);
+                        r = db.SetSongRequests(DJID, newRequests);
+                        if (r.error)
+                            return r;
+                        r.message = clientID.ToString();
+                        r.result = clientID;
+                        return r;
                     }
                 }
 
@@ -741,7 +744,12 @@ namespace KServer
                     queueIndex = queue.Count;
                 queue.Insert(queueIndex, qs);
                 Common.MinimalListToDB(queue, out newRequests);
-                return db.SetSongRequests(DJID, newRequests);
+                r = db.SetSongRequests(DJID, newRequests);
+                if (r.error)
+                    return r;
+                r.message = clientID.ToString();
+                r.result = clientID;
+                return r;
             }
         }
 
@@ -951,6 +959,93 @@ namespace KServer
                 // We didn't find the user.
                 r.error = true;
                 r.message = "Could not find the user.";
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Move a song in a user's song requets new a new position in his/her song requests.
+        /// Does not move singers, moves a singer's songs.
+        /// </summary>
+        /// <param name="sr">The song request to move</param>
+        /// <param name="newIndex">The new index to insert the song into.</param>
+        /// <param name="DJKey">The unique key that describes the DJ.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response DJMoveSongRequest(SongRequest sr, int newIndex, long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                Response r = new Response();
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ isn't logged out.
+                r = DJValidateStatus(DJID, "2", db);
+                if (r.error)
+                    return r;
+
+                // Get the current song Requests
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                string requests = r.message;
+                string newRequests = string.Empty;
+
+                // If there were no requests, simply add the single request.
+                if (requests.Trim().Length == 0)
+                {
+                    r.error = true;
+                    r.message = "The queue is empty";
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                List<queueSinger> queue;
+                r = Common.DBToMinimalList(requests, out queue);
+                if (r.error)
+                    return r;
+
+                // Search to see if the user is already in this list of singers.
+                for (int i = 0; i < queue.Count; i++)
+                {
+                    // We found the userID already in here.
+                    if (queue[i].user.userID == sr.user.userID)
+                    {
+                        // Loop through the songs to see if the user is already singing this song.
+                        for (int j = 0; j < queue[i].songs.Count; j++)
+                        {
+                            // If we find the song.
+                            if (queue[i].songs[j].ID == sr.songID)
+                            {
+                                // Make sure the indexes are in range.
+                                if (newIndex < 0)
+                                    newIndex = 0;
+                                if (newIndex > queue[i].songs.Count - 1)
+                                    newIndex = queue[i].songs.Count - 1;
+
+                                // Get the song out, and insert it into the new index.
+                                Song temp = queue[i].songs[j];
+                                queue[i].songs.RemoveAt(j);
+                                queue[i].songs.Insert(newIndex, temp);
+                                Common.MinimalListToDB(queue, out newRequests);
+                                return db.SetSongRequests(DJID, newRequests);
+                            }
+
+                        }
+                        // If we can't find the current song.
+                        r.error = true;
+                        r.message = "Could not find the song to move.";
+                        return r;
+                    }
+                }
+
+                r.error = true;
+                r.message = "Could not find client in the queue.";
                 return r;
             }
         }
@@ -1230,10 +1325,10 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                if (DJID != 5)
+                if (DJID != 5 && DJID != 4)
                 {
                     r.error = true;
-                    r.message = "You are not the rick account";
+                    r.message = "You are not the rick or jakub account.";
                     return r;
                 }
 
@@ -1247,7 +1342,12 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                string newRequests = "1~32066~31846`3~23565~23504`1002~37516~36965`2~41440~41193";
+                string newRequests = string.Empty;
+                if (DJID == 5)
+                    newRequests = "1~32066~31846`3~23565~23504`1002~37516~36965`2~41440~41193";
+                else if (DJID == 4)
+                    newRequests = "1~55474~56758`2~59321~42050`3~43357~47751";
+
                 return db.SetSongRequests(DJID, newRequests);
             }
         }

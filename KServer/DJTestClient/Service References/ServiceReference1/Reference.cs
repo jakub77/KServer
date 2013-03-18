@@ -600,6 +600,9 @@ namespace DJTestClient.ServiceReference1 {
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJCreateSession", ReplyAction="http://tempuri.org/IDJ/DJCreateSessionResponse")]
         DJTestClient.ServiceReference1.Response DJCreateSession(long DJKey);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJStopSession", ReplyAction="http://tempuri.org/IDJ/DJStopSessionResponse")]
+        DJTestClient.ServiceReference1.Response DJStopSession(long DJKey);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJGetQRNumber", ReplyAction="http://tempuri.org/IDJ/DJGetQRNumberResponse")]
         DJTestClient.ServiceReference1.Response DJGetQRNumber(long DJKey);
         
@@ -623,6 +626,9 @@ namespace DJTestClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJChangeSongRequest", ReplyAction="http://tempuri.org/IDJ/DJChangeSongRequestResponse")]
         DJTestClient.ServiceReference1.Response DJChangeSongRequest(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, long DJKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJMoveSongRequest", ReplyAction="http://tempuri.org/IDJ/DJMoveSongRequestResponse")]
+        DJTestClient.ServiceReference1.Response DJMoveSongRequest(DJTestClient.ServiceReference1.SongRequest sr, int newIndex, long DJKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJRemoveUser", ReplyAction="http://tempuri.org/IDJ/DJRemoveUserResponse")]
         DJTestClient.ServiceReference1.Response DJRemoveUser(int userID, long DJKey);
@@ -686,6 +692,10 @@ namespace DJTestClient.ServiceReference1 {
             return base.Channel.DJCreateSession(DJKey);
         }
         
+        public DJTestClient.ServiceReference1.Response DJStopSession(long DJKey) {
+            return base.Channel.DJStopSession(DJKey);
+        }
+        
         public DJTestClient.ServiceReference1.Response DJGetQRNumber(long DJKey) {
             return base.Channel.DJGetQRNumber(DJKey);
         }
@@ -716,6 +726,10 @@ namespace DJTestClient.ServiceReference1 {
         
         public DJTestClient.ServiceReference1.Response DJChangeSongRequest(DJTestClient.ServiceReference1.SongRequest newSR, DJTestClient.ServiceReference1.SongRequest oldSR, long DJKey) {
             return base.Channel.DJChangeSongRequest(newSR, oldSR, DJKey);
+        }
+        
+        public DJTestClient.ServiceReference1.Response DJMoveSongRequest(DJTestClient.ServiceReference1.SongRequest sr, int newIndex, long DJKey) {
+            return base.Channel.DJMoveSongRequest(sr, newIndex, DJKey);
         }
         
         public DJTestClient.ServiceReference1.Response DJRemoveUser(int userID, long DJKey) {

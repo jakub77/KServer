@@ -1349,7 +1349,6 @@ namespace KServer
             }
         }
 
-
         private Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;

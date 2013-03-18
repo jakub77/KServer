@@ -51,6 +51,8 @@ namespace KServer
         [OperationContract]
         Response DJChangeSongRequest(SongRequest newSR, SongRequest oldSR, long DJKey);
         [OperationContract]
+        Response DJMoveSongRequest(SongRequest sr, int newIndex, long DJKey);
+        [OperationContract]
         Response DJRemoveUser(int userID, long DJKey);
         [OperationContract]
         Response DJMoveUser(int userID, int index, long DJKey);
