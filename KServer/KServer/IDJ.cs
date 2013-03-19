@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// This is the declaration of what methods the DJ can call on the server.
+// Each operation contract is commented in DJ.svc.cs. This file also contains
+// all data contracts that are used throughout the server. 
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -8,18 +13,10 @@ using System.Text;
 
 namespace KServer
 {
-    //public interface IService1Callback
-    //{
-    //    [OperationContract(IsOneWay=true)]
-    //    void DJQueueChanged(List<queueSinger> queue);
-    //}
-    // SessionMode = SessionMode.Allowed,
-    //  [ServiceContract(CallbackContract = typeof(IService1Callback))]
     [ServiceContract()]
     public interface IDJ
     {
-        // DJ STUFF
-        // Log in etc
+        // Log in /etc
         [OperationContract]
         Response DJSignUp(string userName, string password, Venue venue, string email);
         [OperationContract]
@@ -64,14 +61,9 @@ namespace KServer
         Response DJNewUserWaitTime(long DJKey);
         [OperationContract]
         Response DJTestQueueFill(long DJKey);
-
-
     }
 
-
-    // Use a data contract as illustrated in the sample below to add composite types to service operations.
-
-    // Song History
+    // Describes a song history object.
     [DataContract]
     public class SongHistory
     {
@@ -105,6 +97,7 @@ namespace KServer
         public string userName { get; set; }
     }
 
+    // Describe a playlist.
     [DataContract]
     public class Playlist
     {
@@ -164,6 +157,7 @@ namespace KServer
         public int songID { get; set; }
     }
 
+    // Describe a user in the queue.
     [DataContract]
     public class queueSinger
     {
@@ -173,6 +167,7 @@ namespace KServer
         public List<Song> songs { get; set; }
     }
 
+    // Desribe a response passed between functions.
     [DataContract]
     public class Response
     {
@@ -190,6 +185,7 @@ namespace KServer
         public int result { get; set; }
     }
 
+    // Describe a reponse only used for logins.
     [DataContract]
     public class LogInResponse
     {
@@ -223,6 +219,7 @@ namespace KServer
         public int result { get; set; }
     }
 
+    // Describe a user's credentials.
     [DataContract]
     public class Credentials
     {

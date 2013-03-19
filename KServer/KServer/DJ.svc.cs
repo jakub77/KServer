@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// DJ contains all the methods that the DJ client can call. This is how the
+// DJ client interfaces with the server and mobile users. This implements the
+// interface defined in IDJ.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;

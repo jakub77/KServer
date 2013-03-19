@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// This contains all the methods a mobile user can call on the server.
+// This implemented the service contract defined in IMobile.cs
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -7,13 +11,14 @@ using System.Text;
 
 namespace KServer
 {
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Mobile" in code, svc and config file together.
-    //[ServiceBehavior(AddressFilterMode = AddressFilterMode.Any, ConcurrencyMode = ConcurrencyMode.Multiple, SessionMode = SessionMode.)]
-    //[ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Multiple, IncludeExceptionDetailInFaults = true)]
-
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple, IncludeExceptionDetailInFaults = true, AddressFilterMode = AddressFilterMode.Any)]
     public class Mobile : IMobile
     {
+        /// <summary>
+        /// Simple test to see if a client can connect to the server.
+        /// </summary>
+        /// <param name="s">A strong to reverse.</param>
+        /// <returns>A response containing the reversed string and string length.</returns>
         public Response test(string s)
         {
             Response r = new Response();
@@ -22,16 +27,34 @@ namespace KServer
             r.result = s.Length;
             return r;
         }
+
+        /// <summary>
+        /// A simple method to get the current server's time.
+        /// </summary>
+        /// <returns>The datetime.</returns>
         public DateTime GetDateTime()
         {
             return DateTime.Now;
         }
+
+        /// <summary>
+        /// A simple method to test pushing a notification to the android deviceID.
+        /// </summary>
+        /// <param name="deviceID">The deviceID to send to.</param>
+        /// <returns>Returns the message google's GCM servers send the server.</returns>
         public string TestPushNotification(string deviceID)
         {
             Response r = Common.PushAndroidNotification(deviceID, "Hello there, did you know the time is " + DateTime.Now.ToShortTimeString() + "?");
             Common.LogError("Google Server Reply for push notification", r.message, null, 2);
             return "Googles servers told me: " + r.message;
         }
+
+        /// <summary>
+        /// Test sending a push notification to a client.
+        /// </summary>
+        /// <param name="userKey">The userKey of the client.</param>
+        /// <param name="message">The message to push.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response TestPushToMobile(long userKey, string message)
         {
             int mobileID = -1;
@@ -49,7 +72,13 @@ namespace KServer
 
         }
 
-
+        /// <summary>
+        /// Sign a client up for the service. Will fail if username is already in user, or email is not formatted validly.
+        /// </summary>
+        /// <param name="username">Client username.</param>
+        /// <param name="password">Client password.</param>
+        /// <param name="email">Client email.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response MobileSignUp(string username, string password, string email)
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -112,6 +141,14 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Sign in a mobile user into the system. The client's userKey to use is stored in the loginresponse.
+        /// </summary>
+        /// <param name="username">client username.</param>
+        /// <param name="password">client password.</param>
+        /// <param name="deviceID">The device ID the of the hardware the client is using.</param>
+        /// <returns>Returns the outcome of the operation.</returns>
         public LogInResponse MobileSignIn(string username, string password, string deviceID)
         {
             int MobileID;
@@ -167,6 +204,12 @@ namespace KServer
                 return lr;
             }
         }
+
+        /// <summary>
+        /// Signs a mobile user out of the system.
+        /// </summary>
+        /// <param name="userKey">The client's key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response MobileSignOut(long userKey)
         {
             int MobileID;
@@ -201,6 +244,17 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Allows a client to search for songs in a venue. If title or artist are blank, they are not used in the search.
+        /// </summary>
+        /// <param name="title">The title.</param>
+        /// <param name="artist">The artist.</param>
+        /// <param name="start">The index of the first result.</param>
+        /// <param name="count">The number of results to return.</param>
+        /// <param name="venueID">The venueID to search from.</param>
+        /// <param name="userKey">The userKey of the mobile user.</param>
+        /// <returns>The outcome of the operation.</returns>
         public List<Song> MobileSongSearch(string title, string artist, int start, int count, int venueID, long userKey)
         {
             int venueStatus;
@@ -253,6 +307,17 @@ namespace KServer
                 return songs;
             }
         }
+
+        /// <summary>
+        /// Allows a mobile user to browse through a DJ's songs. Depending on isArtist, returns songs whose title/artist start with firstletter.
+        /// </summary>
+        /// <param name="firstLetter">The string to start matching on.</param>
+        /// <param name="isArtist">Whether firstLetter is an artist or title.</param>
+        /// <param name="start">The index of the first result.</param>
+        /// <param name="count">The number of results.</param>
+        /// <param name="venueID">The venueID to search songs from.</param>
+        /// <param name="userKey">The userKey of the client.</param>
+        /// <returns>The outcome of the operation.</returns>
         public List<Song> MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID, long userKey)
         {
             int venueStatus;
@@ -306,6 +371,13 @@ namespace KServer
                 return songs;
             }
         }
+
+        /// <summary>
+        /// Create a song request.
+        /// </summary>
+        /// <param name="songID">The songID</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileSongRequest(int songID, long userKey)
         {
             int venueID = -1;
@@ -416,6 +488,14 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Changes a user's song request to a new song.
+        /// </summary>
+        /// <param name="oldSongID">The old request.</param>
+        /// <param name="newSongID">The new request.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileChangeSongRequest(int oldSongID, int newSongID, long userKey)
         {
             int venueID = -1;
@@ -526,6 +606,13 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Move a user's song to the front of his/her songs.
+        /// </summary>
+        /// <param name="songID">The ID of the song.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileMoveSongRequestToTop(int songID, long userKey)
         {
             int venueID = -1;
@@ -622,6 +709,13 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Removes a song from a user's song requests.
+        /// </summary>
+        /// <param name="songID">The ID of the song.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileRemoveSongRequest(int songID, long userKey)
         {
             int venueID = -1;
@@ -706,6 +800,12 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// View the queue of the DJ the client is associated with.
+        /// </summary>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public List<queueSinger> MobileViewQueue(long userKey)
         {
             int venueID = -1;
@@ -752,6 +852,13 @@ namespace KServer
                 return queue;
             }
         }
+
+        /// <summary>
+        /// Allow a client to join a venue via QR code.
+        /// </summary>
+        /// <param name="QR">The QR code of the venue.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileJoinVenue(string QR, long userKey)
         {
             int mobileID = -1;
@@ -794,6 +901,12 @@ namespace KServer
             }
             return r;
         }
+
+        /// <summary>
+        /// Get the estimated wait time until the user can sing.
+        /// </summary>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileGetWaitTime(long userKey)
         {
             int venueID = -1;
@@ -857,6 +970,14 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Create a playlist. Returns the ID of the playlist in message.
+        /// </summary>
+        /// <param name="name">Playlist Name</param>
+        /// <param name="venueID">VenueID the playlist is associated with.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileCreatePlaylist(string name, int venueID, long userKey)
         {
             Response r = new Response();
@@ -901,6 +1022,13 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Delete a playlist.
+        /// </summary>
+        /// <param name="playListID">The Id of the playlist.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileDeletePlaylist(int playListID, long userKey)
         {
             int mobileID = -1;
@@ -930,6 +1058,14 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Add a song to a playlist.
+        /// </summary>
+        /// <param name="songID">The songID</param>
+        /// <param name="playListID">The PlaylistID</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileAddSongToPlaylist(int songID, int playListID, long userKey)
         {
             int venueID = -1;
@@ -1009,6 +1145,14 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Remove a song from a playlist.
+        /// </summary>
+        /// <param name="songID">The SongID</param>
+        /// <param name="playListID">The PlaylistID</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileRemoveSongFromPlaylist(int songID, int playListID, long userKey)
         {
             int mobileID;
@@ -1063,6 +1207,13 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Get the playlists for a client.
+        /// </summary>
+        /// <param name="venueID">The venue to select playlists from. If set to -1, all venues are used.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public List<Playlist> MobileGetPlayLists(int venueID, long userKey)
         {
             int mobileID = -1;
@@ -1155,6 +1306,14 @@ namespace KServer
                 }
             }
         }    
+
+        /// <summary>
+        /// View the song history of the client.
+        /// </summary>
+        /// <param name="start">The index of the first result.</param>
+        /// <param name="count">The number of results to return.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public List<SongHistory> MobileViewSongHistory(int start, int count, long userKey)
         {
             int mobileID = -1;
@@ -1225,6 +1384,15 @@ namespace KServer
                 }
             }
         }
+
+        /// <summary>
+        /// Rate a song.
+        /// </summary>
+        /// <param name="songID">The songID.</param>
+        /// <param name="rating">The rating -1 to 5.</param>
+        /// <param name="venueID">The venueID of the song.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileRateSong(int songID, int rating, int venueID, long userKey)
         {
             int mobileID = -1;
@@ -1281,6 +1449,14 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// View a song rating.
+        /// </summary>
+        /// <param name="songID">The songID.</param>
+        /// <param name="venueID">The venueID.</param>
+        /// <param name="userKey">client mobile key.</param>
+        /// <returns>The outcome of the opearation.</returns>
         public Response MobileViewSongRating(int songID, int venueID, long userKey)
         {
             int mobileID = -1;
@@ -1349,6 +1525,13 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Check to see if a status of a venue is equal to the desired status. 
+        /// </summary>
+        /// <param name="venueID">The venueID.</param>
+        /// <param name="desiredStatus">The desired status "2" or "!3" etc.</param>
+        /// <param name="db">The database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
@@ -1409,6 +1592,16 @@ namespace KServer
             r.result = DJStatus;
             return r;
         }
+
+        /// <summary>
+        /// Convert the database representation of a queue to the object representation. Fill all fields except for path on disk.
+        /// </summary>
+        /// <param name="raw">The database representation.</param>
+        /// <param name="queue">The out parameter to store the queue in.</param>
+        /// <param name="DJID">The ID of the venue.</param>
+        /// <param name="mobileID">The ID of the client.</param>
+        /// <param name="db">The databse conenctivity to use.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, int mobileID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
@@ -1462,6 +1655,14 @@ namespace KServer
             }
             return r;
         }
+
+        /// <summary>
+        /// Check whether the status of a mobile user is as desired.
+        /// </summary>
+        /// <param name="mobileID">The client ID.</param>
+        /// <param name="desiredStatus">The desired status of the client.</param>
+        /// <param name="db">The database conenctivity to use.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db)
         {
             Response r;
@@ -1522,6 +1723,13 @@ namespace KServer
             r.result = MobileStatus;
             return r;
         }
+
+        /// <summary>
+        /// Conver t amobile Key to a mobileID.
+        /// </summary>
+        /// <param name="MobileKey">The mobileKey.</param>
+        /// <param name="MobileID">Out parameter mobileID.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response MobileKeyToID(long MobileKey, out int MobileID)
         {
             MobileID = -1;
@@ -1546,6 +1754,13 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Convert a mobile ID to a key.
+        /// </summary>
+        /// <param name="MobileID">The mobileID.</param>
+        /// <param name="MobileKey">Out parameter of the mobile key.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response MobileIDToKey(int MobileID, out long MobileKey)
         {
             System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
@@ -1561,6 +1776,13 @@ namespace KServer
             }
             return r;
         }
+
+        /// <summary>
+        /// Get the venue that is associated with the mobile ID. Set result and message to the venue if able.
+        /// </summary>
+        /// <param name="mobileID">The mobile ID of the client.</param>
+        /// <param name="db">The databse conenctivity to use.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response MobileGetVenue(int mobileID, DatabaseConnectivity db)
         {
             int venueID = -1;

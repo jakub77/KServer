@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// This is a program used for testing the DJ functionality of the server.
+// This is not intended to be used in the final product.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,22 +14,10 @@ using System.IO;
 
 namespace DJTestClient
 {
-    //public class DJCallbacks : IDJCallback
-    //{
-    //    void IDJCallback.DJQueueChanged(queueSinger[] queue)
-    //    {
-    //        Console.WriteLine("Got a callback");
-    //        return;
-    //    }
-    //}
-
     class Program
     {
         static void Main(string[] args)
         {
-            //InstanceContext site = new InstanceContext(new DJCallbacks());
-            //DJClient proxy = new DJClient(site);
-
             // User the proxy to communicate with server.
             DJClient proxy = new DJClient();
 

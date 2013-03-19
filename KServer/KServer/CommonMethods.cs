@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// Common is a class that contains common functions used in both the DJ and Mobile
+// parts of the server system. It also contains some variable definitions that are
+// used throughout the server application.
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,15 +15,30 @@ namespace KServer
 {
     public static class Common
     {
+        // The guesstimated time between singers.
         public static readonly int TIME_BETWEEN_REQUESTS = 30;
-        public static readonly string deliminator = "#~Q";
+        // A unique and constant deliminator to use when needed.
+        public static readonly string DELIMINATOR = "#~Q";
+        // ID numbers used for Google Cloud Messaging.
         public static readonly string SENDER_ID = "599874388677";
         public static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
 
+        /// <summary>
+        /// Splits a string up by the global DELIMINATOR.
+        /// </summary>
+        /// <param name="s">The string to split.</param>
+        /// <returns>An array of strings.</returns>
         public static string[] splitByDel(string s)
         {
-            return s.Split(new string[] { deliminator }, StringSplitOptions.None);
+            return s.Split(new string[] { DELIMINATOR }, StringSplitOptions.None);
         }
+
+        /// <summary>
+        /// Changes the object representation of a queue to a representation that is stored in the database.
+        /// </summary>
+        /// <param name="queue">The queue to work off of.</param>
+        /// <param name="raw">Out parameter is set to a compressed representation of the queue.</param>
+        /// <returns>Returns a response indicating no error.</returns>
         public static Response MinimalListToDB(List<queueSinger> queue, out string raw)
         {
             raw = string.Empty;
@@ -35,6 +55,14 @@ namespace KServer
                 raw = raw.Substring(0, raw.Length - 1);
             return new Response();
         }
+
+        /// <summary>
+        /// Takes the database representation of the queue and expands it into a queue that is minimally
+        /// filled with data. The queue is only filled to contain user IDs and song IDs. 
+        /// </summary>
+        /// <param name="raw">The database representation of the queue.</param>
+        /// <param name="queue">Out object represenation of the queue.</param>
+        /// <returns>The outcome of the operation.</returns>
         public static Response DBToMinimalList(string raw, out List<queueSinger> queue)
         {
             int count = 0;
@@ -70,6 +98,16 @@ namespace KServer
             }
             return r;
         }
+
+        /// <summary>
+        /// Takes the database representaiton of the queue and expands it into a queue that is fully
+        /// filled except for song ratings.
+        /// </summary>
+        /// <param name="raw">The databse representation of the queue.</param>
+        /// <param name="queue">Out object representation of the queue.</param>
+        /// <param name="DJID">The DJID of the DJ.</param>
+        /// <param name="db">An object that allows for database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
         public static Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
@@ -124,6 +162,18 @@ namespace KServer
             }
             return r;
         }
+
+        /// <summary>
+        /// Gets the song information of a song from the database. If mobileID is -1, song rating is not included.
+        /// If includePath is set to true, the pathondisk is set, otherwise it is not set.
+        /// </summary>
+        /// <param name="songID">The songID of the song.</param>
+        /// <param name="venueID">The ID of the venue that has this song.</param>
+        /// <param name="mobileID">The mobile ID of client.</param>
+        /// <param name="song">The out parameter that is filled with song information.</param>
+        /// <param name="db">The conenctivity to the database.</param>
+        /// <param name="includePath">Whether or not to include the pathOnDisk in the song.</param>
+        /// <returns>The outcome of the operation.</returns>
         public static Response GetSongInformation(int songID, int venueID, int mobileID, out Song song, DatabaseConnectivity db, bool includePath = false)
         {
             song = new Song();
@@ -166,6 +216,14 @@ namespace KServer
 
             return LoadSongRating(ref song, mobileID, db);
         }
+
+        /// <summary>
+        /// Loads the song rating into the referenced song.
+        /// </summary>
+        /// <param name="song">The referenced song to set the song rating of.</param>
+        /// <param name="mobileID">The ID of the mobile user.</param>
+        /// <param name="db">Connectivity of the database.</param>
+        /// <returns>The outcome of the operation.</returns>
         public static Response LoadSongRating(ref Song song, int mobileID, DatabaseConnectivity db)
         {
             int rating;
@@ -192,6 +250,12 @@ namespace KServer
             return r;
         }
 
+        /// <summary>
+        /// Pushes a notification to the mobile device of a client.
+        /// </summary>
+        /// <param name="mobileID">The mobileID of the client.</param>
+        /// <param name="message">The message to push.</param>
+        /// <returns>The outcome of the operation.</returns>
         public static Response PushMessageToMobile(int mobileID, string message)
         {
             Response r = new Response();
@@ -214,6 +278,13 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Pushes a notification to an android device.
+        /// </summary>
+        /// <param name="deviceID">The deviceID of the device.</param>
+        /// <param name="message">The message to push.</param>
+        /// <returns>The outcome of the operation.</returns>
         public static Response PushAndroidNotification(string deviceID, string message)
         {
             Response r = new Response();
@@ -250,7 +321,7 @@ namespace KServer
         /// <param name="stack">The stack</param>
         /// <param name="passThru">A parameter to return</param>
         /// <param name="Case">0 = mobile_log, 1 = dj_log, 2 = debug</param>
-        /// <returns></returns>
+        /// <returns>The passThru object</returns>
         public static object LogError(string message, string stack, object passThru, int Case)
         {
             switch (Case)
@@ -267,6 +338,13 @@ namespace KServer
             }
             return passThru;
         }
+
+        /// <summary>
+        /// Writes a message to a file
+        /// </summary>
+        /// <param name="message">The first message to write.</param>
+        /// <param name="stack">The second message to write.</param>
+        /// <param name="file">The path of the file to write to.</param>
         private static void writeToFile(string message, string stack, string file)
         {
             StreamWriter w = File.AppendText(file);

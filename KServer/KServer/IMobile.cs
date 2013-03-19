@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// This is the declaration of what methods the Mobile user can call on the server.
+// Each operation contract is commented in Mobile.svc.cs. All of these calls are
+// meant to be called restfully via http get requests.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -8,7 +13,6 @@ using System.Text;
 
 namespace KServer
 {
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IMobile" in both code and config file together.
     [ServiceContract]
     public interface IMobile
     {
@@ -107,10 +111,5 @@ namespace KServer
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileViewSongRating/?songID={songID}&venueID={venueID}&userKey={userKey}")]
         Response MobileViewSongRating(int songID, int venueID, long userKey);
-
-   
-
-
-
     }
 }

@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// This is a program used for testing the Mobile functionality of the server.
+// This is not intended to be used in the final product.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
