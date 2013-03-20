@@ -63,7 +63,8 @@
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Default.htm" />
+    <Content Include="changes.htm" />
+    <Content Include="default.htm" />
     <Content Include="Mobile.svc" />
     <Content Include="DJ.svc" />
     <None Include="Web.Release.config">

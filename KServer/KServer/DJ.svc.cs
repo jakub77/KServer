@@ -472,9 +472,14 @@ namespace KServer
                     return r;
                 }
 
-                r = Common.PushMessageToMobile(queue[0].user.userID, "turn");
-                if (r.error)
-                    Common.LogError(r.message, Environment.StackTrace, r, 1);
+                int nextUserID = queue[0].user.userID;
+                if (nextUserID > 0)
+                {
+                    r = Common.PushMessageToMobile(nextUserID, "turn");
+                    if (r.error)
+                        Common.LogError(r.message, Environment.StackTrace, r, 1);
+                }
+
                 queue[0].songs.RemoveAt(0);
                 if (queue[0].songs.Count == 0)
                 {
@@ -496,9 +501,10 @@ namespace KServer
                     queue.Add(temp);
                 }
 
-                if (queue.Count > 1)
+                nextUserID = queue[0].user.userID;
+                if (queue.Count > 0 && nextUserID > 0)
                 {
-                    r = Common.PushMessageToMobile(queue[0].user.userID, "next");
+                    r = Common.PushMessageToMobile(nextUserID, "next");
                     if (r.error)
                         Common.LogError(r.message, Environment.StackTrace, r, 1);
                 }
@@ -513,6 +519,10 @@ namespace KServer
                 r = db.MobileAddSongHistory(sr.user.userID, DJID, sr.songID, DateTime.Now);
                 if (r.error)
                     Common.LogError(r.message, Environment.StackTrace, r, 1);
+
+
+                Common.PushMessageToAllInQueue(queue, "queue");
+
                 return r;
             }
         }
@@ -691,6 +701,9 @@ namespace KServer
                 if (requests.Trim().Length == 0)
                 {
                     newRequests = sr.user.userID.ToString() + "~" + sr.songID.ToString();
+                    r = Common.PushMessageToMobile(sr.user.userID, "queue");
+                    if (r.error)
+                        Common.LogError(r.message, Environment.StackTrace, null, 1);
                     r = db.SetSongRequests(DJID, newRequests);
                     return r;
                 }
@@ -726,6 +739,9 @@ namespace KServer
                         r = db.SetSongRequests(DJID, newRequests);
                         if (r.error)
                             return r;
+
+                        Common.PushMessageToAllInQueue(queue, "queue");
+
                         r.message = clientID.ToString();
                         r.result = clientID;
                         return r;
@@ -752,6 +768,9 @@ namespace KServer
                 r = db.SetSongRequests(DJID, newRequests);
                 if (r.error)
                     return r;
+
+                Common.PushMessageToAllInQueue(queue, "queue");
+
                 r.message = clientID.ToString();
                 r.result = clientID;
                 return r;
@@ -826,7 +845,11 @@ namespace KServer
                                     }
                                 }
                                 Common.MinimalListToDB(queue, out newRequests);
-                                return db.SetSongRequests(DJID, newRequests);
+                                r = db.SetSongRequests(DJID, newRequests);
+                                if (r.error)
+                                    return r;
+                                Common.PushMessageToAllInQueue(queue, "queue");
+                                return r;
                             }
 
                         }
@@ -951,7 +974,11 @@ namespace KServer
                         if (songChangeMade)
                         {
                             Common.MinimalListToDB(queue, out newRequests);
-                            return db.SetSongRequests(DJID, newRequests);
+                            r = db.SetSongRequests(DJID, newRequests);
+                            if (r.error)
+                                return r;
+                            Common.PushMessageToAllInQueue(queue, "queue");
+                            return r;
                         }
 
                         // We didn't find the old song.
@@ -1038,7 +1065,11 @@ namespace KServer
                                 queue[i].songs.RemoveAt(j);
                                 queue[i].songs.Insert(newIndex, temp);
                                 Common.MinimalListToDB(queue, out newRequests);
-                                return db.SetSongRequests(DJID, newRequests);
+                                r = db.SetSongRequests(DJID, newRequests);
+                                if (r.error)
+                                    return r;
+                                Common.PushMessageToAllInQueue(queue, "queue");
+                                return r;
                             }
 
                         }
@@ -1116,7 +1147,11 @@ namespace KServer
                         }
 
                         Common.MinimalListToDB(queue, out newRequests);
-                        return db.SetSongRequests(DJID, newRequests);
+                        r = db.SetSongRequests(DJID, newRequests);
+                        if (r.error)
+                            return r;
+                        Common.PushMessageToAllInQueue(queue, "queue");
+                        return r;
                     }
                 }
 
@@ -1186,7 +1221,11 @@ namespace KServer
                         queue.RemoveAt(i);
                         queue.Insert(index, tmp);
                         Common.MinimalListToDB(queue, out newRequests);
-                        return db.SetSongRequests(DJID, newRequests);
+                        r = db.SetSongRequests(DJID, newRequests);
+                        if (r.error)
+                            return r;
+                        Common.PushMessageToAllInQueue(queue, "queue");
+                        return r;
                     }
                 }
 

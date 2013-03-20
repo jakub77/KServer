@@ -15,6 +15,7 @@ namespace KServer
 {
     public static class Common
     {
+        //
         // The guesstimated time between singers.
         public static readonly int TIME_BETWEEN_REQUESTS = 30;
         // A unique and constant deliminator to use when needed.
@@ -251,6 +252,29 @@ namespace KServer
         }
 
         /// <summary>
+        /// Push a message to all eligable users in the queue. Temp users and users without registered deviceIDs will not recieve this message.
+        /// </summary>
+        /// <param name="queue">The queue.</param>
+        /// <param name="message">The message to send.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public static Response PushMessageToAllInQueue(List<queueSinger> queue, string message)
+        {
+            Response r = new Response();
+            foreach (queueSinger qs in queue)
+            {
+                if (qs.user.userID > 0)
+                {
+                    r = PushMessageToMobile(qs.user.userID, message);
+                    if (r.error)
+                        LogError(r.message, Environment.StackTrace, null, 1);
+                    if (r.message.StartsWith("Warning:"))
+                        LogError(r.message, String.Empty, null, 1);
+                }
+            }
+            return r;
+        }
+
+        /// <summary>
         /// Pushes a notification to the mobile device of a client.
         /// </summary>
         /// <param name="mobileID">The mobileID of the client.</param>
@@ -312,7 +336,6 @@ namespace KServer
             r.message = sResponseFromServer;
             return r;
         }
- 
 
         /// <summary>
         /// Log an error message.

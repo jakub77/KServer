@@ -227,7 +227,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                // A sign out seems to be valid.
+                // A sign out seems to be valid. Also clears any device id found.
                 r = db.MobileSignOut(MobileID);
                 if(r.error)
                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
@@ -431,6 +431,11 @@ namespace KServer
                 {
                     requests = mobileID.ToString() + "~" + songID.ToString();
                     r = db.SetSongRequests(venueID, requests);
+                    if (r.error)
+                        return r;
+                    r = Common.PushMessageToMobile(mobileID, "queue");
+                    if (r.error)
+                        Common.LogError(r.message, Environment.StackTrace, null, 0);
                     return r;
                 }
 
@@ -465,6 +470,9 @@ namespace KServer
                         r = db.SetSongRequests(venueID, newRequests);
                         if(r.error)
                             return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                        Common.PushMessageToAllInQueue(queue, "queue");
+
                         return r;
                     }
                 }
@@ -485,6 +493,9 @@ namespace KServer
                 r = db.SetSongRequests(venueID, newRequests);
                 if(r.error)
                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+              
+                Common.PushMessageToAllInQueue(queue, "queue");
+
                 return r;
             }
         }
@@ -591,6 +602,9 @@ namespace KServer
                             r = db.SetSongRequests(venueID, newRequests);
                             if(r.error)
                                 return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                            Common.PushMessageToAllInQueue(queue, "queue");
+
                             return r;
                         }
                         // If we couldn't find the old song, inform user.
@@ -697,6 +711,9 @@ namespace KServer
                                 r = db.SetSongRequests(venueID, newRequests);
                                 if (r.error)
                                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                                Common.PushMessageToAllInQueue(queue, "queue");
+
                                 return r;
                             }
                         }  
@@ -784,6 +801,9 @@ namespace KServer
                                 r = db.SetSongRequests(venueID, newRequests);
                                 if(r.error)
                                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                                Common.PushMessageToAllInQueue(queue, "queue");
+
                                 return r;
                             }
 
