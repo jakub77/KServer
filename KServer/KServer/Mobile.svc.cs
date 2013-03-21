@@ -190,7 +190,7 @@ namespace KServer
 
                 // Attempt to change the MobileID into a userKey
                 long userKey;
-                r = MobileIDToKey(MobileID, out userKey);
+                r = MobileGenerateKey(MobileID, out userKey, db);
                 if (r.error)
                     return (LogInResponse)Common.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
 
@@ -1781,20 +1781,31 @@ namespace KServer
         /// <param name="MobileID">The mobileID.</param>
         /// <param name="MobileKey">Out parameter of the mobile key.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response MobileIDToKey(int MobileID, out long MobileKey)
+        private Response MobileGenerateKey(int MobileID, out long MobileKey, DatabaseConnectivity db)
         {
-            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
-            byte[] res = sha.ComputeHash(BitConverter.GetBytes(MobileID));
-            MobileKey = BitConverter.ToInt64(res, 0);
-
+            MobileKey = -1;
             Response r = new Response();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+            Random rand = new Random();
+            byte[] randomBytes = new byte[64];
+            byte[] result;
+            long tempKey;
+            for(;;)
             {
-                r = db.MobileSetKey(MobileID, MobileKey);
-                if (r.error)
+                rand.NextBytes(randomBytes);
+                result = sha.ComputeHash(randomBytes);
+                tempKey = BitConverter.ToInt64(result, 0);
+                r = db.MobileGetIDFromKey(tempKey);
+                if(r.error)
                     return r;
+                if(r.message.Trim().Length != 0)
+                    continue;
+                r = db.MobileSetKey(MobileID, tempKey);
+                if(r.error)
+                    return r;
+                MobileKey = tempKey;
+                return r;
             }
-            return r;
         }
 
         /// <summary>

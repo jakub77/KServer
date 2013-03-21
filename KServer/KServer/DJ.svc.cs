@@ -185,7 +185,7 @@ namespace KServer
 
                 // Attempt to change the DJID into a userKey
                 long userKey;
-                r = DJIDToKey(DJID, out userKey);
+                r = DJGenerateKey(DJID, out userKey, db);
                 if (r.error)
                     return new LogInResponse(r);
 
@@ -1501,20 +1501,31 @@ namespace KServer
         /// <param name="DJID">The DJID</param>
         /// <param name="DJKey">OUT parameter for the DJKey</param>
         /// <returns></returns>
-        private Response DJIDToKey(int DJID, out long DJKey)
+        private Response DJGenerateKey(int DJID, out long DJKey, DatabaseConnectivity db)
         {
-            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
-            byte[] res = sha.ComputeHash(BitConverter.GetBytes(DJID));
-            DJKey = BitConverter.ToInt64(res, 0);
-
+            DJKey = -1;
             Response r = new Response();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
+            Random rand = new Random();
+            byte[] randomBytes = new byte[64];
+            byte[] result;
+            long tempKey;
+            for (; ; )
             {
-                r = db.DJSetKey(DJID, DJKey);
+                rand.NextBytes(randomBytes);
+                result = sha.ComputeHash(randomBytes);
+                tempKey = BitConverter.ToInt64(result, 0);
+                r = db.DJGetIDFromKey(tempKey);
                 if (r.error)
                     return r;
+                if (r.message.Trim().Length != 0)
+                    continue;
+                r = db.DJSetKey(DJID, tempKey);
+                if (r.error)
+                    return r;
+                DJKey = tempKey;
+                return r;
             }
-            return r;
         }
     }
 }
