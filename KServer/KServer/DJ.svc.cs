@@ -16,6 +16,8 @@ using System.Diagnostics;
 
 // Notes:
 // Change it so queue singer/songs are in their own table, so cascading works.
+// Manual users added to an empty queue crash.
+// There are manual users in the database, are they cleared on DJ logout?
 
 namespace KServer
 {
@@ -421,43 +423,6 @@ namespace KServer
                 sw.Stop();
                 r.result = (int)sw.ElapsedMilliseconds;
                 return r;
-
-                //if (r.message.Trim() == string.Empty)
-                //{
-                //    r.message = "Warning: No songs were found";
-                //    return r;
-                //}
-
-                //try
-                //{
-                //    string[] songLines = r.message.Trim().Split('\n');
-                //    foreach (string songLine in songLines)
-                //    {
-                //        string[] songParts = Common.splitByDel(songLine);
-                //        Song song = new Song();
-                //        int id;
-                //        if (!int.TryParse(songParts[0], out id))
-                //        {
-                //            r.error = true;
-                //            r.message = "Exception in SongListSQL: could not parse song id";
-                //            return r;
-                //        }
-                //        song.ID = id;
-                //        song.title = songParts[1];
-                //        song.artist = songParts[2];
-                //        song.pathOnDisk = songParts[3];
-                //        songs.Add(song);
-                //    }
-                //    r.message = "";
-
-                //}
-                //catch (Exception e)
-                //{
-
-                //    r.message = "Exception " + e.ToString();
-                //    r.error = true;
-                //    return r;
-                //}
             }
         }
 
@@ -513,7 +478,7 @@ namespace KServer
                 int nextUserID = queue[0].user.userID;
                 if (nextUserID > 0)
                 {
-                    r = Common.PushMessageToMobile(nextUserID, "turn");
+                    r = Common.PushMessageToMobile(nextUserID, "turn", db);
                     if (r.error)
                         Common.LogError(r.message, Environment.StackTrace, r, 1);
                 }
@@ -542,7 +507,7 @@ namespace KServer
                 nextUserID = queue[0].user.userID;
                 if (queue.Count > 0 && nextUserID > 0)
                 {
-                    r = Common.PushMessageToMobile(nextUserID, "next");
+                    r = Common.PushMessageToMobile(nextUserID, "next", db);
                     if (r.error)
                         Common.LogError(r.message, Environment.StackTrace, r, 1);
                 }
@@ -559,7 +524,7 @@ namespace KServer
                     Common.LogError(r.message, Environment.StackTrace, r, 1);
 
 
-                Common.PushMessageToAllInQueue(queue, "queue");
+                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
 
                 return r;
             }
@@ -744,8 +709,8 @@ namespace KServer
                 // If there were no requests, simply add the single request.
                 if (requests.Trim().Length == 0)
                 {
-                    newRequests = sr.user.userID.ToString() + "~" + sr.songID.ToString();
-                    r = Common.PushMessageToMobile(sr.user.userID, "queue");
+                    newRequests = clientID.ToString() + "~" + sr.songID.ToString();
+                    r = Common.PushMessageToMobile(sr.user.userID, "queue", db);
                     if (r.error)
                         Common.LogError(r.message, Environment.StackTrace, null, 1);
                     r = db.SetSongRequests(DJID, newRequests);
@@ -784,7 +749,7 @@ namespace KServer
                         if (r.error)
                             return r;
 
-                        Common.PushMessageToAllInQueue(queue, "queue");
+                        Common.PushMessageToUsersOfDJ(DJID, "queue", db);
 
                         r.message = clientID.ToString();
                         r.result = clientID;
@@ -813,7 +778,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                Common.PushMessageToAllInQueue(queue, "queue");
+                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
 
                 r.message = clientID.ToString();
                 r.result = clientID;
@@ -895,7 +860,7 @@ namespace KServer
                                 r = db.SetSongRequests(DJID, newRequests);
                                 if (r.error)
                                     return r;
-                                Common.PushMessageToAllInQueue(queue, "queue");
+                                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
                                 return r;
                             }
 
@@ -1027,7 +992,7 @@ namespace KServer
                             r = db.SetSongRequests(DJID, newRequests);
                             if (r.error)
                                 return r;
-                            Common.PushMessageToAllInQueue(queue, "queue");
+                            Common.PushMessageToUsersOfDJ(DJID, "queue", db);
                             return r;
                         }
 
@@ -1121,7 +1086,7 @@ namespace KServer
                                 r = db.SetSongRequests(DJID, newRequests);
                                 if (r.error)
                                     return r;
-                                Common.PushMessageToAllInQueue(queue, "queue");
+                                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
                                 return r;
                             }
 
@@ -1206,7 +1171,7 @@ namespace KServer
                         r = db.SetSongRequests(DJID, newRequests);
                         if (r.error)
                             return r;
-                        Common.PushMessageToAllInQueue(queue, "queue");
+                        Common.PushMessageToUsersOfDJ(DJID, "queue", db);
                         return r;
                     }
                 }
@@ -1283,7 +1248,7 @@ namespace KServer
                         r = db.SetSongRequests(DJID, newRequests);
                         if (r.error)
                             return r;
-                        Common.PushMessageToAllInQueue(queue, "queue");
+                        Common.PushMessageToUsersOfDJ(DJID, "queue", db);
                         return r;
                     }
                 }

@@ -284,19 +284,21 @@ namespace KServer
         /// <param name="queue">The queue.</param>
         /// <param name="message">The message to send.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response PushMessageToAllInQueue(List<queueSinger> queue, string message)
+        public static Response PushMessageToUsersOfDJ(int DJID, string message, DatabaseConnectivity db)
         {
             Response r = new Response();
-            foreach (queueSinger qs in queue)
+            List<int> clients;
+            r = db.DJGetAssociatedClients(DJID, out clients);
+            if (r.error)
+                return r;
+
+            foreach (int clientID in clients)
             {
-                if (qs.user.userID > 0)
-                {
-                    r = PushMessageToMobile(qs.user.userID, message);
-                    if (r.error)
-                        LogError(r.message, Environment.StackTrace, null, 1);
-                    if (r.message.StartsWith("Warning:"))
-                        LogError(r.message, String.Empty, null, 1);
-                }
+                r = PushMessageToMobile(clientID, message, db);
+                if (r.error)
+                    LogError(r.message, Environment.StackTrace, null, 1);
+                if (r.message.StartsWith("Warning:"))
+                    LogError(r.message, "UserID: " + clientID, null, 1);
             }
             return r;
         }
@@ -307,27 +309,31 @@ namespace KServer
         /// <param name="mobileID">The mobileID of the client.</param>
         /// <param name="message">The message to push.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response PushMessageToMobile(int mobileID, string message)
+        public static Response PushMessageToMobile(int mobileID, string message, DatabaseConnectivity db)
         {
             Response r = new Response();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
+
+            string deviceID;
+            r = db.MobileGetDeviceID(mobileID, out deviceID);
+            if (r.error)
+                return r;
+
+            if (deviceID.Trim().Length == 0)
             {
-                string deviceID;
-                r = db.MobileGetDeviceID(mobileID, out deviceID);
-                if (r.error)
-                    return r;
-
-                if (deviceID.Trim().Length == 0)
-                {
-                    r.message = "Warning: No DeviceID was registered for this device";
-                    return r;
-                }
-
-                r = PushAndroidNotification(deviceID, message);
-                if (r.message.ToLower().Contains("error"))
-                    r.error = true;
+                r.message = "Warning: No DeviceID was registered for this device";
+                r.message += Environment.StackTrace;
+                LogError("Message not sent to (No DeviceID associated): " + mobileID, message, null, 2);
                 return r;
             }
+
+            r = PushAndroidNotification(deviceID, message);
+            if (r.message.ToLower().Contains("error"))
+            {
+                r.error = true;
+                LogError("Message had error sending to: " + mobileID, message, null, 2);
+            }
+            LogError("Message sent without error to: " + mobileID, message, null, 2);
+            return r;
         }
 
         /// <summary>
@@ -367,23 +373,23 @@ namespace KServer
         /// <summary>
         /// Log an error message.
         /// </summary>
-        /// <param name="message">The message</param>
-        /// <param name="stack">The stack</param>
+        /// <param name="messagePart1">The message</param>
+        /// <param name="messagePart2">The stack</param>
         /// <param name="passThru">A parameter to return</param>
         /// <param name="Case">0 = mobile_log, 1 = dj_log, 2 = debug</param>
         /// <returns>The passThru object</returns>
-        public static object LogError(string message, string stack, object passThru, int Case)
+        public static object LogError(string messagePart1, string messagePart2, object passThru, int Case)
         {
             switch (Case)
             {
                 case 0:
-                    writeToFile(message, stack, "C:\\inetpub\\ftproot\\log\\mobile_log.txt");
+                    writeToFile(messagePart1, messagePart2, "C:\\inetpub\\ftproot\\log\\mobile_log.txt");
                     break;
                 case 1:
-                    writeToFile(message, stack, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
+                    writeToFile(messagePart1, messagePart2, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
                     break;
                 case 2:
-                    writeToFile(message, stack, "C:\\inetpub\\ftproot\\log\\debug.txt");
+                    writeToFile(messagePart1, messagePart2, "C:\\inetpub\\ftproot\\log\\debug.txt");
                     break;
             }
             return passThru;
@@ -392,15 +398,15 @@ namespace KServer
         /// <summary>
         /// Writes a message to a file
         /// </summary>
-        /// <param name="message">The first message to write.</param>
-        /// <param name="stack">The second message to write.</param>
+        /// <param name="messagePart1">The first message to write.</param>
+        /// <param name="messagePart2">The second message to write.</param>
         /// <param name="file">The path of the file to write to.</param>
-        private static void writeToFile(string message, string stack, string file)
+        private static void writeToFile(string messagePart1, string messagePart2, string file)
         {
             StreamWriter w = File.AppendText(file);
             w.WriteLine(DateTime.Now.ToString());
-            w.WriteLine(message);
-            w.WriteLine(stack);
+            w.WriteLine(messagePart1);
+            w.WriteLine(messagePart2);
             w.WriteLine("--------------------------------------------------");
             w.WriteLine();
             w.Close();

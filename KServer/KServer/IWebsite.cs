@@ -12,6 +12,24 @@ namespace KServer
     public interface IWebsite
     {
         [OperationContract]
-        void DoWork();
+        Response DJValidateUsername(string username);
+
+        [OperationContract]
+        Response MobileValidateUsername(string username);
+
+        [OperationContract]
+        Response DJSignUp(string userName, string password, Venue venue, string email);
+
+        [OperationContract]
+        Response MobileSignUp(string username, string password, string email);
+
+        [OperationContract]
+        Response DJRequestPasswordChange(string username, string password);
+
+        [OperationContract]
+        Response MobileRequestPasswordChange(string username, string password);
+
+        [OperationContract]
+        Response CompletePasswordChange(string hashKey);
     }
 }

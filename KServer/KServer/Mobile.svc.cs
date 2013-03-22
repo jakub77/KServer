@@ -70,7 +70,7 @@ namespace KServer
                 if (r.error)
                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
 
-                return Common.PushMessageToMobile(mobileID, "You sent me: \"" + message + "\"");
+                return Common.PushMessageToMobile(mobileID, "You sent me: \"" + message + "\"", db);
             }
 
         }
@@ -467,7 +467,7 @@ namespace KServer
                     r = db.SetSongRequests(venueID, requests);
                     if (r.error)
                         return r;
-                    r = Common.PushMessageToMobile(mobileID, "queue");
+                    r = Common.PushMessageToMobile(mobileID, "queue", db);
                     if (r.error)
                         Common.LogError(r.message, Environment.StackTrace, null, 0);
                     return r;
@@ -505,7 +505,7 @@ namespace KServer
                         if(r.error)
                             return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
 
-                        Common.PushMessageToAllInQueue(queue, "queue");
+                        Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
                         return r;
                     }
@@ -527,8 +527,8 @@ namespace KServer
                 r = db.SetSongRequests(venueID, newRequests);
                 if(r.error)
                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
-              
-                Common.PushMessageToAllInQueue(queue, "queue");
+
+                Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
                 return r;
             }
@@ -640,7 +640,7 @@ namespace KServer
                             if(r.error)
                                 return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
 
-                            Common.PushMessageToAllInQueue(queue, "queue");
+                            Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
                             return r;
                         }
@@ -752,7 +752,7 @@ namespace KServer
                                 if (r.error)
                                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
 
-                                Common.PushMessageToAllInQueue(queue, "queue");
+                                Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
                                 return r;
                             }
@@ -845,7 +845,7 @@ namespace KServer
                                 if(r.error)
                                     return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
 
-                                Common.PushMessageToAllInQueue(queue, "queue");
+                                Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
                                 return r;
                             }

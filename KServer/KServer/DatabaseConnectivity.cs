@@ -114,24 +114,6 @@ namespace KServer
                 r.message = "Exception in DBNonQuery\n " + e.Message + e.StackTrace;
                 return r;
             }
-
-            //try
-            //{
-            //    using (SqlConnection con = new SqlConnection(connectionString))
-            //    {
-            //        con.Open();
-            //        cmd.Connection = con;
-            //        affectedRows = cmd.ExecuteNonQuery();
-            //        r.result = affectedRows;
-            //    }
-            //    return r;
-            //}
-            //catch (Exception e)
-            //{
-            //    r.error = true;
-            //    r.message = "Exception in DBNonQuery\n " + e.Message + e.StackTrace;
-            //    return r;
-            //}
         }
 
         /// <summary>
@@ -155,25 +137,6 @@ namespace KServer
                 r.message = "Exception in DBScalar\n " + e.Message + e.StackTrace;
                 return r;
             }
-
-
-            //try
-            //{
-            //    using (SqlConnection con = new SqlConnection(connectionString))
-            //    {
-            //        con.Open();
-            //        cmd.Connection = con;
-            //        var v = cmd.ExecuteScalar();
-            //        r.result = int.Parse(v.ToString());
-            //    }
-            //    return r;
-            //}
-            //catch (Exception e)
-            //{
-            //    r.error = true;
-            //    r.message = "Exception in DBScalar\n " + e.Message + e.StackTrace;
-            //    return r;
-            //}
         }
 
         /// <summary>
@@ -209,35 +172,6 @@ namespace KServer
                 r.message = "Exception in DBQuery: " + e.Message;
                 return r;
             }
-
-
-            //try
-            //{
-            //    using (SqlConnection con = new SqlConnection(connectionString))
-            //    {
-            //        con.Open();
-            //        cmd.Connection = con;
-            //        using (SqlDataReader reader = cmd.ExecuteReader())
-            //        {
-            //            while (reader.Read())
-            //            {
-            //                r.result++;
-            //                for (int i = 0; i < columns.Length - 1; i++)
-            //                    r.message += reader[columns[i]].ToString().Trim() + Common.DELIMINATOR;
-            //                if (columns.Length > 0)
-            //                    r.message += reader[columns[columns.Length - 1]].ToString().Trim();
-            //                r.message += "\n";
-            //            }
-            //        }
-            //    }
-            //    return r;
-            //}
-            //catch (Exception e)
-            //{
-            //    r.error = true;
-            //    r.message = "Exception in DBQuery: " + e.Message;
-            //    return r;
-            //}
         }
 
         /// <summary>
@@ -384,6 +318,92 @@ namespace KServer
             return DBNonQuery(cmd);
         }
 
+        /// <summary>
+        /// Sets a DJ's password to the new password.
+        /// </summary>
+        /// <param name="username">The username to match with.</param>
+        /// <param name="password">The new hashed and salted password.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response DJSetPassword(string username, string password)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("Update DJUsers set Password = @password where Username = @username;", con);
+            cmd.Parameters.AddWithValue("@password", password);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetPassword: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Sets a Mobile User's password to the new password.
+        /// </summary>
+        /// <param name="username">The username to match with.</param>
+        /// <param name="password">The new hashed and salted password.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response MobileSetPassword(string username, string password)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("Update MobileUsers set Password = @password where Username = @username;", con);
+            cmd.Parameters.AddWithValue("@password", password);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetPassword: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Get all mobile client ids that are logged into this DJ.
+        /// </summary>
+        /// <param name="venueID">The id of the venue/DJ.</param>
+        /// <param name="clients">Out list of client IDs.</param>
+        /// <returns>The otucome of the operation.</returns>
+        public Response DJGetAssociatedClients(int venueID, out List<int> clients)
+        {
+            clients = new List<int>();
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Venue = @venueID;", con);
+            cmd.Parameters.AddWithValue("@venueID", venueID);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        clients.Add(int.Parse(reader[0].ToString()));
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJGetAssociatedClients: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Get the password salt associated with a DJ.
+        /// </summary>
+        /// <param name="username">The DJ's username</param>
+        /// <param name="salt">Out parameter for the salt.</param>
+        /// <returns>The outcome of the oepration.</returns>
         public Response DJGetSalt(string username, out string salt)
         {
             salt = string.Empty;
@@ -766,6 +786,12 @@ namespace KServer
             return DBNonQuery(cmd);
         }
 
+        /// <summary>
+        /// Get the password salt associated with the mobile user.
+        /// </summary>
+        /// <param name="username">The mobile username.</param>
+        /// <param name="salt">Out parmater of the salt.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response MobileGetSalt(string username, out string salt)
         {
             salt = string.Empty;
