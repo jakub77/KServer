@@ -24,6 +24,8 @@ namespace KServer
         private int connectionTimeOut = 10;
         private string connectionString = String.Empty;
 
+        private SqlConnection con;
+
         /// <summary>
         /// Set up the connection string on creation.
         /// </summary>
@@ -35,14 +37,58 @@ namespace KServer
             connectionString += "server=" + SQLServerAddress + ";";
             connectionString += "database=" + database + ";";
             connectionString += "connection timeout=" + connectionTimeOut + ";";
+            con = new SqlConnection(connectionString);
         }
 
         /// <summary>
-        /// Empty dispose placeholder if this class is later
-        /// optimized for additional performance.
+        /// Open a connection to the database for all other methods to use.
+        /// Call this before calling data retrieving funcitons.
+        /// </summary>
+        /// <returns>The result of the operation.</returns>
+        public Response OpenConnection()
+        {
+            Response r = new Response();
+            try
+            {
+                con.Open();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Error opening SQL connection" + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Close the connection to the database. Call this when you are done
+        /// using this connection. Alternatively dispose of the resource to 
+        /// automatically call this method.
+        /// </summary>
+        /// <returns></returns>
+        public Response CloseConnection()
+        {
+            Response r = new Response();
+            try
+            {
+                con.Close();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Error opening SQL connection" + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Close the database connection.
         /// </summary>
         void IDisposable.Dispose()
         {
+            CloseConnection();
             return;
         }
 
@@ -54,16 +100,12 @@ namespace KServer
         private Response DBNonQuery(SqlCommand cmd)
         {
             Response r = new Response();
-            int affectedRows = 0;
+            r.result = 0;
+
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
-                {
-                    con.Open();
-                    cmd.Connection = con;
-                    affectedRows = cmd.ExecuteNonQuery();
-                    r.result = affectedRows;
-                }
+                cmd.Connection = con;
+                r.result = cmd.ExecuteNonQuery();
                 return r;
             }
             catch (Exception e)
@@ -72,6 +114,24 @@ namespace KServer
                 r.message = "Exception in DBNonQuery\n " + e.Message + e.StackTrace;
                 return r;
             }
+
+            //try
+            //{
+            //    using (SqlConnection con = new SqlConnection(connectionString))
+            //    {
+            //        con.Open();
+            //        cmd.Connection = con;
+            //        affectedRows = cmd.ExecuteNonQuery();
+            //        r.result = affectedRows;
+            //    }
+            //    return r;
+            //}
+            //catch (Exception e)
+            //{
+            //    r.error = true;
+            //    r.message = "Exception in DBNonQuery\n " + e.Message + e.StackTrace;
+            //    return r;
+            //}
         }
 
         /// <summary>
@@ -84,13 +144,9 @@ namespace KServer
             Response r = new Response();
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
-                {
-                    con.Open();
-                    cmd.Connection = con;
-                    var v = cmd.ExecuteScalar();
-                    r.result = int.Parse(v.ToString());
-                }
+                cmd.Connection = con;
+                var v = cmd.ExecuteScalar();
+                r.result = int.Parse(v.ToString());
                 return r;
             }
             catch (Exception e)
@@ -99,6 +155,25 @@ namespace KServer
                 r.message = "Exception in DBScalar\n " + e.Message + e.StackTrace;
                 return r;
             }
+
+
+            //try
+            //{
+            //    using (SqlConnection con = new SqlConnection(connectionString))
+            //    {
+            //        con.Open();
+            //        cmd.Connection = con;
+            //        var v = cmd.ExecuteScalar();
+            //        r.result = int.Parse(v.ToString());
+            //    }
+            //    return r;
+            //}
+            //catch (Exception e)
+            //{
+            //    r.error = true;
+            //    r.message = "Exception in DBScalar\n " + e.Message + e.StackTrace;
+            //    return r;
+            //}
         }
 
         /// <summary>
@@ -113,21 +188,17 @@ namespace KServer
             r.result = 0;
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                cmd.Connection = con;
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    con.Open();
-                    cmd.Connection = con;
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            r.result++;
-                            for (int i = 0; i < columns.Length - 1; i++)
-                                r.message += reader[columns[i]].ToString().Trim() + Common.DELIMINATOR;
-                            if (columns.Length > 0)
-                                r.message += reader[columns[columns.Length - 1]].ToString().Trim();
-                            r.message += "\n";
-                        }
+                        r.result++;
+                        for (int i = 0; i < columns.Length - 1; i++)
+                            r.message += reader[columns[i]].ToString().Trim() + Common.DELIMINATOR;
+                        if (columns.Length > 0)
+                            r.message += reader[columns[columns.Length - 1]].ToString().Trim();
+                        r.message += "\n";
                     }
                 }
                 return r;
@@ -138,6 +209,35 @@ namespace KServer
                 r.message = "Exception in DBQuery: " + e.Message;
                 return r;
             }
+
+
+            //try
+            //{
+            //    using (SqlConnection con = new SqlConnection(connectionString))
+            //    {
+            //        con.Open();
+            //        cmd.Connection = con;
+            //        using (SqlDataReader reader = cmd.ExecuteReader())
+            //        {
+            //            while (reader.Read())
+            //            {
+            //                r.result++;
+            //                for (int i = 0; i < columns.Length - 1; i++)
+            //                    r.message += reader[columns[i]].ToString().Trim() + Common.DELIMINATOR;
+            //                if (columns.Length > 0)
+            //                    r.message += reader[columns[columns.Length - 1]].ToString().Trim();
+            //                r.message += "\n";
+            //            }
+            //        }
+            //    }
+            //    return r;
+            //}
+            //catch (Exception e)
+            //{
+            //    r.error = true;
+            //    r.message = "Exception in DBQuery: " + e.Message;
+            //    return r;
+            //}
         }
 
         /// <summary>
@@ -269,10 +369,10 @@ namespace KServer
         /// <param name="venueName">The DJ's venue name.</param>
         /// <param name="venueAddress">The DJ's venue address.</param>
         /// <returns>The outcome of the operation</returns>
-        public Response DJSignUp(string username, string password, string email, string venueName, string venueAddress)
+        public Response DJSignUp(string username, string password, string email, string venueName, string venueAddress, string salt)
         {
-            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status, QR, Email, VenueName, VenueAddress)");
-            cmd.CommandText += "Values (@username, @password, @status, @QR, @email, @venueName, @venueAddress);";
+            SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status, QR, Email, VenueName, VenueAddress, Salt)");
+            cmd.CommandText += "Values (@username, @password, @status, @QR, @email, @venueName, @venueAddress, @Salt);";
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
             cmd.Parameters.AddWithValue("@status", 0);
@@ -280,7 +380,40 @@ namespace KServer
             cmd.Parameters.AddWithValue("@email", email);
             cmd.Parameters.AddWithValue("@venueName", venueName);
             cmd.Parameters.AddWithValue("@venueAddress", venueAddress);
+            cmd.Parameters.AddWithValue("@Salt", salt);
             return DBNonQuery(cmd);
+        }
+
+        public Response DJGetSalt(string username, out string salt)
+        {
+            salt = string.Empty;
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select Salt from DJUsers where Username = @username;", con);
+            cmd.Parameters.AddWithValue("@username", username);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        salt = reader[0].ToString();
+                        return r;
+                    }
+                    else
+                    {
+                        r.error = true;
+                        r.message = "Error in DJGetSalt: Username could not be found";
+                        return r;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJGetSalt: " + e.Message;
+                return r;
+            }
         }
 
         /// <summary>
@@ -435,10 +568,7 @@ namespace KServer
             r.result = 0;
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
-                {
-                    con.Open();
-                    string cmdText = @"Merge DJSongs as target
+                string cmdText = @"Merge DJSongs as target
                                             using (values(@pathOnDisk, @duration))
 	                                            as source (PathOnDisk, Duration)
 	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
@@ -447,21 +577,21 @@ namespace KServer
                                             when not matched then
 	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
 	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
-                    SqlCommand cmd = new SqlCommand(cmdText, con);
+                SqlCommand cmd = new SqlCommand(cmdText, con);
 
-                    foreach (Song s in songs)
-                    {
-                        cmd.Parameters.Clear();
-                        cmd.Parameters.AddWithValue("@DJID", DJID);
-                        cmd.Parameters.AddWithValue("@title", s.title);
-                        cmd.Parameters.AddWithValue("@artist", s.artist);
-                        cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
-                        cmd.Parameters.AddWithValue("@duration", s.duration);
-                        cmd.Connection = con;
-                        r.result += cmd.ExecuteNonQuery();
-                    }
-                    return r;
+                foreach (Song s in songs)
+                {
+                    cmd.Parameters.Clear();
+                    cmd.Parameters.AddWithValue("@DJID", DJID);
+                    cmd.Parameters.AddWithValue("@title", s.title);
+                    cmd.Parameters.AddWithValue("@artist", s.artist);
+                    cmd.Parameters.AddWithValue("@pathOnDisk", s.pathOnDisk);
+                    cmd.Parameters.AddWithValue("@duration", s.duration);
+                    cmd.Connection = con;
+                    r.result += cmd.ExecuteNonQuery();
                 }
+                return r;
+
             }
             catch (Exception e)
             {
@@ -515,27 +645,22 @@ namespace KServer
         {
             Response r = new Response();
             songs = new List<Song>();
-            SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;");
+            SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
 
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    con.Open();
-                    cmd.Connection = con;
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    while (reader.Read())
                     {
-                        while (reader.Read())
-                        {
-                            Song song = new Song();
-                            song.ID = int.Parse(reader["SongID"].ToString());
-                            song.title = reader["Title"].ToString();
-                            song.artist = reader["Artist"].ToString();
-                            song.pathOnDisk = reader["PathOnDisk"].ToString();
-                            song.duration = int.Parse(reader["Duration"].ToString());
-                            songs.Add(song);
-                        }
+                        Song song = new Song();
+                        song.ID = int.Parse(reader["SongID"].ToString());
+                        song.title = reader["Title"].ToString();
+                        song.artist = reader["Artist"].ToString();
+                        song.pathOnDisk = reader["PathOnDisk"].ToString();
+                        song.duration = int.Parse(reader["Duration"].ToString());
+                        songs.Add(song);
                     }
                 }
                 return r;
@@ -629,15 +754,48 @@ namespace KServer
         /// <param name="password">The password.</param>
         /// <param name="email">The email of the user.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response MobileSignUp(string username, string password, string email)
+        public Response MobileSignUp(string username, string password, string email, string salt)
         {
-            SqlCommand cmd = new SqlCommand("insert into MobileUsers (Username, Password, Status, Email, DeviceID) Values (@username, @password, @status, @email, @deviceID);");
+            SqlCommand cmd = new SqlCommand("insert into MobileUsers (Username, Password, Status, Email, DeviceID, Salt) Values (@username, @password, @status, @email, @deviceID, @salt);");
             cmd.Parameters.AddWithValue("@username", username.Trim());
             cmd.Parameters.AddWithValue("@password", password.Trim());
             cmd.Parameters.AddWithValue("@status", 0);
             cmd.Parameters.AddWithValue("@email", email);
             cmd.Parameters.AddWithValue("@deviceID", String.Empty);
+            cmd.Parameters.AddWithValue("@salt", salt);
             return DBNonQuery(cmd);
+        }
+
+        public Response MobileGetSalt(string username, out string salt)
+        {
+            salt = string.Empty;
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select Salt from MobileUsers where Username = @username;", con);
+            cmd.Parameters.AddWithValue("@username", username);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        salt = reader[0].ToString();
+                        return r;
+                    }
+                    else
+                    {
+                        r.error = true;
+                        r.message = "Error in MobileGetSalt: Username could not be found";
+                        return r;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetSalt: " + e.Message;
+                return r;
+            }
         }
 
         /// <summary>
@@ -664,14 +822,10 @@ namespace KServer
             Response r = new Response();
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
-                {
-                    con.Open();
-                    SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = '', Status = '0' where ID = @mobileID;", con);
-                    cmd.Parameters.AddWithValue("@mobileID", mobileID);
-                    r.result = cmd.ExecuteNonQuery();
-                    return r;
-                }
+                SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = '', Status = '0' where ID = @mobileID;", con);
+                cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                r.result = cmd.ExecuteNonQuery();
+                return r;
             }
             catch (Exception e)
             {
@@ -692,15 +846,12 @@ namespace KServer
             Response r = new Response();
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
-                {
-                    con.Open();
-                    SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = @deviceID, Status = '1' where ID = @mobileID", con);
-                    cmd.Parameters.AddWithValue("@deviceID", deviceID);
-                    cmd.Parameters.AddWithValue("@mobileID", mobileID);
-                    r.result = cmd.ExecuteNonQuery();
-                    return r;
-                }
+                SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = @deviceID, Status = '1' where ID = @mobileID", con);
+                cmd.Parameters.AddWithValue("@deviceID", deviceID);
+                cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+
             }
             catch (Exception e)
             {
@@ -722,23 +873,20 @@ namespace KServer
             Response r = new Response();
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                SqlCommand cmd = new SqlCommand("select DeviceID from MobileUsers where ID = @mobileID", con);
+                cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                using (SqlDataReader reader = cmd.ExecuteReader())
                 {
-                    con.Open();
-                    SqlCommand cmd = new SqlCommand("select DeviceID from MobileUsers where ID = @mobileID", con);
-                    cmd.Parameters.AddWithValue("@mobileID", mobileID);
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    if (reader.Read())
                     {
-                        if (reader.Read())
-                        {
-                            deviceID = reader["DeviceID"].ToString(); ;
-                            return r;
-                        }
-                        r.error = true;
-                        r.message = "MobileID invalid in MobileGetDeviceID";
+                        deviceID = reader["DeviceID"].ToString(); ;
                         return r;
                     }
+                    r.error = true;
+                    r.message = "MobileID invalid in MobileGetDeviceID";
+                    return r;
                 }
+
             }
             catch (Exception e)
             {
@@ -746,7 +894,6 @@ namespace KServer
                 r.message = "Exception in MobileSetDeviceID: " + e.Message;
                 return r;
             }
-
         }
 
         /// <summary>
@@ -1003,12 +1150,32 @@ namespace KServer
         /// <param name="playListID">The playlist ID.</param>
         /// <param name="userID">The mobile client's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response MobileGetSongsFromPlaylist(int playListID, int userID)
+        public Response MobileGetSongsFromPlaylist(int playListID, int userID, out List<Song> songs)
         {
-            SqlCommand cmd = new SqlCommand("select Songs from PlayLists where ID = @playListID and MobileID = @userID;");
+            Response r = new Response();
+            songs = new List<Song>();
+            SqlCommand cmd = new SqlCommand("select SongID from PlayListSongs where PlayListID = @playListID;", con);
             cmd.Parameters.AddWithValue("@playListID", playListID);
-            cmd.Parameters.AddWithValue("@userID", userID);
-            return DBQuery(cmd, new string[1] { "Songs" });
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Song song = new Song();
+                        song.ID = int.Parse(reader[0].ToString());
+                        songs.Add(song);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetSongsFromPlaylist: " + e.Message;
+                return r;
+            }
         }
 
         /// <summary>
@@ -1018,24 +1185,46 @@ namespace KServer
         /// <param name="userID">The mobile client's ID.</param>
         /// <param name="songString">The songs in string form.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response MobileSetPlaylistSongs(int playListID, int userID, string songString)
+        public Response MobileSetPlaylistSongs(int playListID, int userID, List<Song> songs)
         {
-            SqlCommand cmd = new SqlCommand("update PlayLists set Songs = @songs where ID = @playListID and MobileID = @userID;");
-            cmd.Parameters.AddWithValue("@songs", songString);
-            cmd.Parameters.AddWithValue("@playListID", playListID);
-            cmd.Parameters.AddWithValue("@userID", userID);
-            return DBNonQuery(cmd);
+            Response r = new Response();
+            try
+            {
+                SqlCommand cmd = new SqlCommand("delete from PlayListSongs where PlayListID = @playListID;", con);
+                cmd.Parameters.AddWithValue("@playListID", playListID);
+                cmd.ExecuteNonQuery();
+
+                cmd = new SqlCommand("insert into PlayListSongs (PlayListID, SongID) values (@playListID, @songID);", con);
+                cmd.Parameters.AddWithValue("@playListID", playListID);
+
+                foreach (Song s in songs)
+                {
+                    cmd.Parameters.AddWithValue("@songID", s.ID);
+                    cmd.ExecuteNonQuery();
+                    cmd.Parameters.RemoveAt(1);
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileSignOut: " + e.Message;
+                return r;
+            }
         }
 
         /// <summary>
-        /// Get a client's playlists.
+        /// Get a client's playlists. Out playlists parameter has playlist id, name, datecreated, songsIDs and venueIDs set.
+        /// Additional song and venue information is NOT set.
         /// </summary>
         /// <param name="venueID">The venueID, if set to -1, all venues are included.</param>
         /// <param name="userID">The mobile client's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response MobileGetPlaylists(int venueID, int userID)
+        public Response MobileGetPlaylists(int venueID, int userID, out List<Playlist> playlists)
         {
-            SqlCommand cmd = new SqlCommand("select ID, Name, Songs, DateCreated, VenueID from PlayLists where MobileID = @userID");
+            Response r = new Response();
+            playlists = new List<Playlist>();
+            SqlCommand cmd = new SqlCommand("select ID, Name, DateCreated, VenueID from PlayLists where MobileID = @userID", con);
             cmd.Parameters.AddWithValue("@userID", userID);
             if (venueID != -1)
             {
@@ -1043,7 +1232,40 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@venueID", venueID);
             }
             cmd.CommandText += ";";
-            return DBQuery(cmd, new string[5] { "ID", "Name", "Songs", "DateCreated", "VenueID" });
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Playlist p = new Playlist();
+                        p.ID = int.Parse(reader["ID"].ToString());
+                        p.name = reader["Name"].ToString();
+                        p.dateCreated = Convert.ToDateTime(reader["DateCreated"].ToString());
+                        p.venue = new Venue();
+                        p.venue.venueID = int.Parse(reader["VenueID"].ToString());
+                        playlists.Add(p);
+                    }
+                }
+
+                foreach (Playlist p in playlists)
+                {
+                    List<Song> songs;
+                    r = MobileGetSongsFromPlaylist(p.ID, userID, out songs);
+                    if (r.error)
+                        return r;
+                    p.songs = songs;
+                }
+
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetSongsFromPlaylist: " + e.Message;
+                return r;
+            }
         }
 
         /// <summary>

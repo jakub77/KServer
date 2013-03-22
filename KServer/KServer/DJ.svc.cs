@@ -15,7 +15,6 @@ using System.Security.Cryptography;
 using System.Diagnostics;
 
 // Notes:
-// Change it so playlist songs are in their own table, so cascading works.
 // Change it so queue singer/songs are in their own table, so cascading works.
 
 namespace KServer
@@ -37,7 +36,11 @@ namespace KServer
         {
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
                 // Escape to allow the DJTestClient to list all DJ information
                 // WILL BE REMOVED FOR RELEASE!
                 if (username.Equals("list", StringComparison.OrdinalIgnoreCase))
@@ -124,10 +127,12 @@ namespace KServer
                     return r;
                 }
 
+                // Information seems valid, create a salt and hash the password.
+                string salt = Common.CreateSalt(16);
+                string hashSaltPassword = Common.CreatePasswordHash(password, salt);
 
-
-                // Information seems valid, sign up DJ and return successfulness.
-                r = db.DJSignUp(username, password, email, venue.venueName, venue.venueAddress);
+                // Sign up the user.
+                r = db.DJSignUp(username, hashSaltPassword, email, venue.venueName, venue.venueAddress, salt);
                 if (r.error)
                     return r;
 
@@ -148,12 +153,22 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return new LogInResponse(r);
+
+                // Get the salt from the database and salt/hash the password.
+                string salt;
+                r = db.DJGetSalt(username, out salt);
+                if (r.error)
+                    return new LogInResponse(r);
+                string saltHashPassword = Common.CreatePasswordHash(password, salt);
 
                 // See if the username/password combination is valid.
                 // If it is valid, the DJID will be stored in r.message.
                 // If it is not valid, r.message will be empty.
-                r = db.DJValidateUsernamePassword(username, password);
+                r = db.DJValidateUsernamePassword(username, saltHashPassword);
                 if (r.error)
                     return new LogInResponse(r);
 
@@ -210,10 +225,13 @@ namespace KServer
             int DJID;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -245,11 +263,15 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response DJGenerateNewQRNumber(long DJKey)
         {
-            Response r;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
                 int DJID;
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
                 String s = DJID.ToString() + DateTime.Now.ToString();
@@ -273,11 +295,15 @@ namespace KServer
         /// <returns></returns>
         public Response DJGetQRNumber(long DJKey)
         {
-            Response r;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
                 int DJID;
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
                 r = db.DJGetQR(DJID);
@@ -308,10 +334,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Attempt to convert DJKey to DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -338,10 +367,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Attempt to convert DJKey to DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -370,10 +402,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -437,10 +472,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -539,10 +577,13 @@ namespace KServer
             int DJID = -1, count = 0;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -589,10 +630,13 @@ namespace KServer
             int clientID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -788,10 +832,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -880,7 +927,10 @@ namespace KServer
             bool songChangeMade = false;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 if (newSR.user.userID != oldSR.user.userID)
                 {
@@ -890,7 +940,7 @@ namespace KServer
                 }
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1008,10 +1058,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1097,10 +1150,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1173,10 +1229,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1245,10 +1304,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Attempt to convert DJKey to DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1277,10 +1339,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Attempt to convert DJKey to DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1311,10 +1376,13 @@ namespace KServer
             List<queueSinger> queue = new List<queueSinger>();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1362,10 +1430,13 @@ namespace KServer
             int DJID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
                 // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID);
+                r = DJKeyToID(DJKey, out DJID, db);
                 if (r.error)
                     return r;
 
@@ -1470,29 +1541,25 @@ namespace KServer
         /// <param name="DJKey">The DJKey.</param>
         /// <param name="DJID">OUT parameter for the DJID.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response DJKeyToID(long DJKey, out int DJID)
+        private Response DJKeyToID(long DJKey, out int DJID, DatabaseConnectivity db)
         {
             DJID = -1;
-            Response r = new Response();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            Response r  = db.DJGetIDFromKey(DJKey);
+            if (r.error)
+                return r;
+            if (r.message.Trim().Length == 0)
             {
-                r = db.DJGetIDFromKey(DJKey);
-                if (r.error)
-                    return r;
-                if (r.message.Trim().Length == 0)
-                {
-                    r.error = true;
-                    r.message = "DJKey is not valid";
-                    return r;
-                }
-                if (!int.TryParse(r.message.Trim(), out DJID))
-                {
-                    r.error = true;
-                    r.message = "Exception in DJKeyToID: DJID Parse Fail";
-                    return r;
-                }
+                r.error = true;
+                r.message = "DJKey is not valid";
                 return r;
             }
+            if (!int.TryParse(r.message.Trim(), out DJID))
+            {
+                r.error = true;
+                r.message = "Exception in DJKeyToID: DJID Parse Fail";
+                return r;
+            }
+            return r;
         }
 
         /// <summary>

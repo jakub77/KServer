@@ -10,12 +10,12 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Web;
+using System.Security.Cryptography;
 
 namespace KServer
 {
     public static class Common
     {
-        //
         // The guesstimated time between singers.
         public static readonly int TIME_BETWEEN_REQUESTS = 30;
         // A unique and constant deliminator to use when needed.
@@ -23,6 +23,33 @@ namespace KServer
         // ID numbers used for Google Cloud Messaging.
         public static readonly string SENDER_ID = "599874388677";
         public static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
+
+        /// <summary>
+        /// Creates a random string to use as a salt for password hashing.
+        /// </summary>
+        /// <param name="size">The size of the salt to use.</param>
+        /// <returns></returns>
+        public static string CreateSalt(int size)
+        {
+            RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+            byte[] buf = new byte[size];
+            rng.GetBytes(buf);
+            return Convert.ToBase64String(buf);
+        }
+
+        /// <summary>
+        /// Creates a hash of the password plus the salt and returns it as a string.
+        /// </summary>
+        /// <param name="plainPassword">The plain text password.</param>
+        /// <param name="salt">The salt associated with this user.</param>
+        /// <returns>The salted and hashed password.</returns>
+        public static string CreatePasswordHash(string plainPassword, string salt)
+        {
+            HashAlgorithm algorithm = new SHA256Managed();
+            string preHash = plainPassword + salt;
+            byte[] postHash = algorithm.ComputeHash(System.Text.Encoding.UTF8.GetBytes(preHash));
+            return Convert.ToBase64String(postHash);
+        }
 
         /// <summary>
         /// Splits a string up by the global DELIMINATOR.
@@ -182,7 +209,7 @@ namespace KServer
             if (r.error)
                 return r;
 
-            if(r.message.Trim().Length == 0)
+            if (r.message.Trim().Length == 0)
             {
                 r.error = true;
                 r.message = "Could not find song.";

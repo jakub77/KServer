@@ -118,12 +118,19 @@ namespace DJTestClient
                 {
                     try
                     {
-                        string[] parts = command.Split(' ');
-                        int num = int.Parse(parts[1]);
-                        System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
-                        byte[] res = sha.ComputeHash(BitConverter.GetBytes(num));
-                        long l = BitConverter.ToInt64(res, 0);
-                        Console.WriteLine(l.ToString());
+                        Console.WriteLine("password");
+                        string plainPassword = Console.ReadLine().Trim();
+                        RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
+                        byte[] buf = new byte[16];
+                        rng.GetBytes(buf);
+                        string salt = Convert.ToBase64String(buf);
+                        Console.WriteLine(salt);
+
+                        HashAlgorithm algorithm = new SHA256Managed();
+                        string preHash = plainPassword + salt;
+
+                        byte[] postHash = algorithm.ComputeHash(System.Text.Encoding.UTF8.GetBytes(preHash));
+                        Console.WriteLine(Convert.ToBase64String(postHash));
 
                     }
                     catch (Exception e)
