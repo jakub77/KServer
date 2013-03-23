@@ -267,7 +267,7 @@ namespace KServer
 
             if (!int.TryParse(r.message.Trim(), out rating))
             {
-                LogError("The message is: '" + r.message.Trim() + "'", "", null, 2);
+                LogError("Load song rating fail, the message is: '" + r.message.Trim() + "'", "", null, 2);
                 r.error = true;
                 r.message = "Could not parse rating";
                 return r;
@@ -296,9 +296,9 @@ namespace KServer
             {
                 r = PushMessageToMobile(clientID, message, db);
                 if (r.error)
-                    LogError(r.message, Environment.StackTrace, null, 1);
+                    LogError(r.message, Environment.StackTrace, null, 2);
                 if (r.message.StartsWith("Warning:"))
-                    LogError(r.message, "UserID: " + clientID, null, 1);
+                    LogError(r.message, "UserID: " + clientID, null, 2);
             }
             return r;
         }

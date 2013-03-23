@@ -479,8 +479,6 @@ namespace KServer
                 if (nextUserID > 0)
                 {
                     r = Common.PushMessageToMobile(nextUserID, "turn", db);
-                    if (r.error)
-                        Common.LogError(r.message, Environment.StackTrace, r, 1);
                 }
 
                 queue[0].songs.RemoveAt(0);
@@ -508,8 +506,6 @@ namespace KServer
                 if (queue.Count > 0 && nextUserID > 0)
                 {
                     r = Common.PushMessageToMobile(nextUserID, "next", db);
-                    if (r.error)
-                        Common.LogError(r.message, Environment.StackTrace, r, 1);
                 }
 
                 raw = string.Empty;
@@ -711,8 +707,6 @@ namespace KServer
                 {
                     newRequests = clientID.ToString() + "~" + sr.songID.ToString();
                     r = Common.PushMessageToMobile(sr.user.userID, "queue", db);
-                    if (r.error)
-                        Common.LogError(r.message, Environment.StackTrace, null, 1);
                     r = db.SetSongRequests(DJID, newRequests);
                     return r;
                 }
