@@ -22,7 +22,7 @@ namespace JakubMobileClient
             // Used to make http requests.
             WebClient client = new WebClient();
             // Base address of all commands.
-            string baseAddress = "http://sunny.eng.utah.edu:81/Mobile.svc";
+            string baseAddress = "http://sunny.eng.utah.edu:1718/Mobile.svc";
             // The key that describes the user. Is not set until signup is called!
             long userKey = -1;
             // Wether to display JSON or clearer object messages.

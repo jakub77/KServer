@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<SavedWcfConfigurationInformation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="9.1" CheckSum="F3tmoHHIwH7rEdfs04ZTTg6Z+tQ=">
+<SavedWcfConfigurationInformation xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" Version="9.1" CheckSum="hOrUU8tN0Z6Q0jb7GdoBnEOAym8=">
   <bindingConfigurations>
     <bindingConfiguration bindingType="basicHttpBinding" name="BasicHttpBinding_IDJ">
       <properties>
@@ -112,10 +112,10 @@
     </bindingConfiguration>
   </bindingConfigurations>
   <endpoints>
-    <endpoint name="BasicHttpBinding_IDJ" contract="ServiceReference1.IDJ" bindingType="basicHttpBinding" address="http://sunny.eng.utah.edu:81/DJ.svc" bindingConfiguration="BasicHttpBinding_IDJ">
+    <endpoint name="BasicHttpBinding_IDJ" contract="ServiceReference1.IDJ" bindingType="basicHttpBinding" address="http://sunny.eng.utah.edu:1718/DJ.svc" bindingConfiguration="BasicHttpBinding_IDJ">
       <properties>
         <property path="/address" isComplexType="false" isExplicitlyDefined="true" clrType="System.Uri, System, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
-          <serializedValue>http://sunny.eng.utah.edu:81/DJ.svc</serializedValue>
+          <serializedValue>http://sunny.eng.utah.edu:1718/DJ.svc</serializedValue>
         </property>
         <property path="/behaviorConfiguration" isComplexType="false" isExplicitlyDefined="false" clrType="System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
           <serializedValue />

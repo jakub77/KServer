@@ -1377,5 +1377,72 @@ namespace KServer
             cmd.Parameters.AddWithValue("@songID", songID);
             return DBQuery(cmd, new string[1] { "Rating" });
         }
+
+        /// <summary>
+        /// Set a setting the the settings table in the databse.
+        /// </summary>
+        /// <param name="name">The name of the setting.</param>
+        /// <param name="value">The value of the setting.</param>
+        /// <returns>The outcome of the opeartion.</returns>
+        public Response SetSetting(string name, string value)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from Settings where Name = @name ;", con);
+            cmd.Parameters.AddWithValue("@name", name);
+            SqlCommand cmd2 = new SqlCommand("insert into Settings (Name, Value) values (@name, @value);", con);
+            cmd2.Parameters.AddWithValue("@name", name);
+            cmd2.Parameters.AddWithValue("@value", value);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                cmd2.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetSalt: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Set a setting in the Settings table in the databse.
+        /// </summary>
+        /// <param name="name">The name of the setting.</param>
+        /// <param name="value">Out value of the setting.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response GetSetting(string name, out string value)
+        {
+            value = string.Empty;
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select value from Settings where Name = @name ;", con);
+            cmd.Parameters.AddWithValue("@name", name);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        value = reader[0].ToString();
+                        return r;
+                    }
+                    else
+                    {
+                        r.error = true;
+                        r.message = "Error in MobileGetSalt: Username could not be found";
+                        return r;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetSalt: " + e.Message;
+                return r;
+            }
+        }
     }
 }

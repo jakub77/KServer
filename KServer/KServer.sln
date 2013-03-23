@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JakubMobileClient", "JakubM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DJTestClient", "DJTestClient\DJTestClient.csproj", "{6FB7310F-FBEF-4607-9663-ABE1FD1F1420}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MobiokeWebSite", "MobiokeWebSite\MobiokeWebSite.csproj", "{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,16 @@ Global
 		{6FB7310F-FBEF-4607-9663-ABE1FD1F1420}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{6FB7310F-FBEF-4607-9663-ABE1FD1F1420}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{6FB7310F-FBEF-4607-9663-ABE1FD1F1420}.Release|x86.ActiveCfg = Release|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{AD3192BB-E4F3-4833-8BBE-E002CFCAC8DD}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

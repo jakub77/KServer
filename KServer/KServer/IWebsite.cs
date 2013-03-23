@@ -7,29 +7,34 @@ using System.Text;
 
 namespace KServer
 {
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IWebsite" in both code and config file together.
     [ServiceContract]
     public interface IWebsite
     {
         [OperationContract]
-        Response DJValidateUsername(string username);
+        Response SendEmailWithUsername(string email, string role);
 
         [OperationContract]
-        Response MobileValidateUsername(string username);
+        Response StartPasswordReset(string email, out string key, string role);
 
         [OperationContract]
-        Response DJSignUp(string userName, string password, Venue venue, string email);
+        Response CompletePasswordReset(string key, string newPassword);
+
+        [OperationContract]
+        Response ChangePassword(string username, string oldPassword, string newPassword, string role);
+
+        [OperationContract]
+        Response ChangeEmail(string username, string password, string newEmail, string role);
+
+        [OperationContract]
+        Response DJSignUp(string username, string password, Venue venue, string email);
 
         [OperationContract]
         Response MobileSignUp(string username, string password, string email);
 
         [OperationContract]
-        Response DJRequestPasswordChange(string username, string password);
+        Response EnableDisableRegistration(bool enableRegistration);
 
         [OperationContract]
-        Response MobileRequestPasswordChange(string username, string password);
-
-        [OperationContract]
-        Response CompletePasswordChange(string hashKey);
+        Response IsRegistrationAllowed(out bool registrationAllowed);
     }
 }

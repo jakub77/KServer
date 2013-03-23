@@ -7,28 +7,65 @@ using System.Text;
 
 namespace KServer
 {
-    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the class name "Website" in code, svc and config file together.
-    // NOTE: In order to launch WCF Test Client for testing this service, please select Website.svc or Website.svc.cs at the Solution Explorer and start debugging.
     public class Website : IWebsite
     {
         /// <summary>
-        /// Validate a DJ's username. Result is stored in response.result.
-        /// 1 indicates a valid username, 0 indicates invalid.
+        /// Sends the username associated with the email address listed to the email address.
         /// </summary>
-        /// <param name="username">The username</param>
-        /// <returns>The outcome of the operation</returns>
-        public Response DJValidateUsername(string username)
+        /// <param name="email">The email address of the user.</param>
+        /// <param name="role">The role: DJ or Mobile</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response SendEmailWithUsername(string email, string role)
         {
             return null;
         }
 
         /// <summary>
-        /// Validate a Mobile username. Result is stores in response.result
-        /// 1 indicates a valid username, 0 indicates invalid.
+        /// Starts the password reset process for users who forgot their passwords.
         /// </summary>
-        /// <param name="username">The username</param>
-        /// <returns>The outcome of the operation</returns>
-        public Response MobileValidateUsername(string username)
+        /// <param name="email">The email address of the user.</param>
+        /// <param name="key">Out parameter for the unique key this user will temporarily be associated with.</param>
+        /// <param name="role">The role: DJ or Mobile</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response StartPasswordReset(string email, out string key, string role)
+        {
+            key = String.Empty;
+            return null;
+        }
+
+        /// <summary>
+        /// Completes that password reset process for the user.
+        /// </summary>
+        /// <param name="key">The key associated with the user from StartPasswordReset</param>
+        /// <param name="newPassword">The new password.</param>
+        /// <returns>The outcome of the opeartion.</returns>
+        public Response CompletePasswordReset(string key, string newPassword)
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Change a user's password.
+        /// </summary>
+        /// <param name="username">The username.</param>
+        /// <param name="oldPassword">The old password.</param>
+        /// <param name="newPassword">The new password.</param>
+        /// <param name="role">The role: DJ or Mobile</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response ChangePassword(string username, string oldPassword, string newPassword, string role)
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Change a user's email.
+        /// </summary>
+        /// <param name="username">The username.</param>
+        /// <param name="password">The password.</param>
+        /// <param name="newEmail">The new email address.</param>
+        /// <param name="role">The role, DJ or mobile.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response ChangeEmail(string username, string password, string newEmail, string role)
         {
             return null;
         }
@@ -44,7 +81,110 @@ namespace KServer
         /// <returns>A Response object indicating the result of the operation.</returns>
         public Response DJSignUp(string username, string password, Venue venue, string email)
         {
-            return null;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Escape to allow the DJTestClient to list all DJ information
+                // WILL BE REMOVED FOR RELEASE!
+                if (username.Equals("list", StringComparison.OrdinalIgnoreCase))
+                {
+                    Response listResponse = db.DJListMembers();
+                    if (listResponse.error)
+                        return listResponse;
+                    if (r.error)
+                        return r;
+                    return listResponse;
+                }
+
+                // Validate that username and password are not blank.
+                if (username.Length == 0 || password.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Username or password is blank.";
+                    return r;
+                }
+
+                // Validate that username and password are not too long.
+                if (username.Length > 20 || password.Length > 20)
+                {
+                    r.error = true;
+                    r.message = "Username or password is longer than 20 characters.";
+                    return r;
+                }
+
+                // Try to see if the username already exists. If it does, inform the client.
+                r = db.DJValidateUsername(username);
+                if (r.error)
+                    return r;
+                if (r.message.Trim() != string.Empty)
+                {
+                    r.error = true;
+                    r.message = "That username already exists.";
+                    return r;
+                }
+
+                // Validate the email address.
+                try
+                {
+                    var address = new System.Net.Mail.MailAddress(email);
+                }
+                catch
+                {
+                    r.error = true;
+                    r.message = "Email address is not valid";
+                    return r;
+                }
+
+                if (venue == null)
+                {
+                    r.error = true;
+                    r.message = "Venue information must be passed in.";
+                    return r;
+                }
+
+                if (venue.venueName == null || venue.venueName.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Venue name must be set";
+                    return r;
+                }
+
+                if (venue.venueName.Length > 20)
+                {
+                    r.error = true;
+                    r.message = "Venue name is longer than 20 characters.";
+                    return r;
+                }
+
+                if (venue.venueAddress.Length > 100)
+                {
+                    r.error = true;
+                    r.message = "Venue address is longer than 100 characters";
+                    return r;
+                }
+
+                if (venue.venueAddress == null || venue.venueAddress.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Venue address must be set";
+                    return r;
+                }
+
+                // Information seems valid, create a salt and hash the password.
+                string salt = Common.CreateSalt(16);
+                string hashSaltPassword = Common.CreatePasswordHash(password, salt);
+
+                // Sign up the user.
+                r = db.DJSignUp(username, hashSaltPassword, email, venue.venueName, venue.venueAddress, salt);
+                if (r.error)
+                    return r;
+
+                return r;
+            }
         }
 
         /// <summary>
@@ -56,42 +196,113 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response MobileSignUp(string username, string password, string email)
         {
-            return null;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                // Escape to allow the MobileTestClient to list all Mobile information
+                // WILL BE REMOVED FOR RELEASE!
+                if (username.Equals("list", StringComparison.OrdinalIgnoreCase))
+                {
+                    Response listResponse = db.MobileListMembers();
+                    if (listResponse.error)
+                        return (Response)Common.LogError(listResponse.message, Environment.StackTrace, listResponse, 0);
+                    return listResponse;
+                }
+
+                // Validate that username and password are not blank.
+                if (username.Length == 0 || password.Length == 0)
+                {
+                    r.error = true;
+                    r.message = "Username or password is blank.";
+                    return r;
+                }
+
+                // Validate that username and password are not too long.
+                if (username.Length > 20 || password.Length > 20)
+                {
+                    r.error = true;
+                    r.message = "Username or password is longer than 20 characters.";
+                    return r;
+                }
+
+                // Validate the email address.
+                try
+                {
+                    var address = new System.Net.Mail.MailAddress(email);
+                }
+                catch
+                {
+                    r.error = true;
+                    r.message = "Email address is not valid";
+                    return r;
+                }
+
+                // Try to see if the username already exists. If it does, inform the client.
+                r = db.MobileValidateUsername(username);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                if (r.message.Trim() != string.Empty)
+                {
+                    r.error = true;
+                    r.message = "That username already exists.";
+                    return r;
+                }
+
+                // Create salt and hashed/salted password;
+                string salt = Common.CreateSalt(16);
+                string hashSaltPassword = Common.CreatePasswordHash(password, salt);
+
+                // Information seems valid, sign up client and return successfulness.
+                r = db.MobileSignUp(username, hashSaltPassword, email, salt);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                return r;
+            }
         }
 
-        /// <summary>
-        /// Create a request for a password change. If no error is returned, the message will have
-        /// the unique key to pass into CompletePasswordChange to actually change the password.
-        /// </summary>
-        /// <param name="username">The username of the DJ.</param>
-        /// <param name="password">The new password.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response DJRequestPasswordChange(string username, string password)
+        public Response EnableDisableRegistration(bool enableRegistration)
         {
-            return null;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                r = db.SetSetting("webRegistration", enableRegistration.ToString());
+                if (r.error)
+                    return r;
+                return r;
+            }
         }
 
-        /// <summary>
-        /// Create a request for a password change. If no error is returned, the message will have
-        /// the unique key to pass into CompletePasswordChange to actually change the password.
-        /// </summary>
-        /// <param name="username">The username of the Mobile user.</param>
-        /// <param name="password">The new password.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response MobileRequestPasswordChange(string username, string password)
+        public Response IsRegistrationAllowed(out bool registrationAllowed)
         {
-            return null;
-        }
+            registrationAllowed = false;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
-        /// <summary>
-        /// Actually changes a user's password. Called after DJRequestPasswordChange or MobileRequestPasswordChange.
-        /// Passed in the unique key sent from these methods.
-        /// </summary>
-        /// <param name="key">The unique key for this password reset.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response CompletePasswordChange(string key)
-        {
-            return null;
+                string registrationAllowedString;
+                r = db.GetSetting("webRegistration", out registrationAllowedString);
+                if (r.error)
+                    return r;
+
+                if (!bool.TryParse(registrationAllowedString, out registrationAllowed))
+                {
+                    r.error = true;
+                    r.message = "Could not read setting";
+                    return r;
+                }
+                return r;
+            }
         }
     }
 }
