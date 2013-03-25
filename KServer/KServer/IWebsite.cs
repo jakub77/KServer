@@ -11,19 +11,22 @@ namespace KServer
     public interface IWebsite
     {
         [OperationContract]
-        Response SendEmailWithUsername(string email, string role);
+        Response SendEmailWithUsername(string email);
 
         [OperationContract]
-        Response StartPasswordReset(string email, out string key, string role);
+        Response StartPasswordReset(string email, string username, bool isDJ, string websiteAddress);
 
         [OperationContract]
-        Response CompletePasswordReset(string key, string newPassword);
+        Response ValidatePasswordResetKey(string key, bool isDJ, out int ID);
 
         [OperationContract]
-        Response ChangePassword(string username, string oldPassword, string newPassword, string role);
+        Response Login(string username, string password, string role, out int ID);
 
         [OperationContract]
-        Response ChangeEmail(string username, string password, string newEmail, string role);
+        Response ChangePassword(int ID, string role, string newPassword);
+
+        [OperationContract]
+        Response ChangeEmail(int ID, string role, string newEmail);
 
         [OperationContract]
         Response DJSignUp(string username, string password, Venue venue, string email);

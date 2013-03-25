@@ -321,14 +321,15 @@ namespace KServer
         /// <summary>
         /// Sets a DJ's password to the new password.
         /// </summary>
-        /// <param name="username">The username to match with.</param>
+        /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="password">The new hashed and salted password.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response DJSetPassword(string username, string password)
+        public Response DJSetPassword(int DJID, string password)
         {
             Response r = new Response();
-            SqlCommand cmd = new SqlCommand("Update DJUsers set Password = @password where Username = @username;", con);
+            SqlCommand cmd = new SqlCommand("Update DJUsers set Password = @password where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@password", password);
+            cmd.Parameters.AddWithValue("@ID", DJID);
             try
             {
                 r.result = cmd.ExecuteNonQuery();
@@ -343,16 +344,42 @@ namespace KServer
         }
 
         /// <summary>
-        /// Sets a Mobile User's password to the new password.
+        /// Update a DJ's email address.
         /// </summary>
-        /// <param name="username">The username to match with.</param>
-        /// <param name="password">The new hashed and salted password.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response MobileSetPassword(string username, string password)
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="email"></param>
+        /// <returns>The otucome of the operation.</returns>
+        public Response DJSetEmail(int DJID, string email)
         {
             Response r = new Response();
-            SqlCommand cmd = new SqlCommand("Update MobileUsers set Password = @password where Username = @username;", con);
+            SqlCommand cmd = new SqlCommand("Update DJUsers set Email = @email where ID = @ID;", con);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@ID", DJID);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetEmail: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Sets a Mobile User's password to the new password.
+        /// </summary>
+        /// <param name="mobileID">The username to match with.</param>
+        /// <param name="password">The new hashed and salted password.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response MobileSetPassword(int mobileID, string password)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("Update MobileUsers set Password = @password where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@password", password);
+            cmd.Parameters.AddWithValue("@ID", mobileID);
             try
             {
                 r.result = cmd.ExecuteNonQuery();
@@ -365,6 +392,82 @@ namespace KServer
                 return r;
             }
         }
+
+        /// <summary>
+        /// Update a Mobile user's email address.
+        /// </summary>
+        /// <param name="mobileID">The mobile ID.</param>
+        /// <param name="email">The new email.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response MobileSetEmail(int mobileID, string email)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("Update MobileUsers set Email = @email where ID = @ID;", con);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@ID", mobileID);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetEmail: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Update a DJ's salt.
+        /// </summary>
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="salt">The new salt.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response DJSetSalt(int DJID, string salt)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("Update DJUsers set Salt = @salt where ID = @ID;", con);
+            cmd.Parameters.AddWithValue("@salt", salt);
+            cmd.Parameters.AddWithValue("@ID", DJID);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetPassword: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Set's a mobile users's password salt.
+        /// </summary>
+        /// <param name="mobileID">The mobile user's unique ID.</param>
+        /// <param name="salt">The new salt.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response MobileSetSalt(int mobileID, string salt)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("Update MobileUsers set Salt = @salt where ID = @ID;", con);
+            cmd.Parameters.AddWithValue("@salt", salt);
+            cmd.Parameters.AddWithValue("@ID", mobileID);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetPassword: " + e.Message;
+                return r;
+            }
+        }
+
 
         /// <summary>
         /// Get all mobile client ids that are logged into this DJ.
@@ -1441,6 +1544,240 @@ namespace KServer
             {
                 r.error = true;
                 r.message = "Exception in MobileGetSalt: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Get all the mobile usernames associated with this email address.
+        /// </summary>
+        /// <param name="email">The email address.</param>
+        /// <param name="usernames">Out usernames.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response MobileGetUsernamesByEmail(string email, out List<string> usernames)
+        {
+            usernames = new List<string>();
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select Username from MobileUsers where Email = @email ;", con);
+            cmd.Parameters.AddWithValue("@email", email);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while(reader.Read())
+                    {
+                        usernames.Add(reader[0].ToString());
+                    }
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetUsernamesByEmail: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Get all the DJ usernames associated with this email address.
+        /// </summary>
+        /// <param name="email">The email address.</param>
+        /// <param name="usernames">Out usernames.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response DJGetUsernamesByEmail(string email, out List<string> usernames)
+        {
+            usernames = new List<string>();
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select Username from DJUsers where Email = @email ;", con);
+            cmd.Parameters.AddWithValue("@email", email);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        usernames.Add(reader[0].ToString());
+                    }
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJGetUsernamesByEmail: " + e.Message;
+                return r;
+            }
+        }
+
+        public Response DJValidateUsernameEmail(string username, string email, out int DJID)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select ID from DJUsers where Email = @email and Username = @username ;", con);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@username", username);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        DJID = int.Parse(reader[0].ToString());
+                        return r;
+                    }
+
+                    DJID = -1;
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJValidateUsernameEmail: " + e.Message;
+                DJID = -1;
+                return r;
+            }
+        }
+
+        public Response MobileValidateUsernameEmail(string username, string email, out int mobileID)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Email = @email and Username = @username ;", con);
+            cmd.Parameters.AddWithValue("@email", email);
+            cmd.Parameters.AddWithValue("@username", username);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        mobileID = int.Parse(reader[0].ToString());
+                        return r;
+                    }
+
+                    mobileID = -1;
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileValidateUsernameEmail: " + e.Message;
+                mobileID = -1;
+                return r;
+            }
+        }
+
+        public Response DJSetPasswordReset(int DJID, string value)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from DJPasswordResets where ID = @ID;", con);
+            cmd.Parameters.AddWithValue("@ID", DJID);
+            cmd.ExecuteNonQuery();
+
+            SqlCommand cmd2 = new SqlCommand("insert into DJPasswordResets(ID, Value) values (@ID, @value);", con);
+            cmd2.Parameters.AddWithValue("@ID", DJID);
+            cmd2.Parameters.AddWithValue("@value", value);
+            cmd2.ExecuteNonQuery();
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                cmd2.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetPasswordReset: " + e.Message;
+                return r;
+            }
+        }
+
+        public Response MobileSetPasswordReset(int mobileID, string value)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from MobilePasswordResets where ID = @ID;", con);
+            cmd.Parameters.AddWithValue("@ID", mobileID);
+            cmd.ExecuteNonQuery();
+
+            SqlCommand cmd2 = new SqlCommand("insert into MobilePasswordResets(ID, Value) values (@ID, @value);", con);
+            cmd2.Parameters.AddWithValue("@ID", mobileID);
+            cmd2.Parameters.AddWithValue("@value", value);
+            cmd2.ExecuteNonQuery();
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                cmd2.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileSetPasswordReset: " + e.Message;
+                return r;
+            }
+        }
+
+        public Response DJGetPasswordResetID(string value, out int DJID)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select ID from DJPasswordResets where Value = @value;", con);
+            cmd.Parameters.AddWithValue("@value", value);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        DJID = int.Parse(reader[0].ToString());
+                        return r;
+                    }
+
+                    DJID = -1;
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJGetPasswordResetID: " + e.Message;
+                DJID = -1;
+                return r;
+            }
+        }
+
+        public Response MobileGetPasswordResetID(string value, out int mobileID)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select ID from MobilePasswordResets where Value = @value;", con);
+            cmd.Parameters.AddWithValue("@value", value);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        mobileID = int.Parse(reader[0].ToString());
+                        return r;
+                    }
+
+                    mobileID = -1;
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetPasswordResetID: " + e.Message;
+                mobileID = -1;
                 return r;
             }
         }

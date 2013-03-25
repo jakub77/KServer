@@ -66,8 +66,21 @@ namespace MobiokeWebSite.Account
                 return;
             }
 
-            ResultLabel.Text = "Success! Welcome to Mobioke " + username + "!";
-            Response.Redirect("~/Account/SuccessfulRegistration.aspx");
+            int ID;
+            r = proxy.Login(username, password, "Mobile", out ID);
+
+            if (r.error)
+            {
+                Response.Redirect("~/Account/SuccessfulRegistration.aspx");
+                return;
+            }
+
+            Session["ID"] = ID;
+            Session["Role"] = "Mobile";
+            Session["Username"] = username;
+
+            Response.Redirect("~/Account/Manage2.aspx");
+
             return;
         }
 
@@ -138,6 +151,5 @@ namespace MobiokeWebSite.Account
             PasswordErrorLabel.Text = string.Empty;
             PasswordConfirmationErrorLabel.Text = string.Empty;
         }
-
     }
 }

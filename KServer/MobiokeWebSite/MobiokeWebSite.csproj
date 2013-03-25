@@ -125,12 +125,18 @@
   <ItemGroup>
     <Content Include="About.aspx" />
     <Content Include="Account\DJRegister.aspx" />
+    <Content Include="Account\FinishPasswordReset.aspx" />
+    <Content Include="Account\ForgotUsername.aspx" />
     <Content Include="Account\Login.aspx" />
+    <Content Include="Account\Login2.aspx" />
+    <Content Include="Account\Logout.aspx" />
     <Content Include="Account\Manage.aspx" />
+    <Content Include="Account\Manage2.aspx" />
     <Content Include="Account\OpenAuthProviders.ascx" />
     <Content Include="Account\Register.aspx" />
     <Content Include="Account\Register2.aspx" />
     <Content Include="Account\RegisterExternalLogin.aspx" />
+    <Content Include="Account\StartPasswordReset.aspx" />
     <Content Include="Account\SuccessfulRegistration.aspx" />
     <Content Include="Administration.aspx" />
     <Content Include="Contact.aspx" />
@@ -189,6 +195,7 @@
     <Content Include="Content\themes\base\minified\jquery.ui.slider.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.tabs.min.css" />
     <Content Include="Content\themes\base\minified\jquery.ui.theme.min.css" />
+    <Content Include="Error.aspx" />
     <Content Include="Images\accent.png" />
     <Content Include="Images\bullet.png" />
     <Content Include="Images\heroAccent.png" />
@@ -239,10 +246,13 @@
     <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.Response.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Content>
-    <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.StartPasswordResetResponse.datasource">
+    <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.IsRegistrationAllowedResponse.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Content>
-    <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.IsRegistrationAllowedResponse.datasource">
+    <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.LoginResponse.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
+    <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Content>
     <None Include="Service References\ServiceReference1\Website.disco" />
@@ -273,12 +283,54 @@
     <Compile Include="Account\DJRegister.aspx.designer.cs">
       <DependentUpon>DJRegister.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Account\FinishPasswordReset.aspx.cs">
+      <DependentUpon>FinishPasswordReset.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Account\FinishPasswordReset.aspx.designer.cs">
+      <DependentUpon>FinishPasswordReset.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Account\ForgotUsername.aspx.cs">
+      <DependentUpon>ForgotUsername.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Account\ForgotUsername.aspx.designer.cs">
+      <DependentUpon>ForgotUsername.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Account\Login2.aspx.cs">
+      <DependentUpon>Login2.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Account\Login2.aspx.designer.cs">
+      <DependentUpon>Login2.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Account\Logout.aspx.cs">
+      <DependentUpon>Logout.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Account\Logout.aspx.designer.cs">
+      <DependentUpon>Logout.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Account\Manage2.aspx.cs">
+      <DependentUpon>Manage2.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Account\Manage2.aspx.designer.cs">
+      <DependentUpon>Manage2.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Account\Register2.aspx.cs">
       <DependentUpon>Register2.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="Account\Register2.aspx.designer.cs">
       <DependentUpon>Register2.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Account\StartPasswordReset.aspx.cs">
+      <DependentUpon>StartPasswordReset.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Account\StartPasswordReset.aspx.designer.cs">
+      <DependentUpon>StartPasswordReset.aspx</DependentUpon>
     </Compile>
     <Compile Include="Account\SuccessfulRegistration.aspx.cs">
       <DependentUpon>SuccessfulRegistration.aspx</DependentUpon>
@@ -351,6 +403,13 @@
     </Compile>
     <Compile Include="Default.aspx.designer.cs">
       <DependentUpon>Default.aspx</DependentUpon>
+    </Compile>
+    <Compile Include="Error.aspx.cs">
+      <DependentUpon>Error.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="Error.aspx.designer.cs">
+      <DependentUpon>Error.aspx</DependentUpon>
     </Compile>
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>

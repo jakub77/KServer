@@ -67,6 +67,20 @@ namespace MobiokeWebSite
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (Session["ID"] == null)
+            {
+                link1.InnerText = "My Account";
+                link1.HRef = "~/Account/Manage2.aspx";
+                link2.InnerText = "Register";
+                link2.HRef = "~/Account/Register2.aspx";
+            }
+            else
+            {
+                link1.InnerText = "My Account";
+                link1.HRef = "~/Account/Manage2.aspx";
+                link2.InnerText = "Log out";
+                link2.HRef = "~/Account/Logout.aspx";
+            }
 
         }
     }

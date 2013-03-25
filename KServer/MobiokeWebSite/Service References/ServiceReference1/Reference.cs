@@ -172,35 +172,42 @@ namespace MobiokeWebSite.ServiceReference1 {
     public interface IWebsite {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/SendEmailWithUsername", ReplyAction="http://tempuri.org/IWebsite/SendEmailWithUsernameResponse")]
-        MobiokeWebSite.ServiceReference1.Response SendEmailWithUsername(string email, string role);
+        MobiokeWebSite.ServiceReference1.Response SendEmailWithUsername(string email);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/SendEmailWithUsername", ReplyAction="http://tempuri.org/IWebsite/SendEmailWithUsernameResponse")]
-        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> SendEmailWithUsernameAsync(string email, string role);
+        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> SendEmailWithUsernameAsync(string email);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/StartPasswordReset", ReplyAction="http://tempuri.org/IWebsite/StartPasswordResetResponse")]
-        MobiokeWebSite.ServiceReference1.StartPasswordResetResponse StartPasswordReset(MobiokeWebSite.ServiceReference1.StartPasswordResetRequest request);
+        MobiokeWebSite.ServiceReference1.Response StartPasswordReset(string email, string username, bool isDJ, string websiteAddress);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/StartPasswordReset", ReplyAction="http://tempuri.org/IWebsite/StartPasswordResetResponse")]
+        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> StartPasswordResetAsync(string email, string username, bool isDJ, string websiteAddress);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ValidatePasswordResetKey", ReplyAction="http://tempuri.org/IWebsite/ValidatePasswordResetKeyResponse")]
+        MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse ValidatePasswordResetKey(MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest request);
         
         // CODEGEN: Generating message contract since the operation has multiple return values.
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/StartPasswordReset", ReplyAction="http://tempuri.org/IWebsite/StartPasswordResetResponse")]
-        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.StartPasswordResetResponse> StartPasswordResetAsync(MobiokeWebSite.ServiceReference1.StartPasswordResetRequest request);
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ValidatePasswordResetKey", ReplyAction="http://tempuri.org/IWebsite/ValidatePasswordResetKeyResponse")]
+        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse> ValidatePasswordResetKeyAsync(MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest request);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/CompletePasswordReset", ReplyAction="http://tempuri.org/IWebsite/CompletePasswordResetResponse")]
-        MobiokeWebSite.ServiceReference1.Response CompletePasswordReset(string key, string newPassword);
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/Login", ReplyAction="http://tempuri.org/IWebsite/LoginResponse")]
+        MobiokeWebSite.ServiceReference1.LoginResponse Login(MobiokeWebSite.ServiceReference1.LoginRequest request);
         
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/CompletePasswordReset", ReplyAction="http://tempuri.org/IWebsite/CompletePasswordResetResponse")]
-        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> CompletePasswordResetAsync(string key, string newPassword);
-        
-        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ChangePassword", ReplyAction="http://tempuri.org/IWebsite/ChangePasswordResponse")]
-        MobiokeWebSite.ServiceReference1.Response ChangePassword(string username, string oldPassword, string newPassword, string role);
+        // CODEGEN: Generating message contract since the operation has multiple return values.
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/Login", ReplyAction="http://tempuri.org/IWebsite/LoginResponse")]
+        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.LoginResponse> LoginAsync(MobiokeWebSite.ServiceReference1.LoginRequest request);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ChangePassword", ReplyAction="http://tempuri.org/IWebsite/ChangePasswordResponse")]
-        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangePasswordAsync(string username, string oldPassword, string newPassword, string role);
+        MobiokeWebSite.ServiceReference1.Response ChangePassword(int ID, string role, string newPassword);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ChangePassword", ReplyAction="http://tempuri.org/IWebsite/ChangePasswordResponse")]
+        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangePasswordAsync(int ID, string role, string newPassword);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ChangeEmail", ReplyAction="http://tempuri.org/IWebsite/ChangeEmailResponse")]
-        MobiokeWebSite.ServiceReference1.Response ChangeEmail(string username, string password, string newEmail, string role);
+        MobiokeWebSite.ServiceReference1.Response ChangeEmail(int ID, string role, string newEmail);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ChangeEmail", ReplyAction="http://tempuri.org/IWebsite/ChangeEmailResponse")]
-        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangeEmailAsync(string username, string password, string newEmail, string role);
+        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangeEmailAsync(int ID, string role, string newEmail);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/DJSignUp", ReplyAction="http://tempuri.org/IWebsite/DJSignUpResponse")]
         MobiokeWebSite.ServiceReference1.Response DJSignUp(string username, string password, MobiokeWebSite.ServiceReference1.Venue venue, string email);
@@ -230,41 +237,85 @@ namespace MobiokeWebSite.ServiceReference1 {
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ServiceModel.MessageContractAttribute(WrapperName="StartPasswordReset", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
-    public partial class StartPasswordResetRequest {
+    [System.ServiceModel.MessageContractAttribute(WrapperName="ValidatePasswordResetKey", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
+    public partial class ValidatePasswordResetKeyRequest {
         
         [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=0)]
-        public string email;
+        public string key;
         
         [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=1)]
-        public string role;
+        public bool isDJ;
         
-        public StartPasswordResetRequest() {
+        public ValidatePasswordResetKeyRequest() {
         }
         
-        public StartPasswordResetRequest(string email, string role) {
-            this.email = email;
+        public ValidatePasswordResetKeyRequest(string key, bool isDJ) {
+            this.key = key;
+            this.isDJ = isDJ;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="ValidatePasswordResetKeyResponse", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
+    public partial class ValidatePasswordResetKeyResponse {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=0)]
+        public MobiokeWebSite.ServiceReference1.Response ValidatePasswordResetKeyResult;
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=1)]
+        public int ID;
+        
+        public ValidatePasswordResetKeyResponse() {
+        }
+        
+        public ValidatePasswordResetKeyResponse(MobiokeWebSite.ServiceReference1.Response ValidatePasswordResetKeyResult, int ID) {
+            this.ValidatePasswordResetKeyResult = ValidatePasswordResetKeyResult;
+            this.ID = ID;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="Login", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
+    public partial class LoginRequest {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=0)]
+        public string username;
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=1)]
+        public string password;
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=2)]
+        public string role;
+        
+        public LoginRequest() {
+        }
+        
+        public LoginRequest(string username, string password, string role) {
+            this.username = username;
+            this.password = password;
             this.role = role;
         }
     }
     
     [System.Diagnostics.DebuggerStepThroughAttribute()]
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
-    [System.ServiceModel.MessageContractAttribute(WrapperName="StartPasswordResetResponse", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
-    public partial class StartPasswordResetResponse {
+    [System.ServiceModel.MessageContractAttribute(WrapperName="LoginResponse", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
+    public partial class LoginResponse {
         
         [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=0)]
-        public MobiokeWebSite.ServiceReference1.Response StartPasswordResetResult;
+        public MobiokeWebSite.ServiceReference1.Response LoginResult;
         
         [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=1)]
-        public string key;
+        public int ID;
         
-        public StartPasswordResetResponse() {
+        public LoginResponse() {
         }
         
-        public StartPasswordResetResponse(MobiokeWebSite.ServiceReference1.Response StartPasswordResetResult, string key) {
-            this.StartPasswordResetResult = StartPasswordResetResult;
-            this.key = key;
+        public LoginResponse(MobiokeWebSite.ServiceReference1.Response LoginResult, int ID) {
+            this.LoginResult = LoginResult;
+            this.ID = ID;
         }
     }
     
@@ -324,54 +375,73 @@ namespace MobiokeWebSite.ServiceReference1 {
                 base(binding, remoteAddress) {
         }
         
-        public MobiokeWebSite.ServiceReference1.Response SendEmailWithUsername(string email, string role) {
-            return base.Channel.SendEmailWithUsername(email, role);
+        public MobiokeWebSite.ServiceReference1.Response SendEmailWithUsername(string email) {
+            return base.Channel.SendEmailWithUsername(email);
         }
         
-        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> SendEmailWithUsernameAsync(string email, string role) {
-            return base.Channel.SendEmailWithUsernameAsync(email, role);
+        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> SendEmailWithUsernameAsync(string email) {
+            return base.Channel.SendEmailWithUsernameAsync(email);
+        }
+        
+        public MobiokeWebSite.ServiceReference1.Response StartPasswordReset(string email, string username, bool isDJ, string websiteAddress) {
+            return base.Channel.StartPasswordReset(email, username, isDJ, websiteAddress);
+        }
+        
+        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> StartPasswordResetAsync(string email, string username, bool isDJ, string websiteAddress) {
+            return base.Channel.StartPasswordResetAsync(email, username, isDJ, websiteAddress);
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
-        MobiokeWebSite.ServiceReference1.StartPasswordResetResponse MobiokeWebSite.ServiceReference1.IWebsite.StartPasswordReset(MobiokeWebSite.ServiceReference1.StartPasswordResetRequest request) {
-            return base.Channel.StartPasswordReset(request);
+        MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse MobiokeWebSite.ServiceReference1.IWebsite.ValidatePasswordResetKey(MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest request) {
+            return base.Channel.ValidatePasswordResetKey(request);
         }
         
-        public MobiokeWebSite.ServiceReference1.Response StartPasswordReset(string email, string role, out string key) {
-            MobiokeWebSite.ServiceReference1.StartPasswordResetRequest inValue = new MobiokeWebSite.ServiceReference1.StartPasswordResetRequest();
-            inValue.email = email;
+        public MobiokeWebSite.ServiceReference1.Response ValidatePasswordResetKey(string key, bool isDJ, out int ID) {
+            MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest inValue = new MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest();
+            inValue.key = key;
+            inValue.isDJ = isDJ;
+            MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse retVal = ((MobiokeWebSite.ServiceReference1.IWebsite)(this)).ValidatePasswordResetKey(inValue);
+            ID = retVal.ID;
+            return retVal.ValidatePasswordResetKeyResult;
+        }
+        
+        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse> ValidatePasswordResetKeyAsync(MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest request) {
+            return base.Channel.ValidatePasswordResetKeyAsync(request);
+        }
+        
+        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        MobiokeWebSite.ServiceReference1.LoginResponse MobiokeWebSite.ServiceReference1.IWebsite.Login(MobiokeWebSite.ServiceReference1.LoginRequest request) {
+            return base.Channel.Login(request);
+        }
+        
+        public MobiokeWebSite.ServiceReference1.Response Login(string username, string password, string role, out int ID) {
+            MobiokeWebSite.ServiceReference1.LoginRequest inValue = new MobiokeWebSite.ServiceReference1.LoginRequest();
+            inValue.username = username;
+            inValue.password = password;
             inValue.role = role;
-            MobiokeWebSite.ServiceReference1.StartPasswordResetResponse retVal = ((MobiokeWebSite.ServiceReference1.IWebsite)(this)).StartPasswordReset(inValue);
-            key = retVal.key;
-            return retVal.StartPasswordResetResult;
+            MobiokeWebSite.ServiceReference1.LoginResponse retVal = ((MobiokeWebSite.ServiceReference1.IWebsite)(this)).Login(inValue);
+            ID = retVal.ID;
+            return retVal.LoginResult;
         }
         
-        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.StartPasswordResetResponse> StartPasswordResetAsync(MobiokeWebSite.ServiceReference1.StartPasswordResetRequest request) {
-            return base.Channel.StartPasswordResetAsync(request);
+        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.LoginResponse> LoginAsync(MobiokeWebSite.ServiceReference1.LoginRequest request) {
+            return base.Channel.LoginAsync(request);
         }
         
-        public MobiokeWebSite.ServiceReference1.Response CompletePasswordReset(string key, string newPassword) {
-            return base.Channel.CompletePasswordReset(key, newPassword);
+        public MobiokeWebSite.ServiceReference1.Response ChangePassword(int ID, string role, string newPassword) {
+            return base.Channel.ChangePassword(ID, role, newPassword);
         }
         
-        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> CompletePasswordResetAsync(string key, string newPassword) {
-            return base.Channel.CompletePasswordResetAsync(key, newPassword);
+        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangePasswordAsync(int ID, string role, string newPassword) {
+            return base.Channel.ChangePasswordAsync(ID, role, newPassword);
         }
         
-        public MobiokeWebSite.ServiceReference1.Response ChangePassword(string username, string oldPassword, string newPassword, string role) {
-            return base.Channel.ChangePassword(username, oldPassword, newPassword, role);
+        public MobiokeWebSite.ServiceReference1.Response ChangeEmail(int ID, string role, string newEmail) {
+            return base.Channel.ChangeEmail(ID, role, newEmail);
         }
         
-        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangePasswordAsync(string username, string oldPassword, string newPassword, string role) {
-            return base.Channel.ChangePasswordAsync(username, oldPassword, newPassword, role);
-        }
-        
-        public MobiokeWebSite.ServiceReference1.Response ChangeEmail(string username, string password, string newEmail, string role) {
-            return base.Channel.ChangeEmail(username, password, newEmail, role);
-        }
-        
-        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangeEmailAsync(string username, string password, string newEmail, string role) {
-            return base.Channel.ChangeEmailAsync(username, password, newEmail, role);
+        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.Response> ChangeEmailAsync(int ID, string role, string newEmail) {
+            return base.Channel.ChangeEmailAsync(ID, role, newEmail);
         }
         
         public MobiokeWebSite.ServiceReference1.Response DJSignUp(string username, string password, MobiokeWebSite.ServiceReference1.Venue venue, string email) {

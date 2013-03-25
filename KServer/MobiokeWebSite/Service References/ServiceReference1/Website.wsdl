@@ -19,11 +19,17 @@
   <wsdl:message name="IWebsite_StartPasswordReset_OutputMessage">
     <wsdl:part name="parameters" element="tns:StartPasswordResetResponse" />
   </wsdl:message>
-  <wsdl:message name="IWebsite_CompletePasswordReset_InputMessage">
-    <wsdl:part name="parameters" element="tns:CompletePasswordReset" />
+  <wsdl:message name="IWebsite_ValidatePasswordResetKey_InputMessage">
+    <wsdl:part name="parameters" element="tns:ValidatePasswordResetKey" />
   </wsdl:message>
-  <wsdl:message name="IWebsite_CompletePasswordReset_OutputMessage">
-    <wsdl:part name="parameters" element="tns:CompletePasswordResetResponse" />
+  <wsdl:message name="IWebsite_ValidatePasswordResetKey_OutputMessage">
+    <wsdl:part name="parameters" element="tns:ValidatePasswordResetKeyResponse" />
+  </wsdl:message>
+  <wsdl:message name="IWebsite_Login_InputMessage">
+    <wsdl:part name="parameters" element="tns:Login" />
+  </wsdl:message>
+  <wsdl:message name="IWebsite_Login_OutputMessage">
+    <wsdl:part name="parameters" element="tns:LoginResponse" />
   </wsdl:message>
   <wsdl:message name="IWebsite_ChangePassword_InputMessage">
     <wsdl:part name="parameters" element="tns:ChangePassword" />
@@ -70,9 +76,13 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/StartPasswordReset" message="tns:IWebsite_StartPasswordReset_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IWebsite/StartPasswordResetResponse" message="tns:IWebsite_StartPasswordReset_OutputMessage" />
     </wsdl:operation>
-    <wsdl:operation name="CompletePasswordReset">
-      <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/CompletePasswordReset" message="tns:IWebsite_CompletePasswordReset_InputMessage" />
-      <wsdl:output wsaw:Action="http://tempuri.org/IWebsite/CompletePasswordResetResponse" message="tns:IWebsite_CompletePasswordReset_OutputMessage" />
+    <wsdl:operation name="ValidatePasswordResetKey">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/ValidatePasswordResetKey" message="tns:IWebsite_ValidatePasswordResetKey_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWebsite/ValidatePasswordResetKeyResponse" message="tns:IWebsite_ValidatePasswordResetKey_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="Login">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/Login" message="tns:IWebsite_Login_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWebsite/LoginResponse" message="tns:IWebsite_Login_OutputMessage" />
     </wsdl:operation>
     <wsdl:operation name="ChangePassword">
       <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/ChangePassword" message="tns:IWebsite_ChangePassword_InputMessage" />
@@ -119,8 +129,17 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="CompletePasswordReset">
-      <soap:operation soapAction="http://tempuri.org/IWebsite/CompletePasswordReset" style="document" />
+    <wsdl:operation name="ValidatePasswordResetKey">
+      <soap:operation soapAction="http://tempuri.org/IWebsite/ValidatePasswordResetKey" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="Login">
+      <soap:operation soapAction="http://tempuri.org/IWebsite/Login" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
