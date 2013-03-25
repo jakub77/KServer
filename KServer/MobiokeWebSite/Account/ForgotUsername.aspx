@@ -1,4 +1,4 @@
-﻿<%@ Page Title="Forgot Username" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="ForgotUsername.aspx.cs" Inherits="MobiokeWebSite.Account.ForgotUsername" %>
+﻿<%@ Page Title="Forgot username" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="ForgotUsername.aspx.cs" Inherits="MobiokeWebSite.Account.ForgotUsername" %>
 
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <hgroup class="title">

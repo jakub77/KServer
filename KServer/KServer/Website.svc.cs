@@ -122,13 +122,13 @@ namespace KServer
                 {
                     if (isDJ)
                     {
-                        r = db.DJPopPasswordResetID(random, out uniqueIsNegOne);
+                        r = db.DJGetPasswordResetID(random, out uniqueIsNegOne);
                         if (r.error)
                             return r;
                     }
                     else
                     {
-                        r = db.MobilePopPasswordResetID(random, out uniqueIsNegOne);
+                        r = db.MobileGetPasswordResetID(random, out uniqueIsNegOne);
                         if (r.error)
                             return r;
                     }
@@ -170,6 +170,27 @@ namespace KServer
             }
         }
 
+        public Response UsePasswordResetKey(string key, bool isDJ, out int ID)
+        {
+            Response r = ValidatePasswordResetKey(key, isDJ, out ID);
+            if (ID != -1)
+            {
+                using (DatabaseConnectivity db = new DatabaseConnectivity())
+                {
+                    r = db.OpenConnection();
+                    if (r.error)
+                        return r;
+                    if (isDJ)
+                        r = db.DJClearPasswordResetID(ID, key);
+                    else
+                        r = db.MobileClearPasswordResetID(ID, key);
+                    if (r.error)
+                        return r;
+                }
+            }
+            return r;
+        }
+
         public Response ValidatePasswordResetKey(string key, bool isDJ, out int ID)
         {
             Response r = new Response();
@@ -183,13 +204,13 @@ namespace KServer
 
                 if(isDJ)
                 {
-                    r = db.DJPopPasswordResetID(key, out ID);
+                    r = db.DJGetPasswordResetID(key, out ID);
                     if (r.error)
                         return r;
                 }
                 else
                 {
-                    r = db.MobilePopPasswordResetID(key, out ID);
+                    r = db.MobileGetPasswordResetID(key, out ID);
                     if (r.error)
                         return r;
                 }
@@ -619,7 +640,7 @@ namespace KServer
             for (int i = 0; i < usernames.Count; i++)
             {
                 if (roles[i] == "DJ")
-                    body.Append("A DJ Account:\t\t" + usernames[i] + "\n");
+                    body.Append("A DJ Account:\t\t\t" + usernames[i] + "\n");
                 else
                     body.Append("A Singer Account:\t" + usernames[i] + "\n");
             }
@@ -640,12 +661,13 @@ namespace KServer
         {
             StringBuilder body = new StringBuilder();
             body.Append("Hello, we're ready to reset your password in a couple easy steps.<br><br>");
-            body.Append("Simply click on the following link:");
+            body.Append("Simply click on the following link: ");
             body.Append("<a href=\"" + url + "\">Reset Password</a><br><br>");
             body.Append("After clicking, you will be prompted to enter a new password<br><br>");
             body.Append("If the link did not work, navigate to the following address using your web browser: ");
             body.Append(url + "<br><br>");
-            body.Append("We can't wait to see you singing again!<br><br>");
+            body.Append("Please note, this link will only work once. After being clicked on, the link will be invalidated and you will need to request a password reset again<br><br>");
+            body.Append("We can't wait to see you singing again!<br>");
             body.Append("  -Team Warp Zone");
 
             MailMessage mail = new MailMessage();

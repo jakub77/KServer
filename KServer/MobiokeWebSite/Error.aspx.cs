@@ -11,7 +11,11 @@ namespace MobiokeWebSite
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            string error = Request.QueryString["error"];
+            if (error != null)
+                ErrorLabel.Text += error;
+            else
+                ErrorLabel.Text = string.Empty;
         }
     }
 }

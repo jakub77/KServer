@@ -31,7 +31,8 @@ namespace MobiokeWebSite.Account
                 ResultLabel.Text = r.message;
                 return;
             }
-            ResultLabel.Text = "Please check your email for your account name";
+            ResultLabel.Text = "Please check your email for your account name.";
+            Submit.Enabled = false;
         }
 
 

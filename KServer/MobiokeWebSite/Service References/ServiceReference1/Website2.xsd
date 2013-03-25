@@ -48,6 +48,22 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="UsePasswordResetKey">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="key" nillable="true" type="xs:string" />
+        <xs:element minOccurs="0" name="isDJ" type="xs:boolean" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="UsePasswordResetKeyResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q4="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="UsePasswordResetKeyResult" nillable="true" type="q4:Response" />
+        <xs:element minOccurs="0" name="ID" type="xs:int" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="Login">
     <xs:complexType>
       <xs:sequence>
@@ -60,7 +76,7 @@
   <xs:element name="LoginResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q4="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="LoginResult" nillable="true" type="q4:Response" />
+        <xs:element xmlns:q5="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="LoginResult" nillable="true" type="q5:Response" />
         <xs:element minOccurs="0" name="ID" type="xs:int" />
       </xs:sequence>
     </xs:complexType>
@@ -77,7 +93,7 @@
   <xs:element name="ChangePasswordResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q5="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="ChangePasswordResult" nillable="true" type="q5:Response" />
+        <xs:element xmlns:q6="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="ChangePasswordResult" nillable="true" type="q6:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -93,7 +109,7 @@
   <xs:element name="ChangeEmailResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q6="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="ChangeEmailResult" nillable="true" type="q6:Response" />
+        <xs:element xmlns:q7="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="ChangeEmailResult" nillable="true" type="q7:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -102,7 +118,7 @@
       <xs:sequence>
         <xs:element minOccurs="0" name="username" nillable="true" type="xs:string" />
         <xs:element minOccurs="0" name="password" nillable="true" type="xs:string" />
-        <xs:element xmlns:q7="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="venue" nillable="true" type="q7:Venue" />
+        <xs:element xmlns:q8="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="venue" nillable="true" type="q8:Venue" />
         <xs:element minOccurs="0" name="email" nillable="true" type="xs:string" />
       </xs:sequence>
     </xs:complexType>
@@ -110,7 +126,7 @@
   <xs:element name="DJSignUpResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q8="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJSignUpResult" nillable="true" type="q8:Response" />
+        <xs:element xmlns:q9="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJSignUpResult" nillable="true" type="q9:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -126,7 +142,7 @@
   <xs:element name="MobileSignUpResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q9="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileSignUpResult" nillable="true" type="q9:Response" />
+        <xs:element xmlns:q10="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="MobileSignUpResult" nillable="true" type="q10:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -140,7 +156,7 @@
   <xs:element name="EnableDisableRegistrationResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q10="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="EnableDisableRegistrationResult" nillable="true" type="q10:Response" />
+        <xs:element xmlns:q11="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="EnableDisableRegistrationResult" nillable="true" type="q11:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -152,7 +168,7 @@
   <xs:element name="IsRegistrationAllowedResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q11="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="IsRegistrationAllowedResult" nillable="true" type="q11:Response" />
+        <xs:element xmlns:q12="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="IsRegistrationAllowedResult" nillable="true" type="q12:Response" />
         <xs:element minOccurs="0" name="registrationAllowed" type="xs:boolean" />
       </xs:sequence>
     </xs:complexType>

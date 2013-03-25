@@ -1,10 +1,12 @@
-﻿<%@ Page Title="Account Settings" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Manage2.aspx.cs" Inherits="MobiokeWebSite.Account.Manage2" %>
+﻿<%@ Page Title="Account settings" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Manage2.aspx.cs" Inherits="MobiokeWebSite.Account.Manage2" %>
 
 
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <hgroup class="title">
-        <h1><%: Title %>.</h1>
+        <h1><%: Title %></h1>
+        <asp:Label ID="AccountNameType" runat="server" Font-Bold="True"></asp:Label>
     </hgroup>
+
     <section id="loginForm">
         <h2>Change your password.</h2>
         <fieldset>

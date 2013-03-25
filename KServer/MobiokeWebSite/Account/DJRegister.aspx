@@ -1,9 +1,9 @@
-﻿<%@ Page Title="DJ Registration" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="DJRegister.aspx.cs" Inherits="MobiokeWebSite.Account.DJRegister" %>
+﻿<%@ Page Title="DJ registration" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="DJRegister.aspx.cs" Inherits="MobiokeWebSite.Account.DJRegister" %>
 
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <hgroup class="title">
         <h1><%: Title %>.</h1>
-        <h2>Use the form below to create a new account.</h2>
+        <h3>Use the form below to create a new account.</h3>
     </hgroup>
 
     <p class="message-info">
@@ -44,7 +44,7 @@
             </tr>
             <tr>
                 <td>
-                    <asp:Label ID="VenueNameLabel" runat="server" AssociatedControlID="VenueNameTextBox">Name of your Venue</asp:Label>
+                    <asp:Label ID="VenueNameLabel" runat="server" AssociatedControlID="VenueNameTextBox">Name of your venue</asp:Label>
                 </td>
                 <td></td>
             </tr>
@@ -58,7 +58,7 @@
             </tr>
             <tr>
                 <td>
-                    <asp:Label ID="VenueAddressLabel" runat="server" AssociatedControlID="VenueAddressTextBox">Address of your Venue</asp:Label>
+                    <asp:Label ID="VenueAddressLabel" runat="server" AssociatedControlID="VenueAddressTextBox">Address of your venue</asp:Label>
                 </td>
                 <td></td>
             </tr>

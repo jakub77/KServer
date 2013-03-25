@@ -11,31 +11,50 @@ namespace MobiokeWebSite.Account
     public partial class FinishPasswordReset : System.Web.UI.Page
     {
         WebsiteClient proxy;
-        int userResetID;
-        bool isDJ;
-
         protected void Page_Load(object sender, EventArgs e)
         {
+            int userResetID;
+            bool isDJ;
             proxy = new WebsiteClient();
+
+            if (Session["userResetID"] != null && Session["isDJ"] != null)
+            {
+
+                return;
+            }
+
             string key = Request.QueryString["key"];
             if(key == null || !bool.TryParse(Request.QueryString["DJ"], out isDJ))
             {
-                Response.Redirect("~/Error.aspx");
+                Response.Redirect("~/Error.aspx/?error=Invalid parameters.");
                 return;
             }
 
             Response r;
-    
-            r = proxy.ValidatePasswordResetKey(key, isDJ, out userResetID);
+            r = proxy.UsePasswordResetKey(key, isDJ, out userResetID);
+            //r = proxy.ValidatePasswordResetKey(key, isDJ, out userResetID);
             if (userResetID == -1)
             {
-                Response.Redirect("~/Error.aspx");
+                Response.Redirect("~/Error.aspx/?error=Invalid key.");
                 return;
-            }            
+            }
+
+            Session["userResetID"] = userResetID;
+            Session["isDJ"] = isDJ;
+
         }
 
         protected void Submit_Click(object sender, EventArgs e)
         {
+            if (Session["userResetID"] == null || Session["isDJ"] == null)
+            {
+                Response.Redirect("~/Error.aspx/?error=Internal Server Error: Expected non-null session arguments.");
+                return;
+            }
+
+            int userResetID = (int)Session["userResetID"];
+            bool isDJ = (bool)Session["isDJ"];
+
             ClearErrors();
             string password = PasswordTextBox.Text;
             string confirmPassword = PasswordConfirmationTextBox.Text;
@@ -43,6 +62,7 @@ namespace MobiokeWebSite.Account
                 return;
 
             Response r;
+
             if (isDJ)
                 r = proxy.ChangePassword(userResetID, "DJ", password);
             else
@@ -53,6 +73,9 @@ namespace MobiokeWebSite.Account
                 return;
             }
             ResultLabel.Text = "Your password has been changed.";
+            Session["userResetID"] = null;
+            Session["isDJ"] = null;
+            Response.Redirect("~/Account/Login2.aspx");
         }
 
 

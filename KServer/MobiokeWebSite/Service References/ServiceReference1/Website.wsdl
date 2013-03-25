@@ -25,6 +25,12 @@
   <wsdl:message name="IWebsite_ValidatePasswordResetKey_OutputMessage">
     <wsdl:part name="parameters" element="tns:ValidatePasswordResetKeyResponse" />
   </wsdl:message>
+  <wsdl:message name="IWebsite_UsePasswordResetKey_InputMessage">
+    <wsdl:part name="parameters" element="tns:UsePasswordResetKey" />
+  </wsdl:message>
+  <wsdl:message name="IWebsite_UsePasswordResetKey_OutputMessage">
+    <wsdl:part name="parameters" element="tns:UsePasswordResetKeyResponse" />
+  </wsdl:message>
   <wsdl:message name="IWebsite_Login_InputMessage">
     <wsdl:part name="parameters" element="tns:Login" />
   </wsdl:message>
@@ -80,6 +86,10 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/ValidatePasswordResetKey" message="tns:IWebsite_ValidatePasswordResetKey_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IWebsite/ValidatePasswordResetKeyResponse" message="tns:IWebsite_ValidatePasswordResetKey_OutputMessage" />
     </wsdl:operation>
+    <wsdl:operation name="UsePasswordResetKey">
+      <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/UsePasswordResetKey" message="tns:IWebsite_UsePasswordResetKey_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IWebsite/UsePasswordResetKeyResponse" message="tns:IWebsite_UsePasswordResetKey_OutputMessage" />
+    </wsdl:operation>
     <wsdl:operation name="Login">
       <wsdl:input wsaw:Action="http://tempuri.org/IWebsite/Login" message="tns:IWebsite_Login_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IWebsite/LoginResponse" message="tns:IWebsite_Login_OutputMessage" />
@@ -131,6 +141,15 @@
     </wsdl:operation>
     <wsdl:operation name="ValidatePasswordResetKey">
       <soap:operation soapAction="http://tempuri.org/IWebsite/ValidatePasswordResetKey" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="UsePasswordResetKey">
+      <soap:operation soapAction="http://tempuri.org/IWebsite/UsePasswordResetKey" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

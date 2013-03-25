@@ -1724,7 +1724,7 @@ namespace KServer
             }
         }
 
-        public Response DJPopPasswordResetID(string value, out int DJID)
+        public Response DJGetPasswordResetID(string value, out int DJID)
         {
             Response r = new Response();
             SqlCommand cmd = new SqlCommand("select ID from DJPasswordResets where Value = @value;", con);
@@ -1737,12 +1737,13 @@ namespace KServer
                     if (reader.Read())
                     {
                         DJID = int.Parse(reader[0].ToString());
-                        return r;
                     }
-
-                    DJID = -1;
-                    return r;
+                    else
+                    {
+                        DJID = -1;
+                    }
                 }
+                return r;
             }
             catch (Exception e)
             {
@@ -1753,16 +1754,11 @@ namespace KServer
             }
         }
 
-        public Response MobilePopPasswordResetID(string value, out int mobileID)
+        public Response MobileGetPasswordResetID(string value, out int mobileID)
         {
             Response r = new Response();
             SqlCommand cmd = new SqlCommand("select ID from MobilePasswordResets where Value = @value;", con);
             cmd.Parameters.AddWithValue("@value", value);
-
-            Response r = new Response();
-            SqlCommand cmd2 = new SqlCommand("delete from MobilePasswordResets where Value = @value;", con);
-            cmd.Parameters.AddWithValue("@value", value);
-            cmd2.ExecuteNonQuery();
 
             try
             {
@@ -1777,14 +1773,53 @@ namespace KServer
                         mobileID = -1;
                     }
                 }
-
-
+                return r;
             }
             catch (Exception e)
             {
                 r.error = true;
                 r.message = "Exception in MobileGetPasswordResetID: " + e.Message;
                 mobileID = -1;
+                return r;
+            }
+        }
+
+        public Response DJClearPasswordResetID(int DJID, string value)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from DJPasswordResets where ID = @DJID or Value = @value;", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            cmd.Parameters.AddWithValue("@value", value);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJClearPasswordResetID: " + e.Message;
+                return r;
+            }
+        }
+
+        public Response MobileClearPasswordResetID(int mobileID, string value)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from MobilePasswordResets where ID = @mobileID or Value = @value;", con);
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+            cmd.Parameters.AddWithValue("@value", value);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileClearPasswordResetID: " + e.Message;
                 return r;
             }
         }

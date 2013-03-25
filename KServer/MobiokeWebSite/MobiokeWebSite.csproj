@@ -127,17 +127,11 @@
     <Content Include="Account\DJRegister.aspx" />
     <Content Include="Account\FinishPasswordReset.aspx" />
     <Content Include="Account\ForgotUsername.aspx" />
-    <Content Include="Account\Login.aspx" />
     <Content Include="Account\Login2.aspx" />
     <Content Include="Account\Logout.aspx" />
-    <Content Include="Account\Manage.aspx" />
     <Content Include="Account\Manage2.aspx" />
-    <Content Include="Account\OpenAuthProviders.ascx" />
-    <Content Include="Account\Register.aspx" />
     <Content Include="Account\Register2.aspx" />
-    <Content Include="Account\RegisterExternalLogin.aspx" />
     <Content Include="Account\StartPasswordReset.aspx" />
-    <Content Include="Account\SuccessfulRegistration.aspx" />
     <Content Include="Administration.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\Site.css" />
@@ -255,6 +249,9 @@
     <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Content>
+    <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.UsePasswordResetKeyResponse.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </Content>
     <None Include="Service References\ServiceReference1\Website.disco" />
     <None Include="Service References\ServiceReference1\configuration91.svcinfo" />
     <None Include="Service References\ServiceReference1\configuration.svcinfo" />
@@ -263,7 +260,9 @@
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
     <Content Include="Web.config" />
-    <Content Include="Bundle.config" />
+    <Content Include="Bundle.config">
+      <SubType>Designer</SubType>
+    </Content>
     <None Include="Service References\ServiceReference1\Website.wsdl" />
     <None Include="Service References\ServiceReference1\Website.xsd">
       <SubType>Designer</SubType>
@@ -332,13 +331,6 @@
     <Compile Include="Account\StartPasswordReset.aspx.designer.cs">
       <DependentUpon>StartPasswordReset.aspx</DependentUpon>
     </Compile>
-    <Compile Include="Account\SuccessfulRegistration.aspx.cs">
-      <DependentUpon>SuccessfulRegistration.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Account\SuccessfulRegistration.aspx.designer.cs">
-      <DependentUpon>SuccessfulRegistration.aspx</DependentUpon>
-    </Compile>
     <Compile Include="Administration.aspx.cs">
       <DependentUpon>Administration.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -347,48 +339,12 @@
       <DependentUpon>Administration.aspx</DependentUpon>
     </Compile>
     <Compile Include="App_Start\BundleConfig.cs" />
-    <Compile Include="App_Start\AuthConfig.cs" />
     <Compile Include="About.aspx.cs">
       <DependentUpon>About.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
     </Compile>
     <Compile Include="About.aspx.designer.cs">
       <DependentUpon>About.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Account\Login.aspx.cs">
-      <DependentUpon>Login.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Account\Login.aspx.designer.cs">
-      <DependentUpon>Login.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Account\Manage.aspx.cs">
-      <DependentUpon>Manage.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Account\Manage.aspx.designer.cs">
-      <DependentUpon>Manage.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Account\OpenAuthProviders.ascx.cs">
-      <DependentUpon>OpenAuthProviders.ascx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Account\OpenAuthProviders.ascx.designer.cs">
-      <DependentUpon>OpenAuthProviders.ascx</DependentUpon>
-    </Compile>
-    <Compile Include="Account\Register.aspx.cs">
-      <DependentUpon>Register.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Account\Register.aspx.designer.cs">
-      <DependentUpon>Register.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Account\RegisterExternalLogin.aspx.cs">
-      <DependentUpon>RegisterExternalLogin.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Account\RegisterExternalLogin.aspx.designer.cs">
-      <DependentUpon>RegisterExternalLogin.aspx</DependentUpon>
     </Compile>
     <Compile Include="Contact.aspx.cs">
       <DependentUpon>Contact.aspx</DependentUpon>

@@ -9,12 +9,9 @@
         <p>
             Sorry, an error occured. Let's try not to do that again.
         </p>
+        <p>
+            <asp:Label ID ="ErrorLabel" runat="server">If you are interested, the specifics of the error are: </asp:Label>
+        </p>
     </article>
 
-    <%--    <aside>
-        <h3>Team Warp Zone</h3>
-        <p>
-            Mobioke was created by Team Warp Zone at the University of Utah from a Senior Capstone Project. 
-        </p>
-    </aside>--%>
 </asp:Content>

@@ -75,7 +75,7 @@ namespace MobiokeWebSite.Account
 
             if (r.error)
             {
-                Response.Redirect("~/Account/SuccessfulRegistration.aspx");
+                Response.Redirect("~/Account/Login2.aspx");
                 return;
             }
 

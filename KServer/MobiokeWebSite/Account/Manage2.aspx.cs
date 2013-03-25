@@ -19,6 +19,12 @@ namespace MobiokeWebSite.Account
                 return;
             }
             proxy = new WebsiteClient();
+            AccountNameType.Text = "&nbspfor " + Session["Username"];
+            if (((string)Session["Role"]) == "DJ")
+                AccountNameType.Text += " (DJ)";
+            else
+                AccountNameType.Text += " (singer)";
+            
         }
 
         protected void PasswordSubmit_Click(object sender, EventArgs e)
@@ -37,9 +43,9 @@ namespace MobiokeWebSite.Account
             if (r.error)
             {
                 if (r.message.Contains("Username/Password is incorrect."))
-                    PasswordResultLabel.Text = "Old password is incorrect";
+                    PasswordResultLabel.Text = "Old password is incorrect.";
                 else
-                    PasswordResultLabel.Text = "A Server error occured, please try again later";
+                    PasswordResultLabel.Text = "A Server error occured, please try again later.";
                 return;
             }
 

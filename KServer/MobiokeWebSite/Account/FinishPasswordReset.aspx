@@ -50,10 +50,6 @@
 
     <br />
     <p>
-        You will be sent an email with instructions on how to reset your password.
-    </p>
-
-    <p>
         Don't have an account?<a id="A1" runat="server" href="~/Account/Register2.aspx">Register!</a><br />
         Forgotten your<a id="A2" runat="server" href="~/Account/ForgotUsername.aspx">username</a> or <a id="A3" runat="server" href="~/Account/StartPasswordReset.aspx">password</a>?
     </p>

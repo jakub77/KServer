@@ -20,6 +20,9 @@ namespace KServer
         Response ValidatePasswordResetKey(string key, bool isDJ, out int ID);
 
         [OperationContract]
+        Response UsePasswordResetKey(string key, bool isDJ, out int ID);
+
+        [OperationContract]
         Response Login(string username, string password, string role, out int ID);
 
         [OperationContract]

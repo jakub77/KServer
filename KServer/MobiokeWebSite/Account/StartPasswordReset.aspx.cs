@@ -29,7 +29,7 @@ namespace MobiokeWebSite.Account
             string serverAddress = "http://" + Request.Url.Host;
             if (Request.Url.Port != 80)
                 serverAddress += ":" + Request.Url.Port;
-            serverAddress += "/FinishPasswordReset.aspx/";
+            serverAddress += "/Account/FinishPasswordReset.aspx/";
             Response r = proxy.StartPasswordReset(email, username, isDJ, serverAddress);
             if (r.error)
             {
@@ -37,6 +37,7 @@ namespace MobiokeWebSite.Account
                 return;
             }
             ResultLabel.Text = "Please check your email.";
+            Submit.Enabled = false;
         }
 
 
@@ -46,7 +47,7 @@ namespace MobiokeWebSite.Account
 
             if (username.Length == 0)
             {
-                UserNameErrorLabel.Text = "You must enter a username";
+                UserNameErrorLabel.Text = "You must enter a username.";
                 errorInForm = true;
             }
 

@@ -1,5 +1,4 @@
-﻿<%@ Page Title="Password Reset" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="StartPasswordReset.aspx.cs" Inherits="MobiokeWebSite.Account.StartPasswordReset" %>
-
+﻿<%@ Page Title="Password reset" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="StartPasswordReset.aspx.cs" Inherits="MobiokeWebSite.Account.StartPasswordReset" %>
 
 <asp:Content runat="server" ID="BodyContent" ContentPlaceHolderID="MainContent">
     <hgroup class="title">

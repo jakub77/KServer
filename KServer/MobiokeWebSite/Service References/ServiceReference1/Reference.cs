@@ -190,6 +190,13 @@ namespace MobiokeWebSite.ServiceReference1 {
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/ValidatePasswordResetKey", ReplyAction="http://tempuri.org/IWebsite/ValidatePasswordResetKeyResponse")]
         System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse> ValidatePasswordResetKeyAsync(MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest request);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/UsePasswordResetKey", ReplyAction="http://tempuri.org/IWebsite/UsePasswordResetKeyResponse")]
+        MobiokeWebSite.ServiceReference1.UsePasswordResetKeyResponse UsePasswordResetKey(MobiokeWebSite.ServiceReference1.UsePasswordResetKeyRequest request);
+        
+        // CODEGEN: Generating message contract since the operation has multiple return values.
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/UsePasswordResetKey", ReplyAction="http://tempuri.org/IWebsite/UsePasswordResetKeyResponse")]
+        System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.UsePasswordResetKeyResponse> UsePasswordResetKeyAsync(MobiokeWebSite.ServiceReference1.UsePasswordResetKeyRequest request);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IWebsite/Login", ReplyAction="http://tempuri.org/IWebsite/LoginResponse")]
         MobiokeWebSite.ServiceReference1.LoginResponse Login(MobiokeWebSite.ServiceReference1.LoginRequest request);
         
@@ -271,6 +278,46 @@ namespace MobiokeWebSite.ServiceReference1 {
         
         public ValidatePasswordResetKeyResponse(MobiokeWebSite.ServiceReference1.Response ValidatePasswordResetKeyResult, int ID) {
             this.ValidatePasswordResetKeyResult = ValidatePasswordResetKeyResult;
+            this.ID = ID;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="UsePasswordResetKey", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
+    public partial class UsePasswordResetKeyRequest {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=0)]
+        public string key;
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=1)]
+        public bool isDJ;
+        
+        public UsePasswordResetKeyRequest() {
+        }
+        
+        public UsePasswordResetKeyRequest(string key, bool isDJ) {
+            this.key = key;
+            this.isDJ = isDJ;
+        }
+    }
+    
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
+    [System.ServiceModel.MessageContractAttribute(WrapperName="UsePasswordResetKeyResponse", WrapperNamespace="http://tempuri.org/", IsWrapped=true)]
+    public partial class UsePasswordResetKeyResponse {
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=0)]
+        public MobiokeWebSite.ServiceReference1.Response UsePasswordResetKeyResult;
+        
+        [System.ServiceModel.MessageBodyMemberAttribute(Namespace="http://tempuri.org/", Order=1)]
+        public int ID;
+        
+        public UsePasswordResetKeyResponse() {
+        }
+        
+        public UsePasswordResetKeyResponse(MobiokeWebSite.ServiceReference1.Response UsePasswordResetKeyResult, int ID) {
+            this.UsePasswordResetKeyResult = UsePasswordResetKeyResult;
             this.ID = ID;
         }
     }
@@ -407,6 +454,24 @@ namespace MobiokeWebSite.ServiceReference1 {
         
         public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyResponse> ValidatePasswordResetKeyAsync(MobiokeWebSite.ServiceReference1.ValidatePasswordResetKeyRequest request) {
             return base.Channel.ValidatePasswordResetKeyAsync(request);
+        }
+        
+        [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
+        MobiokeWebSite.ServiceReference1.UsePasswordResetKeyResponse MobiokeWebSite.ServiceReference1.IWebsite.UsePasswordResetKey(MobiokeWebSite.ServiceReference1.UsePasswordResetKeyRequest request) {
+            return base.Channel.UsePasswordResetKey(request);
+        }
+        
+        public MobiokeWebSite.ServiceReference1.Response UsePasswordResetKey(string key, bool isDJ, out int ID) {
+            MobiokeWebSite.ServiceReference1.UsePasswordResetKeyRequest inValue = new MobiokeWebSite.ServiceReference1.UsePasswordResetKeyRequest();
+            inValue.key = key;
+            inValue.isDJ = isDJ;
+            MobiokeWebSite.ServiceReference1.UsePasswordResetKeyResponse retVal = ((MobiokeWebSite.ServiceReference1.IWebsite)(this)).UsePasswordResetKey(inValue);
+            ID = retVal.ID;
+            return retVal.UsePasswordResetKeyResult;
+        }
+        
+        public System.Threading.Tasks.Task<MobiokeWebSite.ServiceReference1.UsePasswordResetKeyResponse> UsePasswordResetKeyAsync(MobiokeWebSite.ServiceReference1.UsePasswordResetKeyRequest request) {
+            return base.Channel.UsePasswordResetKeyAsync(request);
         }
         
         [System.ComponentModel.EditorBrowsableAttribute(System.ComponentModel.EditorBrowsableState.Advanced)]
