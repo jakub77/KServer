@@ -122,13 +122,13 @@ namespace KServer
                 {
                     if (isDJ)
                     {
-                        r = db.DJGetPasswordResetID(random, out uniqueIsNegOne);
+                        r = db.DJPopPasswordResetID(random, out uniqueIsNegOne);
                         if (r.error)
                             return r;
                     }
                     else
                     {
-                        r = db.MobileGetPasswordResetID(random, out uniqueIsNegOne);
+                        r = db.MobilePopPasswordResetID(random, out uniqueIsNegOne);
                         if (r.error)
                             return r;
                     }
@@ -172,8 +172,30 @@ namespace KServer
 
         public Response ValidatePasswordResetKey(string key, bool isDJ, out int ID)
         {
+            Response r = new Response();
             ID = -1;
-            return new Response();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                if(isDJ)
+                {
+                    r = db.DJPopPasswordResetID(key, out ID);
+                    if (r.error)
+                        return r;
+                }
+                else
+                {
+                    r = db.MobilePopPasswordResetID(key, out ID);
+                    if (r.error)
+                        return r;
+                }
+
+                return r;
+            }
         }
 
 

@@ -29,7 +29,7 @@ namespace MobiokeWebSite.Account
             string serverAddress = "http://" + Request.Url.Host;
             if (Request.Url.Port != 80)
                 serverAddress += ":" + Request.Url.Port;
-            serverAddress += "/FinishPasswordReset/";
+            serverAddress += "/FinishPasswordReset.aspx/";
             Response r = proxy.StartPasswordReset(email, username, isDJ, serverAddress);
             if (r.error)
             {

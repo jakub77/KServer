@@ -1724,7 +1724,7 @@ namespace KServer
             }
         }
 
-        public Response DJGetPasswordResetID(string value, out int DJID)
+        public Response DJPopPasswordResetID(string value, out int DJID)
         {
             Response r = new Response();
             SqlCommand cmd = new SqlCommand("select ID from DJPasswordResets where Value = @value;", con);
@@ -1753,11 +1753,16 @@ namespace KServer
             }
         }
 
-        public Response MobileGetPasswordResetID(string value, out int mobileID)
+        public Response MobilePopPasswordResetID(string value, out int mobileID)
         {
             Response r = new Response();
             SqlCommand cmd = new SqlCommand("select ID from MobilePasswordResets where Value = @value;", con);
             cmd.Parameters.AddWithValue("@value", value);
+
+            Response r = new Response();
+            SqlCommand cmd2 = new SqlCommand("delete from MobilePasswordResets where Value = @value;", con);
+            cmd.Parameters.AddWithValue("@value", value);
+            cmd2.ExecuteNonQuery();
 
             try
             {
@@ -1766,12 +1771,14 @@ namespace KServer
                     if (reader.Read())
                     {
                         mobileID = int.Parse(reader[0].ToString());
-                        return r;
                     }
-
-                    mobileID = -1;
-                    return r;
+                    else
+                    {
+                        mobileID = -1;
+                    }
                 }
+
+
             }
             catch (Exception e)
             {

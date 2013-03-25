@@ -11,11 +11,12 @@ namespace MobiokeWebSite.Account
     public partial class FinishPasswordReset : System.Web.UI.Page
     {
         WebsiteClient proxy;
+        int userResetID;
+        bool isDJ;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             proxy = new WebsiteClient();
-            bool isDJ;
             string key = Request.QueryString["key"];
             if(key == null || !bool.TryParse(Request.QueryString["DJ"], out isDJ))
             {
@@ -23,15 +24,14 @@ namespace MobiokeWebSite.Account
                 return;
             }
 
-            if (isDJ)
+            Response r;
+    
+            r = proxy.ValidatePasswordResetKey(key, isDJ, out userResetID);
+            if (userResetID == -1)
             {
-                
-            }
-            else
-            {
-
-            }
-            
+                Response.Redirect("~/Error.aspx");
+                return;
+            }            
         }
 
         protected void Submit_Click(object sender, EventArgs e)
@@ -42,13 +42,17 @@ namespace MobiokeWebSite.Account
             if (ErrorInInput(password, confirmPassword))
                 return;
 
-            Response r = new Response();
+            Response r;
+            if (isDJ)
+                r = proxy.ChangePassword(userResetID, "DJ", password);
+            else
+                r = proxy.ChangePassword(userResetID, "Mobile", password);
             if (r.error)
             {
                 ResultLabel.Text = r.message;
                 return;
             }
-            ResultLabel.Text = "Please check your email.";
+            ResultLabel.Text = "Your password has been changed.";
         }
 
 
