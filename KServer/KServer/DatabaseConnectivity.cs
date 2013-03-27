@@ -196,9 +196,8 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response SongInformation(int DJID, int SongID)
         {
-            SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk, Duration from DJSongs where SongID = @songID and DJListID = @DJID;");
+            SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk, Duration from DJSongs where SongID = @songID;");
             cmd.Parameters.AddWithValue("@songID", SongID);
-            cmd.Parameters.AddWithValue("@DJID", DJID);
             return DBQuery(cmd, new string[4] { "Title", "Artist", "PathOnDisk", "Duration" });
         }
 
@@ -1612,6 +1611,14 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Validate a DJ's username and email are consistant and exist. If they exist, the DJID is set and > 0,
+        /// if they do not exist the DJID is set to -1.
+        /// </summary>
+        /// <param name="username">DJ's Username</param>
+        /// <param name="email">DJ's email</param>
+        /// <param name="DJID">Out DJID</param>
+        /// <returns>The outcome of the operation</returns>
         public Response DJValidateUsernameEmail(string username, string email, out int DJID)
         {
             Response r = new Response();
@@ -1642,6 +1649,14 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Validate a Mobile user's username and email are consistant and exist. If they exist, the mobileID is set and > 0,
+        /// if they do not exist the mobileID is set to -1.
+        /// </summary>
+        /// <param name="username">The username</param>
+        /// <param name="email">The email</param>
+        /// <param name="mobileID">Out mobileID</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response MobileValidateUsernameEmail(string username, string email, out int mobileID)
         {
             Response r = new Response();
@@ -1672,6 +1687,12 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Sets up the DB to start the password reset process. The value is tored in the DB along with the ID.
+        /// </summary>
+        /// <param name="DJID">The DJ's ID</param>
+        /// <param name="value">The unique key that will represent this password reset.</param>
+        /// <returns>The outcome of the operation</returns>
         public Response DJSetPasswordReset(int DJID, string value)
         {
             Response r = new Response();
@@ -1698,6 +1719,12 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Sets up the DB to start the password reset process. The value is tored in the DB along with the ID.
+        /// </summary>
+        /// <param name="mobileID">The mobile client's ID</param>
+        /// <param name="value">The unique key that will represent this password reset.</param>
+        /// <returns>The outcome of the operation</returns>
         public Response MobileSetPasswordReset(int mobileID, string value)
         {
             Response r = new Response();
@@ -1724,6 +1751,13 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Try to get the the DJID that corresponds to the password reset key value.
+        /// DJID is set to -1 if it doesn't exist, otherwise is >0.
+        /// </summary>
+        /// <param name="value">The unique password reset key.</param>
+        /// <param name="DJID">Out DJID</param>
+        /// <returns>The outcome of the operaiton.</returns>
         public Response DJGetPasswordResetID(string value, out int DJID)
         {
             Response r = new Response();
@@ -1754,6 +1788,13 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Try to get the the mobileID that corresponds to the password reset key value.
+        /// mobileID is set to -1 if it doesn't exist, otherwise is >0.
+        /// </summary>
+        /// <param name="value">The unique password reset key.</param>
+        /// <param name="mobileID">Out mobileID</param>
+        /// <returns>The outcome of the operaiton.</returns>
         public Response MobileGetPasswordResetID(string value, out int mobileID)
         {
             Response r = new Response();
@@ -1784,6 +1825,13 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Deletes any trace of a password reset from the DB that either matches the
+        /// DJID or matches the password reset key value.
+        /// </summary>
+        /// <param name="DJID">The DJID</param>
+        /// <param name="value">The unique password reset key</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJClearPasswordResetID(int DJID, string value)
         {
             Response r = new Response();
@@ -1804,6 +1852,13 @@ namespace KServer
             }
         }
 
+        /// <summary>
+        /// Deletes any trace of a password reset from the DB that either matches the
+        /// mobileID or matches the password reset key value.
+        /// </summary>
+        /// <param name="mobileID">The mobileID</param>
+        /// <param name="value">The unique password reset key</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response MobileClearPasswordResetID(int mobileID, string value)
         {
             Response r = new Response();
@@ -1820,6 +1875,161 @@ namespace KServer
             {
                 r.error = true;
                 r.message = "Exception in MobileClearPasswordResetID: " + e.Message;
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Gets the most or the least popular songs at a venue.
+        /// </summary>
+        /// <param name="venueID">The venue ID, -1 signifies any venue.</param>
+        /// <param name="start">Results start at given index.</param>
+        /// <param name="count">Get count results.</param>
+        /// <param name="date">The date results must be before or after (inclusive)</param>
+        /// <param name="beforeOrOnDate">If true, results must be before this date (inclusive), otherwise after(inclusive)</param>
+        /// <param name="songs">Out list of songs.</param>
+        /// <param name="counts">Out count of how often the songs exist.</param>
+        /// <returns></returns>
+        public Response GetMostPopularSongs(int venueID, int start, int count, out List<Song> songs, out List<int> counts)
+        {
+            songs = new List<Song>();
+            counts = new List<int>();
+            //select SongID, count(SongID) from MobileSongHistory where venueID > '0' and DateSung > '2010' 
+            //group by SongID order by count(SongID) desc offset 2 rows fetch next 3 rows only;
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select SongID, count(SongID) from MobileSongHistory ", con);
+            if (venueID != -1)
+            {
+                cmd.CommandText += "where VenueID = @venueID ";
+                cmd.Parameters.AddWithValue("@venueID", venueID);
+            }
+            cmd.CommandText += "group by SongID order by count(SongID) desc ";
+            cmd.CommandText += "offset @start rows fetch next @count rows only;";
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@count", count);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        Song s = new Song();
+                        s.ID = reader.GetInt32(0);
+                        songs.Add(s);
+                        counts.Add(reader.GetInt32(1));
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJGetPasswordResetID: " + e.Message;
+                return r;
+            }
+        }
+
+        public Response DJBanUser(int DJID, int mobileID)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from DJBannedUsers where DJID = @DJID and MobileID = @mobileID;", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+
+            SqlCommand cmd2 = new SqlCommand("insert into DJBannedUsers (DJID, mobileID) values (@DJID, @mobileID);", con);
+            cmd2.Parameters.AddWithValue("@DJID", DJID);
+            cmd2.Parameters.AddWithValue("@mobileID", mobileID);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+                r.result = cmd2.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJBanUser: " + e.Message;
+                DJID = -1;
+                return r;
+            }
+        }
+        
+        public Response DJUnbanUser(int DJID, int mobileID)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from DJBannedUsers where DJID = @DJID and MobileID = @mobileID;", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJUnbanUser: " + e.Message;
+                DJID = -1;
+                return r;
+            }
+        }
+
+        public Response MobileIsBanned(int DJID, int mobileID, out bool userBanned)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select MobileID from DJBannedUsers where DJID = @DJID and MobileID = @mobileID;", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        userBanned = true;
+                        return r;
+                    }
+                    userBanned = false;
+                    return r;
+                }
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJGetBannedUsers: " + e.Message;
+                userBanned = true;
+                return r;
+            }
+        }
+
+        public Response DJGetBannedUsers(int DJID, out List<User> bannedUsers)
+        {
+            bannedUsers = new List<User>();
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select MobileID from DJBannedUsers where DJID = @DJID;", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        User u = new User();
+                        u.userID = reader.GetInt32(0);
+                        bannedUsers.Add(u);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJGetBannedUsers: " + e.Message;
                 return r;
             }
         }

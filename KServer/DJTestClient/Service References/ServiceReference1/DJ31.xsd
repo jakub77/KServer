@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <xs:schema xmlns:tns="http://tempuri.org/" elementFormDefault="qualified" targetNamespace="http://tempuri.org/" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:import schemaLocation="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/KServer" />
+  <xs:import schemaLocation="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd3" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
   <xs:element name="DJSignUp">
     <xs:complexType>
       <xs:sequence>
@@ -297,6 +298,70 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element xmlns:q31="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJTestQueueFillResult" nillable="true" type="q31:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJGetMostPopularSongs">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+        <xs:element minOccurs="0" name="limitToVenue" type="xs:boolean" />
+        <xs:element minOccurs="0" name="start" type="xs:int" />
+        <xs:element minOccurs="0" name="count" type="xs:int" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJGetMostPopularSongsResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q32="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJGetMostPopularSongsResult" nillable="true" type="q32:Response" />
+        <xs:element xmlns:q33="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="songs" nillable="true" type="q33:ArrayOfSong" />
+        <xs:element xmlns:q34="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="counts" nillable="true" type="q34:ArrayOfint" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJBanUser">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q35="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="userToBan" nillable="true" type="q35:User" />
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJBanUserResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q36="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJBanUserResult" nillable="true" type="q36:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJUnbanUser">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q37="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="userToUnban" nillable="true" type="q37:User" />
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJUnbanUserResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q38="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJUnbanUserResult" nillable="true" type="q38:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJGetBannedUsers">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJGetBannedUsersResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q39="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJGetBannedUsersResult" nillable="true" type="q39:Response" />
+        <xs:element xmlns:q40="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="users" nillable="true" type="q40:ArrayOfUser" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>

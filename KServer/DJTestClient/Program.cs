@@ -35,9 +35,44 @@ namespace DJTestClient
                 {
                     Console.WriteLine("help<h>, quit<q>, insertDJ<id>, signinDJ<si>, signoutDJ <so>,");
                     Console.WriteLine("listDJS<ld>, addSong<as>, removeSong<rs>, listSongs<ls>, listQueue<lq>,"); 
-                    Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest(rr)");
+                    Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest<rr>");
                     Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>, createSession<cs>");
-                    Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>, moveSongRequest<mr>");
+                    Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>, moveSongRequest<mr>, mostPopular<mp>");
+                }
+                else if (command.StartsWith("mp"))
+                {
+                    Response r;
+                    Song[] songs;
+                    int[] counts;
+                    bool limitToVenue;
+                    Console.WriteLine("Do you wish to limit results to this venue? [0=no,1=yes]");
+                    string input = Console.ReadLine();
+                    if (input == "0")
+                        limitToVenue = false;
+                    else
+                        limitToVenue = true;
+
+                    Console.WriteLine("Starting index");
+                    int start = int.Parse(Console.ReadLine());
+                    Console.WriteLine("Count");
+                    int count = int.Parse(Console.ReadLine());
+
+                    try
+                    {
+                        r = proxy.DJGetMostPopularSongs(out songs, out counts, DJKey, limitToVenue, start, count);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                        for (int i = 0; i < songs.Length; i++)
+                        {
+                            Console.WriteLine(songs[i].ID + " " + songs[i].title + " " + songs[i].artist + " " + counts[i]);
+                        }
+
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("tf"))
                 {

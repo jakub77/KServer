@@ -46,7 +46,7 @@ namespace JakubMobileClient
                     Console.WriteLine("SongRequestChange<sc>, SongRequestRemove<sx>, JoinVenue<jv>,");
                     Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
                     Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>, songHistory<sh>,");
-                    Console.WriteLine("RateSong<rs>, GetRating<gr>, MoveSongRequestToTop<st>");
+                    Console.WriteLine("RateSong<rs>, GetRating<gr>, MoveSongRequestToTop<st>, mostPopular<mp>");
                 }
                 else if (command.StartsWith("xx"))
                 {
@@ -77,6 +77,36 @@ namespace JakubMobileClient
                 {
                     return;
                 }
+                else if (command.StartsWith("mp"))
+                {
+                    Console.WriteLine("Enter venueID or 0 to use last venue ID, or -1 for all venues");
+                    int venueIDL = int.Parse(Console.ReadLine().Trim());
+                    if (venueIDL == 0)
+                        venueIDL = venueID;
+                    Console.WriteLine("Enter start");
+                    int start = int.Parse(Console.ReadLine());
+                    Console.WriteLine("Enter count");
+                    int count = int.Parse(Console.ReadLine());
+                    Stream data = client.OpenRead(baseAddress + "/MobileGetMostPopularSongs/?venueID=" + venueIDL + "&start=" + start + "&count=" + count);
+                    StreamReader reader = new StreamReader(data);
+                    string s = reader.ReadToEnd();
+                    if (s == "")
+                    {
+                        Console.WriteLine("An error occured");
+                        continue;
+                    }
+
+                    List<Song> r = strToJSON<List<Song>>(s);
+                    if (displayJSON)
+                        Console.WriteLine("JSON: " + s);
+                    else
+                    {
+                        foreach (Song song in r)
+                        {
+                            Console.WriteLine(song.ID + " " + song.title + " " + song.artist + " " + song.rating);
+                        }
+                    }
+                }
                 else if (command.StartsWith("lm"))
                 {
                     Stream data = client.OpenRead(baseAddress + "/MobileSignUp/?username=list&password=ignore");
@@ -91,7 +121,6 @@ namespace JakubMobileClient
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
                     }
-
                 }
                 else if (command.StartsWith("su")) // SIGN UP
                 {

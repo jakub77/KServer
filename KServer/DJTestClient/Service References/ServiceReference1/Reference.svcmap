@@ -22,10 +22,11 @@
   </MetadataSources>
   <Metadata>
     <MetadataFile FileName="DJ3.xsd" MetadataType="Schema" ID="0bb49ac9-b92f-4a48-9e54-2da6fce275af" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd2" />
+    <MetadataFile FileName="DJ.xsd" MetadataType="Schema" ID="f125407d-5a89-4c2c-bdd6-a6cca69517f5" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd3" />
     <MetadataFile FileName="DJ31.xsd" MetadataType="Schema" ID="bd881b0e-4587-4eba-8b7d-c97cef5ff6f3" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd0" />
-    <MetadataFile FileName="Service11.wsdl" MetadataType="Wsdl" ID="d872ea77-899c-4f02-ae48-19935190258d" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?wsdl" />
-    <MetadataFile FileName="DJ1.disco" MetadataType="Disco" ID="314b43cd-3084-4c63-a432-57f53a62177f" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?disco" />
     <MetadataFile FileName="DJ32.xsd" MetadataType="Schema" ID="109f5a05-b548-4496-bd80-0253153f287c" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd1" />
+    <MetadataFile FileName="DJ1.disco" MetadataType="Disco" ID="314b43cd-3084-4c63-a432-57f53a62177f" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?disco" />
+    <MetadataFile FileName="Service11.wsdl" MetadataType="Wsdl" ID="d872ea77-899c-4f02-ae48-19935190258d" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/DJ.svc?wsdl" />
   </Metadata>
   <Extensions>
     <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />

@@ -5,6 +5,7 @@
       <xsd:import schemaLocation="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd0" namespace="http://tempuri.org/" />
       <xsd:import schemaLocation="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd1" namespace="http://schemas.microsoft.com/2003/10/Serialization/" />
       <xsd:import schemaLocation="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd2" namespace="http://schemas.datacontract.org/2004/07/KServer" />
+      <xsd:import schemaLocation="http://sunny.eng.utah.edu:1718/DJ.svc?xsd=xsd3" namespace="http://schemas.microsoft.com/2003/10/Serialization/Arrays" />
     </xsd:schema>
   </wsdl:types>
   <wsdl:message name="IDJ_DJSignUp_InputMessage">
@@ -127,6 +128,30 @@
   <wsdl:message name="IDJ_DJTestQueueFill_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJTestQueueFillResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJGetMostPopularSongs_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetMostPopularSongs" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJGetMostPopularSongs_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetMostPopularSongsResponse" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJBanUser_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJBanUser" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJBanUser_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJBanUserResponse" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJUnbanUser_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJUnbanUser" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJUnbanUser_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJUnbanUserResponse" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJGetBannedUsers_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetBannedUsers" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJGetBannedUsers_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetBannedUsersResponse" />
+  </wsdl:message>
   <wsdl:portType name="IDJ">
     <wsdl:operation name="DJSignUp">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJSignUp" message="tns:IDJ_DJSignUp_InputMessage" />
@@ -207,6 +232,22 @@
     <wsdl:operation name="DJTestQueueFill">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJTestQueueFill" message="tns:IDJ_DJTestQueueFill_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJTestQueueFillResponse" message="tns:IDJ_DJTestQueueFill_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJGetMostPopularSongs">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGetMostPopularSongs" message="tns:IDJ_DJGetMostPopularSongs_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGetMostPopularSongsResponse" message="tns:IDJ_DJGetMostPopularSongs_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJBanUser">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJBanUser" message="tns:IDJ_DJBanUser_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJBanUserResponse" message="tns:IDJ_DJBanUser_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJUnbanUser">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJUnbanUser" message="tns:IDJ_DJUnbanUser_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJUnbanUserResponse" message="tns:IDJ_DJUnbanUser_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJGetBannedUsers">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGetBannedUsers" message="tns:IDJ_DJGetBannedUsers_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGetBannedUsersResponse" message="tns:IDJ_DJGetBannedUsers_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IDJ" type="tns:IDJ">
@@ -384,6 +425,42 @@
     </wsdl:operation>
     <wsdl:operation name="DJTestQueueFill">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJTestQueueFill" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJGetMostPopularSongs">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJGetMostPopularSongs" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJBanUser">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJBanUser" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJUnbanUser">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJUnbanUser" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJGetBannedUsers">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJGetBannedUsers" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

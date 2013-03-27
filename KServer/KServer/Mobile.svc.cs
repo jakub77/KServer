@@ -1576,6 +1576,58 @@ namespace KServer
             }
         }
 
+
+
+        /// <summary>
+        /// Gets the most popular songs associated with a venue or all venues.
+        /// </summary>
+        /// <param name="venueID">The venueID of the venue, if -1, searches all venues.</param>
+        /// <param name="start">The starting index of results.</param>
+        /// <param name="count">The count of results.</param>
+        /// <returns></returns>
+        public List<Song> MobileGetMostPopularSongs(int venueID, int start, int count)
+        {
+            List<Song> songs = new List<Song>();
+            List<int> counts = new List<int>();
+            List<Song> songIDs;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Validate venueID if the any venueID not given.
+                if (venueID != -1)
+                {
+                    // Make sure the venueID exists.
+                    r = db.DJGetStatus(venueID);
+                    if (r.error)
+                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                    int venueStatus;
+                    if (!int.TryParse(r.message.Trim(), out venueStatus))
+                        return (List<Song>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                }
+
+
+                r = db.GetMostPopularSongs(venueID, start, count, out songIDs, out counts);
+                if (r.error)
+                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                foreach (Song s in songIDs)
+                {
+                    Song fullSong;
+                    Common.GetSongInformation(s.ID, venueID, -1, out fullSong, db, false);
+                    songs.Add(fullSong);
+                }
+                return songs;
+            }
+        }
+
+
+
+
         /// <summary>
         /// Check to see if a status of a venue is equal to the desired status. 
         /// </summary>

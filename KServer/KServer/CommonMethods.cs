@@ -196,7 +196,7 @@ namespace KServer
         /// If includePath is set to true, the pathondisk is set, otherwise it is not set.
         /// </summary>
         /// <param name="songID">The songID of the song.</param>
-        /// <param name="venueID">The ID of the venue that has this song.</param>
+        /// <param name="venueID">ignored</param>
         /// <param name="mobileID">The mobile ID of client.</param>
         /// <param name="song">The out parameter that is filled with song information.</param>
         /// <param name="db">The conenctivity to the database.</param>

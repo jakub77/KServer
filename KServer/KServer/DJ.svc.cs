@@ -1427,6 +1427,167 @@ namespace KServer
         }
 
         /// <summary>
+        /// Gets the most or the least popular songs at a venue.
+        /// </summary>
+        /// <param name="DJKey">The unique DJ key.</param>
+        /// <param name="limitToVenue">If true, results are only from this DJ's venue, otherwise, results are from all venues.</param>
+        /// <param name="start">Results start at the given index.</param>
+        /// <param name="count">Sets the number of results.</param>
+        /// <param name="songs">Out list of songs.</param>
+        /// <param name="counts">Out list of counts that contains how many times that song shows up. Indexes match song indexes. ie counts[2] is the number of times songs[2] was sung.</param>
+        /// <returns></returns>
+        public Response DJGetMostPopularSongs(long DJKey, bool limitToVenue, int start, int count, out List<Song> songs, out List<int> counts)
+        {
+            int DJID = -1;
+            songs = new List<Song>();
+            counts = new List<int>();
+            List<Song> songIDs;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                int chosenVenue = -1;
+                if(limitToVenue)
+                    chosenVenue = DJID;
+                r = db.GetMostPopularSongs(chosenVenue, start, count, out songIDs, out counts);
+                if (r.error)
+                    return r;
+
+                foreach(Song s in songIDs)
+                {
+                    Song fullSong;
+                    Common.GetSongInformation(s.ID, DJID, -1, out fullSong, db, true);
+                    songs.Add(fullSong);
+                }
+                return r;
+            }
+        }
+
+        public Response DJBanUser(User userToBan, long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+                r = db.MobileValidateID(userToBan.userID);
+                if (r.error)
+                    return r;
+                if (r.message.Length == 0)
+                {
+                    r.message = "Could not find that userID";
+                    r.error = true;
+                    return r;
+                }
+                r = db.DJBanUser(DJID, userToBan.userID);
+                if (r.error)
+                    return r;
+
+                if (r.result != 1)
+                {
+                    r.message = "DB failed to ban user?";
+                    r.error = true;
+                    return r;
+                }
+                return r;
+            }
+        }
+
+        public Response DJUnbanUser(User userToUnban, long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+                r = db.MobileValidateID(userToUnban.userID);
+                if (r.error)
+                    return r;
+                if (r.message.Length == 0)
+                {
+                    r.message = "Could not find that userID";
+                    r.error = true;
+                    return r;
+                }
+
+                bool isBanned;
+                r = db.MobileIsBanned(DJID, userToUnban.userID, out isBanned);
+                if (r.error)
+                    return r;
+                if (!isBanned)
+                {
+                    r.error = true;
+                    r.message = "User is not banned!";
+                    return r;
+                }
+
+                r = db.DJUnbanUser(DJID, userToUnban.userID);
+                if (r.error)
+                    return r;
+
+                if (r.result != 1)
+                {
+                    r.message = "DB failed to unban user?";
+                    r.error = true;
+                    return r;
+                }
+                return r;
+            }
+        }
+
+        public Response DJGetBannedUsers(long DJKey, out List<User> users)
+        {
+            int DJID = -1;
+            users = new List<User>();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                r = db.DJGetBannedUsers(DJID, out users);
+                if (r.error)
+                    return r;
+
+                for (int i = 0; i < users.Count; i++)
+                {
+                    r = db.MobileIDtoUsername(users[i].userID);
+                    if (r.error)
+                        return r;
+                    users[i].userName = r.message.Trim();
+                }
+
+                return r;
+            }
+        }
+
+
+        /// <summary>
         /// Check the status of the DJ. Returns whether the desired status was found.
         /// </summary>
         /// <param name="DJID">The DJID for the DJ.</param>
@@ -1553,5 +1714,6 @@ namespace KServer
                 return r;
             }
         }
+
     }
 }

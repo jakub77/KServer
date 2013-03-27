@@ -61,6 +61,32 @@ namespace KServer
         Response DJNewUserWaitTime(long DJKey);
         [OperationContract]
         Response DJTestQueueFill(long DJKey);
+        [OperationContract]
+        Response DJGetMostPopularSongs(long DJKey, bool limitToVenue, int start, int count, out List<Song> songs, out List<int> counts);
+        [OperationContract]
+        Response DJBanUser(User userToBan, long DJKey);
+        [OperationContract]
+        Response DJUnbanUser(User userToUnban, long DJKey);
+        [OperationContract]
+        Response DJGetBannedUsers(long DJKey, out List<User> users);
+    }
+
+    [DataContract]
+    public class Statement
+    {
+        [DataMember]
+        public int select { get; set; }
+        [DataMember]
+        public int selectModifier { get; set; }
+        [DataMember]
+        public int selectValue { get; set; }
+    }
+
+    [DataContract]
+    public class Achievement
+    {
+
+        //
     }
 
     // Describes a song history object.

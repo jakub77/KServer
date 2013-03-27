@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KServer", "KServer\KServer.csproj", "{A1050CDC-2FA3-487E-A2E6-06FD8784E7FC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JakubMobileClient", "JakubMobileClient\JakubMobileClient.csproj", "{88B7A07F-165C-468A-A486-4C2FFDACFDC8}"
