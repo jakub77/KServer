@@ -38,6 +38,63 @@ namespace DJTestClient
                     Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest<rr>");
                     Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>, createSession<cs>");
                     Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>, moveSongRequest<mr>, mostPopular<mp>");
+                    Console.WriteLine("BanUser<bu>, UnbanUser<uu>, ListBans<lb>");
+                }
+                else if (command.StartsWith("bu"))
+                {
+                    Console.WriteLine("Enter UserID to bad");
+                    User u = new User();
+                    u.userID = int.Parse(Console.ReadLine());
+                    Response r;
+                    try
+                    {
+                        r = proxy.DJBanUser(u, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("uu"))
+                {
+                    Console.WriteLine("Enter UserID to unban");
+                    User u = new User();
+                    u.userID = int.Parse(Console.ReadLine());
+                    Response r;
+                    try
+                    {
+                        r = proxy.DJUnbanUser(u, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("lb"))
+                {
+                    Response r;
+                    User[] users;
+                    try
+                    {
+                        r = proxy.DJGetBannedUsers(out users, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                        foreach (User u in users)
+                        {
+                            Console.WriteLine(u.userID + " " + u.userName);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("mp"))
                 {

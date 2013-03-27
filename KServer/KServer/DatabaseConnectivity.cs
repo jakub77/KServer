@@ -1086,18 +1086,34 @@ namespace KServer
 
             cmd.CommandText += (") as 'RN', * from DJSongs where DJListID = @DJID");
 
-            if (isArtist && length > 0)
+            if (!firstLetter.StartsWith("1"))
             {
-                cmd.CommandText += " and LEFT([Artist], @length) = @firstLetter";
-                cmd.Parameters.AddWithValue("@length", length);
-                cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
+                if (isArtist && length > 0)
+                {
+                    cmd.CommandText += " and Artist like @firstLetter ";
+                    cmd.Parameters.AddWithValue("@firstLetter", firstLetter + "%");
+                }
+                else if (length > 0)
+                {
+                    cmd.CommandText += " and Title like @firstLetter ";
+                    cmd.Parameters.AddWithValue("@firstLetter", firstLetter + "%");
+                }
             }
             else if (length > 0)
             {
-                cmd.CommandText += " and LEFT([Title], @length) = @firstLetter";
-                cmd.Parameters.AddWithValue("@length", length);
-                cmd.Parameters.AddWithValue("@firstLetter", firstLetter);
+                if (isArtist)
+                    cmd.CommandText += " and Artist like '[0-9]%' ";
+                else
+                    cmd.CommandText += " and Title like '[0-9]%' ";
             }
+
+            //else if (length > 0)
+            //{
+            //    if (isArtist)
+            //        cmd.CommandText += " and Artist not like '[A-z]%' ";
+            //    else
+            //        cmd.CommandText += " and Title not like '[A-z]%' ";
+            //}
 
             cmd.CommandText += ") B on A.SongID = B.SongID and B.rn between @start and @end;";
             cmd.Parameters.AddWithValue("@start", (start + 1));

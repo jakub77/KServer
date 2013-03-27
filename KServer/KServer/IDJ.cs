@@ -71,22 +71,75 @@ namespace KServer
         Response DJGetBannedUsers(long DJKey, out List<User> users);
     }
 
-    [DataContract]
-    public class Statement
+    public class AchievementSelect
     {
+        // DateTime.min /max if you don't care
         [DataMember]
-        public int select { get; set; }
+        public DateTime startDate { get; set; }
         [DataMember]
-        public int selectModifier { get; set; }
+        public DateTime endDate { get; set; }
+        
+        // Count = 2 etc. newest = 3, gets the third newest person to meet clause.
         [DataMember]
-        public int selectValue { get; set; }
+        public SelectKeyword selectKeyword { get; set; }
+        [DataMember]
+        public string selectValue { get; set; }
+
+        // songtitle=umbrella etc
+        [DataMember]
+        public ClauseKeyword clauseKeyword { get; set; }
+        [DataMember]
+        public string clauseValue { get; set; }    
+    }
+
+    [DataContract]
+    public enum SelectKeyword
+    {
+        [EnumMember]
+        CountEqual,
+        [EnumMember]
+        CountNotEqual,
+        [EnumMember]
+        CountGreaterThan,
+        [EnumMember]
+        CountLessThan,
+        [EnumMember]
+        Max,
+        [EnumMember]
+        Min,
+        [EnumMember]
+        Newest,
+        [EnumMember]
+        Oldest
+    }
+    [DataContract]
+    public enum ClauseKeyword
+    {
+        [EnumMember]
+        Artist,
+        [EnumMember]
+        Title,
+        [EnumMember]
+        SongID
     }
 
     [DataContract]
     public class Achievement
     {
-
-        //
+        // ID of achievement. return ID from achievement create method on server.
+        [DataMember]
+        public int ID { get; set; }
+        [DataMember]
+        public string name { get; set; }
+        [DataMember]
+        public string description { get; set; }
+        [DataMember]
+        public byte[] imageArray { get; set; }
+        // All statmeents in selectList are anded together if true, otherwise, all ored togethere
+        [DataMember]
+        public bool statementsAnd { get; set; }
+        [DataMember]
+        public List<AchievementSelect> selectList { get; set; }
     }
 
     // Describes a song history object.

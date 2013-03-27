@@ -16,8 +16,9 @@ using System.Diagnostics;
 
 // Notes:
 // Change it so queue singer/songs are in their own table, so cascading works.
-// Manual users added to an empty queue crash.
 // There are manual users in the database, are they cleared on DJ logout?
+// make banning users kick the user out of the venue and not just can't join.
+// make database browse ignore non alphanumberic characters until it finds alphanumeric.
 
 namespace KServer
 {

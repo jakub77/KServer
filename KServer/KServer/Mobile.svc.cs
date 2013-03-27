@@ -959,6 +959,19 @@ namespace KServer
                     return r;
                 }
 
+                // Check if the user is banned
+                bool userBanned;
+                r = db.MobileIsBanned(venueID, mobileID, out userBanned);
+                if (r.error)
+                    return r;
+
+                if (userBanned)
+                {
+                    r.error = true;
+                    r.message = "You have been banned from this Venue!";
+                    return r;
+                }
+
                 // Set the venue of the client
                 r = db.MobileSetVenue(mobileID, venueID);
                 if (r.error)
