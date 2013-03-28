@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="c2ebcd0a-e95a-47c4-af19-2db1ea415bf0" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+<ReferenceGroup xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" ID="d21719a7-d2d5-4f9e-ba3b-7972ccf73ad1" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
   <ClientOptions>
     <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
     <EnableDataBinding>true</EnableDataBinding>
@@ -18,12 +18,14 @@
     <ServiceContractMappings />
   </ClientOptions>
   <MetadataSources>
-    <MetadataSource Address="http://sunny.eng.utah.edu/Mobile.svc" Protocol="http" SourceId="1" />
+    <MetadataSource Address="http://sunny.eng.utah.edu:81/Mobile.svc" Protocol="http" SourceId="1" />
   </MetadataSources>
   <Metadata>
-    <MetadataFile FileName="Mobile.disco" MetadataType="Disco" ID="56abba64-fa8b-491d-966c-efffcc6fe692" SourceId="1" SourceUrl="http://sunny.eng.utah.edu/Mobile.svc?disco" />
-    <MetadataFile FileName="Mobile.wsdl" MetadataType="Wsdl" ID="91ce569a-b0b5-4ecb-aba6-ffd48873efee" SourceId="1" SourceUrl="http://sunny.eng.utah.edu/Mobile.svc?wsdl" />
-    <MetadataFile FileName="Mobile.xsd" MetadataType="Schema" ID="654e2599-ec5b-4fc6-830e-94f6a6447eca" SourceId="1" SourceUrl="http://sunny.eng.utah.edu/Mobile.svc?xsd=xsd0" />
+    <MetadataFile FileName="Mobile.xsd" MetadataType="Schema" ID="60f91dbb-bc96-43af-a883-18c6086ddf85" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:81/Mobile.svc?xsd=xsd2" />
+    <MetadataFile FileName="Mobile1.xsd" MetadataType="Schema" ID="bb7bc521-1b09-4646-bbe4-ab0bcfce2e3e" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:81/Mobile.svc?xsd=xsd1" />
+    <MetadataFile FileName="Mobile2.xsd" MetadataType="Schema" ID="5f668569-e78d-458f-bf6c-00a4500d84e3" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:81/Mobile.svc?xsd=xsd0" />
+    <MetadataFile FileName="Mobile.wsdl" MetadataType="Wsdl" ID="0d524ecb-b87c-4687-8931-68b462d6fa0c" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:81/Mobile.svc?wsdl" />
+    <MetadataFile FileName="Mobile.disco" MetadataType="Disco" ID="d6010407-bb00-4250-be3b-9015d18bef7f" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:81/Mobile.svc?disco" />
   </Metadata>
   <Extensions>
     <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />

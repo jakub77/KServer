@@ -69,8 +69,15 @@ namespace KServer
         Response DJUnbanUser(User userToUnban, long DJKey);
         [OperationContract]
         Response DJGetBannedUsers(long DJKey, out List<User> users);
+        [OperationContract]
+        Response DJAddAchievement(Achievement achievement, long DJKey);
+        [OperationContract]
+        Response DJDeleteAchievement(int achievementID, long DJKey);
+        [OperationContract]
+        Response DJViewAchievements(long DJKey, out List<Achievement> achievements);
     }
 
+    [DataContract]
     public class AchievementSelect
     {
         // DateTime.min /max if you don't care
@@ -91,7 +98,6 @@ namespace KServer
         [DataMember]
         public string clauseValue { get; set; }    
     }
-
     [DataContract]
     public enum SelectKeyword
     {
@@ -122,7 +128,6 @@ namespace KServer
         [EnumMember]
         SongID
     }
-
     [DataContract]
     public class Achievement
     {

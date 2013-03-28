@@ -26,6 +26,8 @@ namespace KServer
 
     public class Service1 : IDJ
     {
+        #region SignInOutEtc
+
         /// <summary>
         /// Registers a DJ for the Mobioke service.
         /// If an error occurs, the response will describe the error.
@@ -325,6 +327,80 @@ namespace KServer
         }
 
         /// <summary>
+        /// Starts a DJ session up. Mobile users can now make song requests, The DJ can now control the queue.
+        /// </summary>
+        /// <param name="DJKey">The DJ's assigned key.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response DJCreateSession(long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ is not logged out.
+                r = DJValidateStatus(DJID, "!0", db);
+                if (r.error)
+                    return r;
+
+                // Set the status of the DJ to accepting songs.
+                r = db.DJSetStatus(DJID, 2);
+                if (r.error)
+                    return r;
+                // Create a new field for song requests.
+                r = db.DJOpenSongRequests(DJID);
+                return r;
+            }
+        }
+
+        /// <summary>
+        /// Close a DJ's session. The DJ must have a session running for this to work.
+        /// </summary>
+        /// <param name="DJKey">The DJKey assigned to the DJ.</param>
+        /// <returns>The outcome of the operation.b</returns>
+        public Response DJStopSession(long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ has a session running.
+                r = DJValidateStatus(DJID, "2", db);
+                if (r.error)
+                    return r;
+
+                // Set the status of the DJ to logged in.
+                r = db.DJSetStatus(DJID, 1);
+                if (r.error)
+                    return r;
+
+                // Delete the song request field.
+                r = db.DJCloseSongRequests(DJID);
+                return r;
+            }
+        }
+        #endregion
+
+        #region SongControl
+
+        /// <summary>
         /// Add songs to a DJ's library. If a song with a matching artist and title exists,
         /// the song is updated to the newly supplied duration and path on disk, otherwise
         /// a new song is added to the DJ's library.
@@ -426,6 +502,9 @@ namespace KServer
                 return r;
             }
         }
+        #endregion
+
+        #region QueueControl
 
         /// <summary>
         /// Pop the top song off the queue and updates the queue.
@@ -1255,132 +1334,6 @@ namespace KServer
         }
 
         /// <summary>
-        /// Starts a DJ session up. Mobile users can now make song requests, The DJ can now control the queue.
-        /// </summary>
-        /// <param name="DJKey">The DJ's assigned key.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response DJCreateSession(long DJKey)
-        {
-            int DJID = -1;
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                // Try to establish a database connection
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
-
-                // Attempt to convert DJKey to DJID
-                r = DJKeyToID(DJKey, out DJID, db);
-                if (r.error)
-                    return r;
-
-                // Make sure the DJ is not logged out.
-                r = DJValidateStatus(DJID, "!0", db);
-                if (r.error)
-                    return r;
-
-                // Set the status of the DJ to accepting songs.
-                r = db.DJSetStatus(DJID, 2);
-                if (r.error)
-                    return r;
-                // Create a new field for song requests.
-                r = db.DJOpenSongRequests(DJID);
-                return r;
-            }
-        }
-
-        /// <summary>
-        /// Close a DJ's session. The DJ must have a session running for this to work.
-        /// </summary>
-        /// <param name="DJKey">The DJKey assigned to the DJ.</param>
-        /// <returns>The outcome of the operation.b</returns>
-        public Response DJStopSession(long DJKey)
-        {
-            int DJID = -1;
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                // Try to establish a database connection
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
-
-                // Attempt to convert DJKey to DJID
-                r = DJKeyToID(DJKey, out DJID, db);
-                if (r.error)
-                    return r;
-
-                // Make sure the DJ has a session running.
-                r = DJValidateStatus(DJID, "2", db);
-                if (r.error)
-                    return r;
-
-                // Set the status of the DJ to logged in.
-                r = db.DJSetStatus(DJID, 1);
-                if (r.error)
-                    return r;
-
-                // Delete the song request field.
-                r = db.DJCloseSongRequests(DJID);
-                return r;
-            }
-        }
-
-        /// <summary>
-        /// Get the approximate wait time for a new user if they were to join the queue. If no error occures, result stored in result and message.
-        /// </summary>
-        /// <param name="DJKey">The DJ key assigned to the DJ.</param>
-        /// <returns>The outcome of the opeartion.</returns>
-        public Response DJNewUserWaitTime(long DJKey)
-        {
-            int DJID = -1;
-            List<queueSinger> queue = new List<queueSinger>();
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                // Try to establish a database connection
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
-
-                // Convert the DJKey to a DJID
-                r = DJKeyToID(DJKey, out DJID, db);
-                if (r.error)
-                    return r;
-
-                // Make sure the DJ isn't logged out.
-                r = DJValidateStatus(DJID, "2", db);
-                if (r.error)
-                    return r;
-
-                r = db.GetSongRequests(DJID);
-                if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
-
-                string raw = r.message;
-                if (raw.Trim() == "")
-                {
-                    r.error = false;
-                    r.message = "Empty Queue";
-                    r.result = 0;
-                    return r;
-                }
-
-                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
-                r = Common.DBToFullList(raw, out queue, DJID, db);
-                if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
-
-                int time = 0;
-                foreach (queueSinger qs in queue)
-                    time += qs.songs[0].duration + Common.TIME_BETWEEN_REQUESTS;
-
-                r.error = false;
-                r.message = time.ToString().Trim();
-                r.result = time;
-                return r;
-            }
-        }
-
-        /// <summary>
         /// Create a test Queue for the Rick account. Does not work with any other account.
         /// </summary>
         /// <param name="DJKey">The DJ Key assigned to the Rick account.</param>
@@ -1427,51 +1380,9 @@ namespace KServer
             }
         }
 
-        /// <summary>
-        /// Gets the most or the least popular songs at a venue.
-        /// </summary>
-        /// <param name="DJKey">The unique DJ key.</param>
-        /// <param name="limitToVenue">If true, results are only from this DJ's venue, otherwise, results are from all venues.</param>
-        /// <param name="start">Results start at the given index.</param>
-        /// <param name="count">Sets the number of results.</param>
-        /// <param name="songs">Out list of songs.</param>
-        /// <param name="counts">Out list of counts that contains how many times that song shows up. Indexes match song indexes. ie counts[2] is the number of times songs[2] was sung.</param>
-        /// <returns></returns>
-        public Response DJGetMostPopularSongs(long DJKey, bool limitToVenue, int start, int count, out List<Song> songs, out List<int> counts)
-        {
-            int DJID = -1;
-            songs = new List<Song>();
-            counts = new List<int>();
-            List<Song> songIDs;
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                // Try to establish a database connection
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return r;
+        #endregion
 
-                // Attempt to convert DJKey to DJID
-                r = DJKeyToID(DJKey, out DJID, db);
-                if (r.error)
-                    return r;
-
-                int chosenVenue = -1;
-                if(limitToVenue)
-                    chosenVenue = DJID;
-                r = db.GetMostPopularSongs(chosenVenue, start, count, out songIDs, out counts);
-                if (r.error)
-                    return r;
-
-                foreach(Song s in songIDs)
-                {
-                    Song fullSong;
-                    Common.GetSongInformation(s.ID, DJID, -1, out fullSong, db, true);
-                    songs.Add(fullSong);
-                }
-                return r;
-            }
-        }
-
+        #region BanUsers
         public Response DJBanUser(User userToBan, long DJKey)
         {
             int DJID = -1;
@@ -1587,6 +1498,142 @@ namespace KServer
             }
         }
 
+        #endregion
+
+        #region GetInformation
+        /// <summary>
+        /// Get the approximate wait time for a new user if they were to join the queue. If no error occures, result stored in result and message.
+        /// </summary>
+        /// <param name="DJKey">The DJ key assigned to the DJ.</param>
+        /// <returns>The outcome of the opeartion.</returns>
+        public Response DJNewUserWaitTime(long DJKey)
+        {
+            int DJID = -1;
+            List<queueSinger> queue = new List<queueSinger>();
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                // Make sure the DJ isn't logged out.
+                r = DJValidateStatus(DJID, "2", db);
+                if (r.error)
+                    return r;
+
+                r = db.GetSongRequests(DJID);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                string raw = r.message;
+                if (raw.Trim() == "")
+                {
+                    r.error = false;
+                    r.message = "Empty Queue";
+                    r.result = 0;
+                    return r;
+                }
+
+                // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+                r = Common.DBToFullList(raw, out queue, DJID, db);
+                if (r.error)
+                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+
+                int time = 0;
+                foreach (queueSinger qs in queue)
+                    time += qs.songs[0].duration + Common.TIME_BETWEEN_REQUESTS;
+
+                r.error = false;
+                r.message = time.ToString().Trim();
+                r.result = time;
+                return r;
+            }
+        }
+        /// <summary>
+        /// Gets the most or the least popular songs at a venue.
+        /// </summary>
+        /// <param name="DJKey">The unique DJ key.</param>
+        /// <param name="limitToVenue">If true, results are only from this DJ's venue, otherwise, results are from all venues.</param>
+        /// <param name="start">Results start at the given index.</param>
+        /// <param name="count">Sets the number of results.</param>
+        /// <param name="songs">Out list of songs.</param>
+        /// <param name="counts">Out list of counts that contains how many times that song shows up. Indexes match song indexes. ie counts[2] is the number of times songs[2] was sung.</param>
+        /// <returns></returns>
+        public Response DJGetMostPopularSongs(long DJKey, bool limitToVenue, int start, int count, out List<Song> songs, out List<int> counts)
+        {
+            int DJID = -1;
+            songs = new List<Song>();
+            counts = new List<int>();
+            List<Song> songIDs;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Attempt to convert DJKey to DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                int chosenVenue = -1;
+                if(limitToVenue)
+                    chosenVenue = DJID;
+                r = db.GetMostPopularSongs(chosenVenue, start, count, out songIDs, out counts);
+                if (r.error)
+                    return r;
+
+                foreach(Song s in songIDs)
+                {
+                    Song fullSong;
+                    Common.GetSongInformation(s.ID, DJID, -1, out fullSong, db, true);
+                    songs.Add(fullSong);
+                }
+                return r;
+            }
+        }
+
+        #endregion
+
+        #region Achievements
+
+        public Response DJAddAchievement(Achievement achievement, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "Not Implemented";
+            return r;
+        }
+
+        public Response DJDeleteAchievement(int achievementID, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "Not Implemented";
+            return r;
+        }
+
+        public Response DJViewAchievements(long DJKey, out List<Achievement> achievements)
+        {
+            achievements = new List<Achievement>();
+            Response r = new Response();
+            r.error = true;
+            r.message = "Not Implemented";
+            return r;
+        }
+
+        #endregion
+
+
+
+        #region PrivateMethods
 
         /// <summary>
         /// Check the status of the DJ. Returns whether the desired status was found.
@@ -1716,5 +1763,6 @@ namespace KServer
             }
         }
 
+        #endregion
     }
 }
