@@ -76,4 +76,59 @@
     </xs:sequence>
   </xs:complexType>
   <xs:element name="ArrayOfUser" nillable="true" type="tns:ArrayOfUser" />
+  <xs:complexType name="Achievement">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="ID" type="xs:int" />
+      <xs:element minOccurs="0" name="description" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="imageArray" nillable="true" type="xs:base64Binary" />
+      <xs:element minOccurs="0" name="name" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="selectList" nillable="true" type="tns:ArrayOfAchievementSelect" />
+      <xs:element minOccurs="0" name="statementsAnd" type="xs:boolean" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="Achievement" nillable="true" type="tns:Achievement" />
+  <xs:complexType name="ArrayOfAchievementSelect">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="AchievementSelect" nillable="true" type="tns:AchievementSelect" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfAchievementSelect" nillable="true" type="tns:ArrayOfAchievementSelect" />
+  <xs:complexType name="AchievementSelect">
+    <xs:sequence>
+      <xs:element minOccurs="0" name="clauseKeyword" type="tns:ClauseKeyword" />
+      <xs:element minOccurs="0" name="clauseValue" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="endDate" type="xs:dateTime" />
+      <xs:element minOccurs="0" name="selectKeyword" type="tns:SelectKeyword" />
+      <xs:element minOccurs="0" name="selectValue" nillable="true" type="xs:string" />
+      <xs:element minOccurs="0" name="startDate" type="xs:dateTime" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="AchievementSelect" nillable="true" type="tns:AchievementSelect" />
+  <xs:simpleType name="ClauseKeyword">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Artist" />
+      <xs:enumeration value="Title" />
+      <xs:enumeration value="SongID" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="ClauseKeyword" nillable="true" type="tns:ClauseKeyword" />
+  <xs:simpleType name="SelectKeyword">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="CountEqual" />
+      <xs:enumeration value="CountNotEqual" />
+      <xs:enumeration value="CountGreaterThan" />
+      <xs:enumeration value="CountLessThan" />
+      <xs:enumeration value="Max" />
+      <xs:enumeration value="Min" />
+      <xs:enumeration value="Newest" />
+      <xs:enumeration value="Oldest" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="SelectKeyword" nillable="true" type="tns:SelectKeyword" />
+  <xs:complexType name="ArrayOfAchievement">
+    <xs:sequence>
+      <xs:element minOccurs="0" maxOccurs="unbounded" name="Achievement" nillable="true" type="tns:Achievement" />
+    </xs:sequence>
+  </xs:complexType>
+  <xs:element name="ArrayOfAchievement" nillable="true" type="tns:ArrayOfAchievement" />
 </xs:schema>

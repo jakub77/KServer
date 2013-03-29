@@ -603,7 +603,7 @@ namespace JakubMobileClient
                             foreach (SongHistory sh in r)
                             {
                                 Console.WriteLine(sh.venue.venueID + ", " + sh.venue.venueName + ", " + sh.venue.venueAddress);
-                                Console.WriteLine("\t" + sh.song.ID + ", " + sh.song.title + ", " + sh.song.artist + ", " + sh.song.duration + ", " + sh.date);
+                                Console.WriteLine("\t" + sh.song.ID + ", " + sh.song.title + ", " + sh.song.artist + ", " + sh.song.duration + "s, " + sh.date);
                             }
                         }
                     }

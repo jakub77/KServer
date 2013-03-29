@@ -85,6 +85,9 @@
     <None Include="Service References\ServiceReference1\DJ32.xsd">
       <SubType>Designer</SubType>
     </None>
+    <None Include="Service References\ServiceReference1\DJTestClient.ServiceReference1.Achievement.datasource">
+      <DependentUpon>Reference.svcmap</DependentUpon>
+    </None>
     <None Include="Service References\ServiceReference1\DJTestClient.ServiceReference1.LogInResponse.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </None>

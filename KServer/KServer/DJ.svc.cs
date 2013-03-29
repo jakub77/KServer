@@ -13,6 +13,8 @@ using System.Text;
 using System.Security.Permissions;
 using System.Security.Cryptography;
 using System.Diagnostics;
+using System.IO;
+using System.Data.SqlClient;
 
 // Notes:
 // Change it so queue singer/songs are in their own table, so cascading works.
@@ -582,10 +584,12 @@ namespace KServer
                     queue.Add(temp);
                 }
 
-                nextUserID = queue[0].user.userID;
+                
                 if (queue.Count > 0 && nextUserID > 0)
                 {
-                    r = Common.PushMessageToMobile(nextUserID, "next", db);
+                    nextUserID = queue[0].user.userID;
+                    if(nextUserID > 0)
+                        r = Common.PushMessageToMobile(nextUserID, "next", db);
                 }
 
                 raw = string.Empty;
@@ -595,7 +599,13 @@ namespace KServer
                 r = db.SetSongRequests(DJID, raw);
                 if (r.error)
                     return r;
-                r = db.MobileAddSongHistory(sr.user.userID, DJID, sr.songID, DateTime.Now);
+
+                Song song;
+                r = Common.GetSongInformation(sr.songID, DJID, -1, out song, db);
+                if (r.error)
+                    return r;
+
+                r = db.MobileAddSongHistory(sr.user.userID, DJID, song, DateTime.Now);
                 if (r.error)
                     Common.LogError(r.message, Environment.StackTrace, r, 1);
 
@@ -1606,34 +1616,107 @@ namespace KServer
 
         public Response DJAddAchievement(Achievement achievement, long DJKey)
         {
-            Response r = new Response();
-            r.error = true;
-            r.message = "Not Implemented";
-            return r;
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+
+                r = db.DJAddAchievement(DJID, achievement);
+                if (r.error)
+                    return r;
+                return r;
+            }
         }
 
         public Response DJDeleteAchievement(int achievementID, long DJKey)
         {
-            Response r = new Response();
-            r.error = true;
-            r.message = "Not Implemented";
-            return r;
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                r = db.DJDeleteAchievement(DJID, achievementID);
+                if (r.error)
+                    return r;
+
+                if (r.result < 1)
+                {
+                    r.error = true;
+                    r.message = "The achievement didn't exist? nothing deleted";
+                    return r;
+                }
+                return r;
+            }
         }
 
         public Response DJViewAchievements(long DJKey, out List<Achievement> achievements)
         {
+            int DJID = -1;
             achievements = new List<Achievement>();
-            Response r = new Response();
-            r.error = true;
-            r.message = "Not Implemented";
-            return r;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                r = db.DJViewAchievements(DJID, out achievements);
+                if (r.error)
+                    return r;
+                return r;
+            }
         }
+
+
 
         #endregion
 
 
 
         #region PrivateMethods
+
+        private Response RunAchievements(int DJID, DatabaseConnectivity db)
+        {
+            Response r;
+            List<Achievement> achievements;
+            r = db.DJViewAchievements(DJID, out achievements);
+            if (r.error)
+                return r;
+
+            string sqlText;
+            List<SqlCommand> cmds;
+            foreach (Achievement a in achievements)
+            {
+                r = AchievementParser.CreateAchievementSQL(a, DJID, out sqlText, out cmds);
+                if (r.error)
+                    return r;
+                
+            }
+
+            return new Response();
+        }
 
         /// <summary>
         /// Check the status of the DJ. Returns whether the desired status was found.

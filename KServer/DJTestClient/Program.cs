@@ -16,6 +16,40 @@ namespace DJTestClient
 {
     class Program
     {
+        private static Achievement createAchievement()
+        {
+            Achievement a = new Achievement();
+            a.name = "Kansas";
+            a.description = "Carry on.";
+            a.ID = 0;
+            a.imageArray = new byte[1];
+            a.statementsAnd = true;
+            a.selectList = new AchievementSelect[1];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.Max;
+            select.selectValue = "1";
+            select.clauseKeyword = ClauseKeyword.Title;
+            select.clauseValue = "Carry on Wayward Son";
+            a.selectList[0] = select;
+            return a;
+        }
+        private static string achievementString(Achievement a)
+        {
+            string s = String.Empty;
+            s += a.ID + ", " + a.name + ", " + a.description + "\n";
+            foreach (AchievementSelect select in a.selectList)
+            {
+                s += "\t" + select.selectKeyword.ToString() + " = '" + select.selectValue + "' where " + select.clauseKeyword.ToString() + " = '" + select.clauseValue + "' ";
+                if (a.statementsAnd)
+                    s += "and\n";
+                else
+                    s += "or\n";
+            }
+            return s;
+        }
+
         static void Main(string[] args)
         {
             // User the proxy to communicate with server.
@@ -38,7 +72,61 @@ namespace DJTestClient
                     Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest<rr>");
                     Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>, createSession<cs>");
                     Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>, moveSongRequest<mr>, mostPopular<mp>");
-                    Console.WriteLine("BanUser<bu>, UnbanUser<uu>, ListBans<lb>");
+                    Console.WriteLine("BanUser<bu>, UnbanUser<uu>, ListBans<lb>, addAchievement<aa>, listAchievemts<la>");
+                    Console.WriteLine("deleteAchivement<da>");
+                }
+                else if (command.StartsWith("aa"))
+                {
+                    Response r;
+                    Achievement achievement = createAchievement();
+                    try
+                    {
+                        r = proxy.DJAddAchievement(achievement, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception Add Achievement: " + e.Message + " " + e.StackTrace);
+                    }
+                }
+                else if (command.StartsWith("da"))
+                {
+                    Response r;
+                    try
+                    {
+                        Console.WriteLine("ID:");
+                        int id = int.Parse(Console.ReadLine());
+                        r = proxy.DJDeleteAchievement(id, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("la"))
+                {
+                    Response r;
+                    Achievement[] achievements;
+                    try
+                    {
+                        r = proxy.DJViewAchievements(out achievements, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                        foreach (Achievement a in achievements)
+                        {
+                            Console.WriteLine(achievementString(a));
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("bu"))
                 {

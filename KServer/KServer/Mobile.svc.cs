@@ -467,9 +467,7 @@ namespace KServer
                     r = db.SetSongRequests(venueID, requests);
                     if (r.error)
                         return r;
-                    r = Common.PushMessageToMobile(mobileID, "queue", db);
-                    if (r.error)
-                        Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    Common.PushMessageToMobile(mobileID, "queue", db);
                     return r;
                 }
 

@@ -365,4 +365,49 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="DJAddAchievement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q41="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="achievement" nillable="true" type="q41:Achievement" />
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJAddAchievementResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q42="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJAddAchievementResult" nillable="true" type="q42:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJDeleteAchievement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="achievementID" type="xs:int" />
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJDeleteAchievementResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q43="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJDeleteAchievementResult" nillable="true" type="q43:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJViewAchievements">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJViewAchievementsResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q44="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJViewAchievementsResult" nillable="true" type="q44:Response" />
+        <xs:element xmlns:q45="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="achievements" nillable="true" type="q45:ArrayOfAchievement" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

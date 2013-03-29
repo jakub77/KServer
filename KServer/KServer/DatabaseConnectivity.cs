@@ -11,11 +11,15 @@ using System.Linq;
 using System.Text;
 using System.Web;
 using System.Diagnostics;
+using System.IO;
+using System.Runtime.Serialization;
 
 namespace KServer
 {
     public class DatabaseConnectivity : IDisposable
     {
+        #region OpenCloseETC
+
         // Descriptions of the connection information for the database.
         private string SQLServerAddress = "localhost";
         private string DBUsername = "karaoke";
@@ -23,7 +27,6 @@ namespace KServer
         private string database = "KaraokeDB";
         private int connectionTimeOut = 10;
         private string connectionString = String.Empty;
-
         private SqlConnection con;
 
         /// <summary>
@@ -174,44 +177,11 @@ namespace KServer
             }
         }
 
-        /// <summary>
-        /// Checks to see if a song exists, if it does, SongID is stored in message.
-        /// </summary>
-        /// <param name="DJID">The ID of the DJ/Venue.</param>
-        /// <param name="SongID">The ID of the song.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response SongExists(int DJID, int SongID)
-        {
-            SqlCommand cmd = new SqlCommand("select SongID from DJSongs where SongID = @songID and DJListID = @DJID;");
-            cmd.Parameters.AddWithValue("@songID", SongID);
-            cmd.Parameters.AddWithValue("@DJID", DJID);
-            return DBQuery(cmd, new string[1] { "SongID" });
-        }
 
-        /// <summary>
-        /// Gets the song information of a song from the databse
-        /// </summary>
-        /// <param name="DJID">The ID of the DJ/Venue.</param>
-        /// <param name="SongID">The ID of the song.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response SongInformation(int DJID, int SongID)
-        {
-            SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk, Duration from DJSongs where SongID = @songID;");
-            cmd.Parameters.AddWithValue("@songID", SongID);
-            return DBQuery(cmd, new string[4] { "Title", "Artist", "PathOnDisk", "Duration" });
-        }
+        #endregion
 
-        /// <summary>
-        /// Get all the DJs from the database.
-        /// </summary>
-        /// <returns>The outcome of the operation with message describing the DJs.</returns>
-        public Response DJListMembers()
-        {
-            SqlCommand cmd = new SqlCommand("select * from DJUsers;");
-            Response r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
-            r.message = r.message.Replace(Common.DELIMINATOR, ",");
-            return r;
-        }
+
+        #region DJMiscValidateEtc
 
         /// <summary>
         /// Check to see if a DJ's username and password are valid.
@@ -294,6 +264,44 @@ namespace KServer
         }
 
         /// <summary>
+        /// Update a DJ's salt.
+        /// </summary>
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="salt">The new salt.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response DJSetSalt(int DJID, string salt)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("Update DJUsers set Salt = @salt where ID = @ID;", con);
+            cmd.Parameters.AddWithValue("@salt", salt);
+            cmd.Parameters.AddWithValue("@ID", DJID);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJSetPassword: " + e.Message;
+                return r;
+            }
+        }
+
+
+        /// <summary>
+        /// Get all the DJs from the database.
+        /// </summary>
+        /// <returns>The outcome of the operation with message describing the DJs.</returns>
+        public Response DJListMembers()
+        {
+            SqlCommand cmd = new SqlCommand("select * from DJUsers;");
+            Response r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            r.message = r.message.Replace(Common.DELIMINATOR, ",");
+            return r;
+        }
+
+        /// <summary>
         /// Adds a new DJ into the database.
         /// </summary>
         /// <param name="username">The username of the DJ.</param>
@@ -367,6 +375,36 @@ namespace KServer
             }
         }
 
+
+        #endregion
+
+        /// <summary>
+        /// Checks to see if a song exists, if it does, SongID is stored in message.
+        /// </summary>
+        /// <param name="DJID">The ID of the DJ/Venue.</param>
+        /// <param name="SongID">The ID of the song.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response SongExists(int DJID, int SongID)
+        {
+            SqlCommand cmd = new SqlCommand("select SongID from DJSongs where SongID = @songID and DJListID = @DJID;");
+            cmd.Parameters.AddWithValue("@songID", SongID);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            return DBQuery(cmd, new string[1] { "SongID" });
+        }
+
+        /// <summary>
+        /// Gets the song information of a song from the databse
+        /// </summary>
+        /// <param name="DJID">The ID of the DJ/Venue.</param>
+        /// <param name="SongID">The ID of the song.</param>
+        /// <returns>The outcome of the operation.</returns>
+        public Response SongInformation(int DJID, int SongID)
+        {
+            SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk, Duration from DJSongs where SongID = @songID;");
+            cmd.Parameters.AddWithValue("@songID", SongID);
+            return DBQuery(cmd, new string[4] { "Title", "Artist", "PathOnDisk", "Duration" });
+        }
+
         /// <summary>
         /// Sets a Mobile User's password to the new password.
         /// </summary>
@@ -417,30 +455,6 @@ namespace KServer
             }
         }
 
-        /// <summary>
-        /// Update a DJ's salt.
-        /// </summary>
-        /// <param name="DJID">The DJ's unique ID.</param>
-        /// <param name="salt">The new salt.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response DJSetSalt(int DJID, string salt)
-        {
-            Response r = new Response();
-            SqlCommand cmd = new SqlCommand("Update DJUsers set Salt = @salt where ID = @ID;", con);
-            cmd.Parameters.AddWithValue("@salt", salt);
-            cmd.Parameters.AddWithValue("@ID", DJID);
-            try
-            {
-                r.result = cmd.ExecuteNonQuery();
-                return r;
-            }
-            catch (Exception e)
-            {
-                r.error = true;
-                r.message = "Exception in DJSetPassword: " + e.Message;
-                return r;
-            }
-        }
 
         /// <summary>
         /// Set's a mobile users's password salt.
@@ -818,8 +832,6 @@ namespace KServer
             cmd.Parameters.AddWithValue("@username", username);
             return DBQuery(cmd, new string[1] { "ID" });
         }
-        // Check to see if a DJ's username and password are valid.
-        // If credentials are valid, returns the unique DJID in message.
 
         /// <summary>
         /// Check to see if mobile credentials are valid. If they are, mobile ID is stored in message.
@@ -1436,13 +1448,15 @@ namespace KServer
         /// <param name="songID">The songID.</param>
         /// <param name="dateSung">The date of singing.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response MobileAddSongHistory(int mobileID, int venueID, int songID, DateTime dateSung)
+        public Response MobileAddSongHistory(int mobileID, int venueID, Song song, DateTime dateSung)
         {
-            SqlCommand cmd = new SqlCommand("insert into MobileSongHistory (VenueID, MobileID, SongID, DateSung) values (@venueID, @mobileID, @songID, @dateSung);");
+            SqlCommand cmd = new SqlCommand("insert into MobileSongHistory (VenueID, MobileID, SongID, DateSung, Title, Artist) values (@venueID, @mobileID, @songID, @dateSung, @title, @artist);");
             cmd.Parameters.AddWithValue("@venueID", venueID);
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
-            cmd.Parameters.AddWithValue("@songID", songID);
+            cmd.Parameters.AddWithValue("@songID", song.ID);
             cmd.Parameters.AddWithValue("@dateSung", dateSung);
+            cmd.Parameters.AddWithValue("@title", song.title);
+            cmd.Parameters.AddWithValue("@artist", song.artist);
             return DBNonQuery(cmd);
         }
 
@@ -1967,7 +1981,6 @@ namespace KServer
             {
                 r.error = true;
                 r.message = "Exception in DJBanUser: " + e.Message;
-                DJID = -1;
                 return r;
             }
         }
@@ -1988,7 +2001,6 @@ namespace KServer
             {
                 r.error = true;
                 r.message = "Exception in DJUnbanUser: " + e.Message;
-                DJID = -1;
                 return r;
             }
         }
@@ -2049,5 +2061,117 @@ namespace KServer
                 return r;
             }
         }
+
+        public Response DJAddAchievement(int DJID, Achievement achievement)
+        {
+            MemoryStream streamAchievement = new MemoryStream();
+            DataContractSerializer achievementSerializer = new DataContractSerializer(typeof(Achievement));
+            achievementSerializer.WriteObject(streamAchievement, achievement);
+            byte[] serializedAchievementBytes = streamAchievement.ToArray();
+
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("insert into Achievements (DJID, Object, Name, ObjectSize) values (@DJID, @achievement, @name, @objectSize); SELECT SCOPE_IDENTITY();", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
+            cmd.Parameters.AddWithValue("@name", achievement.name);
+            cmd.Parameters.AddWithValue("@objectSize", serializedAchievementBytes.Length);
+
+            try
+            {
+                r.result = int.Parse(cmd.ExecuteScalar().ToString());
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DBDJAddAchievement: " + e.ToString();
+                return r;
+            }
+        }
+
+        public Response DJDeleteAchievement(int DJID, int achievementID)
+        {
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from Achievements where DJID = @DJID", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJDeleteAchievement: " + e.ToString();
+                return r;
+            }
+        }
+
+        public Response DJViewAchievements(int DJID, out List<Achievement> achievements)
+        {
+            Response r = new Response();
+            achievements = new List<Achievement>();
+            SqlCommand cmd = new SqlCommand("select ObjectSize, Object, ID from Achievements where DJID = @DJID;", con);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+
+            try
+            {
+                DataContractSerializer serializer = new DataContractSerializer(typeof(Achievement));
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int objectSize = reader.GetInt32(0);
+                        byte[] buffer = new byte[objectSize];
+                        reader.GetBytes(1, 0, buffer, 0, buffer.Length);
+                        MemoryStream stream = new MemoryStream(buffer);
+                        Achievement achievement = (Achievement)serializer.ReadObject(stream);
+                        achievement.ID = reader.GetInt32(2);
+                        achievements.Add(achievement);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJViewAchievements: " + e.Message;
+                return r;
+            }
+        }
+
+        public Response EvaluateAchievementStatements(int DJID, List<SqlCommand> cmds, out List<List<int>> userIDs)
+        {
+            userIDs = new List<List<int>>();
+            Response r = new Response();
+
+            try
+            {
+                for (int i = 0; i < cmds.Count; i++)
+                {
+                    cmds[i].Connection = con;
+                    userIDs.Add(new List<int>());
+                    using (SqlDataReader reader = cmds[0].ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            userIDs[i].Add(reader.GetInt32(0));
+                        }
+                    }
+
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJViewAchievements: " + e.Message;
+                return r;
+            }
+
+
+        }
+    
     }
 }
