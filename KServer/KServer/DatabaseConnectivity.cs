@@ -2166,12 +2166,52 @@ namespace KServer
             catch (Exception e)
             {
                 r.error = true;
-                r.message = "Exception in DJViewAchievements: " + e.Message;
+                r.message = "Exception in EvaluateAchievementStatements: " + e.Message;
                 return r;
             }
 
 
         }
-    
+
+
+        internal Response AwardAchievement(int userID, int achievementID)
+        {
+            return new Response();
+//            //AwardedAchievements
+
+//            Response r = new Response();
+//            string cmdText = @"Merge AwardedAchievements as target
+//                                            using (values(@pathOnDisk, @duration))
+//	                                            as source (PathOnDisk, Duration)
+//	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
+//                                            when matched then
+//	                                            update set PathOnDisk = source.PathOnDisk, Duration = source.Duration
+//                                            when not matched then
+//	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
+//	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
+//            merge AwardedAchievements as target
+//using (values('1','4'))
+//as source(MobileID, AchievementID)
+//on target.MobileID = 1 and target.AchievementID = 4
+//when not matched then
+//insert (MobileID, AchievementID) values ('1', '4');
+//            SqlCommand cmd = new SqlCommand(cmdText, con);
+//            //cmd.Parameters.AddWithValue("@DJID", DJID);
+//            //cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
+//            //cmd.Parameters.AddWithValue("@name", achievement.name);
+//            //cmd.Parameters.AddWithValue("@objectSize", serializedAchievementBytes.Length);
+
+//            try
+//            {
+//                r.result = int.Parse(cmd.ExecuteScalar().ToString());
+//                return r;
+//            }
+//            catch (Exception e)
+//            {
+//                r.error = true;
+//                r.message = "Exception in DBDJAddAchievement: " + e.ToString();
+//                return r;
+//            }
+        }
     }
 }

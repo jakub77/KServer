@@ -16,7 +16,7 @@ namespace DJTestClient
 {
     class Program
     {
-        private static Achievement createAchievement()
+        private static Achievement createAchievement1()
         {
             Achievement a = new Achievement();
             a.name = "Kansas";
@@ -32,6 +32,52 @@ namespace DJTestClient
             select.selectValue = "1";
             select.clauseKeyword = ClauseKeyword.Title;
             select.clauseValue = "Carry on Wayward Son";
+            a.selectList[0] = select;
+            return a;
+        }
+        private static Achievement createAchievement2()
+        {
+            Achievement a = new Achievement();
+            a.name = "Beatles/Rolling Stones";
+            a.description = "Sing at least one beatles and at least one rolling stones song.";
+            a.ID = 0;
+            a.imageArray = new byte[1];
+            a.statementsAnd = true;
+            a.selectList = new AchievementSelect[2];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.CountGreaterThan;
+            select.selectValue = "0";
+            select.clauseKeyword = ClauseKeyword.Artist;
+            select.clauseValue = "Rolling Stones";
+            a.selectList[0] = select;
+            AchievementSelect select2 = new AchievementSelect();
+            select2.startDate = DateTime.MinValue;
+            select2.endDate = DateTime.MaxValue;
+            select2.selectKeyword = SelectKeyword.CountGreaterThan;
+            select2.selectValue = "0";
+            select2.clauseKeyword = ClauseKeyword.Artist;
+            select2.clauseValue = "Beatles";
+            a.selectList[1] = select2;
+            return a;
+        }
+        private static Achievement createAchievement3()
+        {
+            Achievement a = new Achievement();
+            a.name = "Most Recent";
+            a.description = "Sing the most recent song.";
+            a.ID = 0;
+            a.imageArray = new byte[1];
+            a.statementsAnd = true;
+            a.selectList = new AchievementSelect[1];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.Newest;
+            select.selectValue = "1";
+            select.clauseKeyword = ClauseKeyword.Title;
+            select.clauseValue = "%";
             a.selectList[0] = select;
             return a;
         }
@@ -78,7 +124,15 @@ namespace DJTestClient
                 else if (command.StartsWith("aa"))
                 {
                     Response r;
-                    Achievement achievement = createAchievement();
+                    Console.WriteLine("Achievement number");
+                    int number = int.Parse(Console.ReadLine());
+                    Achievement achievement;
+                     if (number == 1)
+                         achievement = createAchievement1();
+                     if (number == 2)
+                         achievement = createAchievement2();
+                     else
+                         achievement = createAchievement3();
                     try
                     {
                         r = proxy.DJAddAchievement(achievement, DJKey);
