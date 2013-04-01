@@ -1636,11 +1636,10 @@ namespace KServer
             }
         }
 
-        public List<MobileAchievement> MobileGetAchievements(int venueID, long userKey)
+        public List<MobileAchievement> MobileGetAchievements(int venueID, long userKey, int start, int count)
         {
             int mobileID = -1;
             int venueStatus;
-            List<MobileAchievement> achievements = new List<MobileAchievement>();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
@@ -1665,15 +1664,25 @@ namespace KServer
                         return (List<MobileAchievement>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
                 }
 
-                for (int i = 0; i < 3; i++)
+                List<Achievement> achievements;
+
+                r = db.MobileGetAchievements(mobileID, venueID, out achievements);
+                if (r.error)
+                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                List<MobileAchievement> mobileAchievements = new List<MobileAchievement>();
+                foreach (Achievement a in achievements)
                 {
                     MobileAchievement ma = new MobileAchievement();
-                    ma.name = "Test achievement " + i;
-                    ma.description = "Test description " + i;
-                    ma.ID = i;
-                    achievements.Add(ma);
+                    ma.ID = a.ID;
+                    ma.name = a.name;
+                    ma.description = a.description;
+                    ma.image = a.image.ToString();
+                    mobileAchievements.Add(ma);
                 }
-                return achievements;
+
+
+                return mobileAchievements;
             }
         }
 

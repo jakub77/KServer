@@ -158,6 +158,12 @@
   <wsdl:message name="IDJ_DJAddAchievement_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJAddAchievementResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJModifyAchievement_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJModifyAchievement" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJModifyAchievement_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJModifyAchievementResponse" />
+  </wsdl:message>
   <wsdl:message name="IDJ_DJDeleteAchievement_InputMessage">
     <wsdl:part name="parameters" element="tns:DJDeleteAchievement" />
   </wsdl:message>
@@ -170,11 +176,17 @@
   <wsdl:message name="IDJ_DJViewAchievements_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJViewAchievementsResponse" />
   </wsdl:message>
-  <wsdl:message name="IDJ_DJEvaluateAchievement_InputMessage">
-    <wsdl:part name="parameters" element="tns:DJEvaluateAchievement" />
+  <wsdl:message name="IDJ_DJEvaluateAchievements_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJEvaluateAchievements" />
   </wsdl:message>
-  <wsdl:message name="IDJ_DJEvaluateAchievement_OutputMessage">
-    <wsdl:part name="parameters" element="tns:DJEvaluateAchievementResponse" />
+  <wsdl:message name="IDJ_DJEvaluateAchievements_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJEvaluateAchievementsResponse" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_ViewAchievementSql_InputMessage">
+    <wsdl:part name="parameters" element="tns:ViewAchievementSql" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_ViewAchievementSql_OutputMessage">
+    <wsdl:part name="parameters" element="tns:ViewAchievementSqlResponse" />
   </wsdl:message>
   <wsdl:portType name="IDJ">
     <wsdl:operation name="DJSignUp">
@@ -277,6 +289,10 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJAddAchievement" message="tns:IDJ_DJAddAchievement_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJAddAchievementResponse" message="tns:IDJ_DJAddAchievement_OutputMessage" />
     </wsdl:operation>
+    <wsdl:operation name="DJModifyAchievement">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJModifyAchievement" message="tns:IDJ_DJModifyAchievement_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJModifyAchievementResponse" message="tns:IDJ_DJModifyAchievement_OutputMessage" />
+    </wsdl:operation>
     <wsdl:operation name="DJDeleteAchievement">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJDeleteAchievement" message="tns:IDJ_DJDeleteAchievement_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJDeleteAchievementResponse" message="tns:IDJ_DJDeleteAchievement_OutputMessage" />
@@ -285,9 +301,13 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJViewAchievements" message="tns:IDJ_DJViewAchievements_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJViewAchievementsResponse" message="tns:IDJ_DJViewAchievements_OutputMessage" />
     </wsdl:operation>
-    <wsdl:operation name="DJEvaluateAchievement">
-      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJEvaluateAchievement" message="tns:IDJ_DJEvaluateAchievement_InputMessage" />
-      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJEvaluateAchievementResponse" message="tns:IDJ_DJEvaluateAchievement_OutputMessage" />
+    <wsdl:operation name="DJEvaluateAchievements">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJEvaluateAchievements" message="tns:IDJ_DJEvaluateAchievements_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJEvaluateAchievementsResponse" message="tns:IDJ_DJEvaluateAchievements_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="ViewAchievementSql">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/ViewAchievementSql" message="tns:IDJ_ViewAchievementSql_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/ViewAchievementSqlResponse" message="tns:IDJ_ViewAchievementSql_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IDJ" type="tns:IDJ">
@@ -517,6 +537,15 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
+    <wsdl:operation name="DJModifyAchievement">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJModifyAchievement" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
     <wsdl:operation name="DJDeleteAchievement">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJDeleteAchievement" style="document" />
       <wsdl:input>
@@ -535,8 +564,17 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="DJEvaluateAchievement">
-      <soap:operation soapAction="http://tempuri.org/IDJ/DJEvaluateAchievement" style="document" />
+    <wsdl:operation name="DJEvaluateAchievements">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJEvaluateAchievements" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="ViewAchievementSql">
+      <soap:operation soapAction="http://tempuri.org/IDJ/ViewAchievementSql" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

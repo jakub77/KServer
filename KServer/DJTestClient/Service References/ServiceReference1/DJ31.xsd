@@ -380,6 +380,21 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="DJModifyAchievement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q43="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="achievement" nillable="true" type="q43:Achievement" />
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJModifyAchievementResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q44="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJModifyAchievementResult" nillable="true" type="q44:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="DJDeleteAchievement">
     <xs:complexType>
       <xs:sequence>
@@ -391,7 +406,7 @@
   <xs:element name="DJDeleteAchievementResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q43="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJDeleteAchievementResult" nillable="true" type="q43:Response" />
+        <xs:element xmlns:q45="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJDeleteAchievementResult" nillable="true" type="q45:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -405,22 +420,37 @@
   <xs:element name="DJViewAchievementsResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q44="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJViewAchievementsResult" nillable="true" type="q44:Response" />
-        <xs:element xmlns:q45="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="achievements" nillable="true" type="q45:ArrayOfAchievement" />
+        <xs:element xmlns:q46="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJViewAchievementsResult" nillable="true" type="q46:Response" />
+        <xs:element xmlns:q47="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="achievements" nillable="true" type="q47:ArrayOfAchievement" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-  <xs:element name="DJEvaluateAchievement">
+  <xs:element name="DJEvaluateAchievements">
     <xs:complexType>
       <xs:sequence>
         <xs:element minOccurs="0" name="DJKey" type="xs:long" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
-  <xs:element name="DJEvaluateAchievementResponse">
+  <xs:element name="DJEvaluateAchievementsResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q46="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJEvaluateAchievementResult" nillable="true" type="q46:Response" />
+        <xs:element xmlns:q48="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJEvaluateAchievementsResult" nillable="true" type="q48:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ViewAchievementSql">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+        <xs:element minOccurs="0" name="achievementID" type="xs:int" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="ViewAchievementSqlResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q49="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="ViewAchievementSqlResult" nillable="true" type="q49:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>

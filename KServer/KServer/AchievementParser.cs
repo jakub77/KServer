@@ -73,7 +73,6 @@ namespace KServer
                 return r;
             }
 
-            //and Title like @title
             cmd.CommandText = "select MobileID from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID ";
             cmd.CommandText += "where DJSongs." + ClauseKeywordToString(a) + " like @clauseKeyword ";
             cmd.Parameters.AddWithValue("@clauseKeyword", a.clauseValue);
@@ -99,7 +98,7 @@ namespace KServer
                 r.message="Could not parse offset";
                 return r;
             }
-            offset++;
+            offset--;
 
             cmd.CommandText = "select MobileID from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID ";      
             cmd.CommandText+= "where DJSongs." + ClauseKeywordToString(a) + " like @clauseKeyword ";
@@ -128,7 +127,7 @@ namespace KServer
                 r.message = "Could not parse offset";
                 return r;
             }
-            offset++;
+            offset--;
 
             cmd.CommandText = "select MobileID from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID ";      
             cmd.CommandText+= "where DJSongs." + ClauseKeywordToString(a) + " like @clauseKeyword ";

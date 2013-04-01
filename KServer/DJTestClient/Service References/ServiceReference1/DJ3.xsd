@@ -80,13 +80,29 @@
     <xs:sequence>
       <xs:element minOccurs="0" name="ID" type="xs:int" />
       <xs:element minOccurs="0" name="description" nillable="true" type="xs:string" />
-      <xs:element minOccurs="0" name="imageArray" nillable="true" type="xs:base64Binary" />
+      <xs:element minOccurs="0" name="image" type="tns:AchievementImage" />
+      <xs:element minOccurs="0" name="isPermanant" type="xs:boolean" />
       <xs:element minOccurs="0" name="name" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="selectList" nillable="true" type="tns:ArrayOfAchievementSelect" />
       <xs:element minOccurs="0" name="statementsAnd" type="xs:boolean" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="Achievement" nillable="true" type="tns:Achievement" />
+  <xs:simpleType name="AchievementImage">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="Image0" />
+      <xs:enumeration value="Image1" />
+      <xs:enumeration value="Image2" />
+      <xs:enumeration value="Image3" />
+      <xs:enumeration value="Image4" />
+      <xs:enumeration value="Image5" />
+      <xs:enumeration value="Image6" />
+      <xs:enumeration value="Image7" />
+      <xs:enumeration value="Image8" />
+      <xs:enumeration value="Image9" />
+    </xs:restriction>
+  </xs:simpleType>
+  <xs:element name="AchievementImage" nillable="true" type="tns:AchievementImage" />
   <xs:complexType name="ArrayOfAchievementSelect">
     <xs:sequence>
       <xs:element minOccurs="0" maxOccurs="unbounded" name="AchievementSelect" nillable="true" type="tns:AchievementSelect" />

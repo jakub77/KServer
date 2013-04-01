@@ -79,6 +79,8 @@ namespace KServer
         Response DJViewAchievements(long DJKey, out List<Achievement> achievements);
         [OperationContract]
         Response DJEvaluateAchievements(long DJKey);
+        [OperationContract]
+        Response ViewAchievementSql(long DJKey, int achievementID);
     }
 
     [DataContract]
@@ -132,6 +134,32 @@ namespace KServer
         [EnumMember]
         SongID
     }
+
+    [DataContract]
+    public enum AchievementImage
+    {
+        [EnumMember]
+        Image0,
+        [EnumMember]
+        Image1,
+        [EnumMember]
+        Image2,
+        [EnumMember]
+        Image3,
+        [EnumMember]
+        Image4,
+        [EnumMember]
+        Image5,
+        [EnumMember]
+        Image6,
+        [EnumMember]
+        Image7,
+        [EnumMember]
+        Image8,
+        [EnumMember]
+        Image9,
+    }
+
     [DataContract]
     public class Achievement
     {
@@ -143,7 +171,7 @@ namespace KServer
         [DataMember]
         public string description { get; set; }
         [DataMember]
-        public byte[] imageArray { get; set; }
+        public AchievementImage image { get; set; }
         // All statmeents in selectList are anded together if true, otherwise, all ored togethere
         [DataMember]
         public bool statementsAnd { get; set; }
@@ -162,6 +190,8 @@ namespace KServer
         public string name { get; set; }
         [DataMember]
         public string description { get; set; }
+        [DataMember]
+        public string image { get; set; }
     }
 
     // Describes a song history object.

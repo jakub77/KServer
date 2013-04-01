@@ -22,7 +22,7 @@ namespace DJTestClient
             a.name = "Kansas";
             a.description = "Carry on.";
             a.ID = 0;
-            a.imageArray = new byte[1];
+            a.image = AchievementImage.Image0;
             a.statementsAnd = true;
             a.selectList = new AchievementSelect[1];
             AchievementSelect select = new AchievementSelect();
@@ -32,6 +32,7 @@ namespace DJTestClient
             select.selectValue = "1";
             select.clauseKeyword = ClauseKeyword.Title;
             select.clauseValue = "Carry on Wayward Son";
+            a.isPermanant = false;
             a.selectList[0] = select;
             return a;
         }
@@ -41,7 +42,7 @@ namespace DJTestClient
             a.name = "Beatles and Rolling Stones";
             a.description = "Sing at least one beatles and at least one rolling stones song.";
             a.ID = 0;
-            a.imageArray = new byte[1];
+            a.image = AchievementImage.Image1;
             a.statementsAnd = true;
             a.selectList = new AchievementSelect[2];
             AchievementSelect select = new AchievementSelect();
@@ -60,6 +61,7 @@ namespace DJTestClient
             select2.clauseKeyword = ClauseKeyword.Artist;
             select2.clauseValue = "Beatles";
             a.selectList[1] = select2;
+            a.isPermanant = false;
             return a;
         }
         private static Achievement createAchievement3()
@@ -68,7 +70,7 @@ namespace DJTestClient
             a.name = "Most Recent";
             a.description = "Sing the most recent song.";
             a.ID = 0;
-            a.imageArray = new byte[1];
+            a.image = AchievementImage.Image2;
             a.statementsAnd = true;
             a.selectList = new AchievementSelect[1];
             AchievementSelect select = new AchievementSelect();
@@ -79,6 +81,7 @@ namespace DJTestClient
             select.clauseKeyword = ClauseKeyword.Title;
             select.clauseValue = "%";
             a.selectList[0] = select;
+            a.isPermanant = false;
             return a;
         }
         private static Achievement createAchievement4()
@@ -87,7 +90,7 @@ namespace DJTestClient
             a.name = "Beatles or Rolling Stones";
             a.description = "Sing at least one beatles or at least one rolling stones song.";
             a.ID = 0;
-            a.imageArray = new byte[1];
+            a.image = AchievementImage.Image3;
             a.statementsAnd = false;
             a.selectList = new AchievementSelect[2];
             AchievementSelect select = new AchievementSelect();
@@ -106,6 +109,7 @@ namespace DJTestClient
             select2.clauseKeyword = ClauseKeyword.Artist;
             select2.clauseValue = "Beatles";
             a.selectList[1] = select2;
+            a.isPermanant = false;
             return a;
         }
         private static string achievementString(Achievement a)
@@ -145,8 +149,9 @@ namespace DJTestClient
                     Console.WriteLine("popQueue<pq>, getQR<gq>, generateNewQR<nq>, addRequest<ar>, removeRequest<rr>");
                     Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>, createSession<cs>");
                     Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>, moveSongRequest<mr>, mostPopular<mp>");
-                    Console.WriteLine("BanUser<bu>, UnbanUser<uu>, ListBans<lb>, addAchievement<aa>, listAchievemts<la>");
-                    Console.WriteLine("deleteAchivement<da>, evaluateAchievements<ea>");
+                    Console.WriteLine("BanUser<bu>, UnbanUser<uu>, ListBans<lb>, addAchievement<aa>,listAchievemts<la>");
+                    Console.WriteLine("deleteAchivement<da>, evaluateAchievements<ea>, modifyAchievement<ma>");
+                    Console.WriteLine("viewAchievementSql<vs>");
                 }
                 else if (command.StartsWith("x"))
                 {
@@ -162,12 +167,29 @@ namespace DJTestClient
                     }
 
                 }
+                else if (command.StartsWith("vs"))
+                {
+                                        Response r;
+                    try
+                    {
+                        Console.WriteLine("Enter ID:");
+                        int achievementID = int.Parse(Console.ReadLine());
+                        r = proxy.ViewAchievementSql(DJKey, achievementID);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
                 else if (command.StartsWith("ea"))
                 {
                     Response r;
                     try
                     {
-                        r = proxy.DJEvaluateAchievement(DJKey);
+                        r = proxy.DJEvaluateAchievements(DJKey);
                         Console.WriteLine("Error: " + r.error);
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);
@@ -194,6 +216,38 @@ namespace DJTestClient
                     try
                     {
                         r = proxy.DJAddAchievement(achievement, DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
+                else if (command.StartsWith("ma"))
+                {
+                    Response r;
+                    Console.WriteLine("Enter old achievement ID");
+                    int ID = int.Parse(Console.ReadLine());
+                    Console.WriteLine("New achievement number");
+                    int number = int.Parse(Console.ReadLine().Trim());
+                    Achievement achievement;
+                    if (number == 1)
+                        achievement = createAchievement1();
+                    else if (number == 2)
+                        achievement = createAchievement2();
+                    else if (number == 3)
+                        achievement = createAchievement3();
+                    else
+                        achievement = createAchievement4();
+
+                    achievement.ID = ID;
+                    Console.WriteLine("Enter new name:");
+                    achievement.name = Console.ReadLine();
+                    try
+                    {
+                        r = proxy.DJModifyAchievement(achievement, DJKey);
                         Console.WriteLine("Error: " + r.error);
                         Console.WriteLine("Result: " + r.result);
                         Console.WriteLine("Message:\n" + r.message);

@@ -1958,6 +1958,35 @@ namespace KServer
             }
         }
 
+        public Response DJRemoveUserFromVenueIfAtVenue(int DJID, int mobileID)
+        {
+            //update MobileUsers set Venue = '4' where Venue = '0' and ID = '1';
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("update MobileUsers set Venue = @null where Venue = @DJID and ID = @mobileID;", con);
+            cmd.Parameters.AddWithValue("@null", DBNull.Value);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+
+
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (SqlException e)
+            {
+                r.error = true;
+                r.message = "Exception in DJRemoveUserFromVenueIfAtVenue ID: " + e.Number + " " + e.Message;
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DJRemoveUserFromVenueIfAtVenue: " + e.Message;
+                return r;
+            }
+        }
+
         public Response DJBanUser(int DJID, int mobileID)
         {
             Response r = new Response();
@@ -2265,6 +2294,51 @@ namespace KServer
                 r.message = "Exception in AwardAchievement: " + e.ToString();
                 return r;
             }
+        }
+
+        internal Response MobileGetAchievements(int mobileID, int venueID, out List<Achievement> achievements)
+        {
+            //select ObjectSize, Object, Achievements.ID from Achievements inner join AwardedAchievements on AwardedAchievements.AchievementID = Achievements.ID
+            // where AwardedAchievements.MobileID = '1' and Achievements.DJID = '4';
+            Response r = new Response();
+            achievements = new List<Achievement>();
+            SqlCommand cmd = new SqlCommand("select ObjectSize, Object, Achievements.ID from Achievements inner join AwardedAchievements on AwardedAchievements.AchievementID = Achievements.ID ", con);
+            cmd.CommandText += "where AwardedAchievements.MobileID = @mobileID";
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+
+            if (venueID != -1)
+            {
+                cmd.CommandText += " and Achievements.DJID = @DJID";
+                cmd.Parameters.AddWithValue("@DJID", venueID);
+            }
+
+            cmd.CommandText += ";";
+
+            try
+            {
+                DataContractSerializer serializer = new DataContractSerializer(typeof(Achievement));
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int objectSize = reader.GetInt32(0);
+                        byte[] buffer = new byte[objectSize];
+                        reader.GetBytes(1, 0, buffer, 0, buffer.Length);
+                        MemoryStream stream = new MemoryStream(buffer);
+                        Achievement achievement = (Achievement)serializer.ReadObject(stream);
+                        achievement.ID = reader.GetInt32(2);
+                        achievements.Add(achievement);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DBMobileGetAchievements: " + e.Message;
+                return r;
+            }
+
         }
     }
 }

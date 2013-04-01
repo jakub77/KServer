@@ -17,11 +17,8 @@ using System.IO;
 using System.Data.SqlClient;
 
 // Notes:
-// Change it so queue singer/songs are in their own table, so cascading works.
-// There are manual users in the database, are they cleared on DJ logout?
-// make banning users kick the user out of the venue and not just can't join.
+// improve error message.
 // make database browse ignore non alphanumberic characters until it finds alphanumeric.
-// implement ispermanant for achievements.
 
 namespace KServer
 {
@@ -260,6 +257,12 @@ namespace KServer
 
                 // Close out the song requests for this DJ.
                 r = db.DJCloseSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                r = db.DJRemoveAllTempUsers(DJID);
+                if (r.error)
+                    return r;
                 return r;
             }
         }
@@ -605,8 +608,12 @@ namespace KServer
                 if (r.error)
                     Common.LogError(r.message, Environment.StackTrace, r, 1);
 
-
                 Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+
+                r = RunAchievements(DJID, db);
+                if (r.error)
+                    return r;
+
 
                 return r;
             }
@@ -1421,6 +1428,11 @@ namespace KServer
                     r.error = true;
                     return r;
                 }
+
+                r = db.DJRemoveUserFromVenueIfAtVenue(DJID, userToBan.userID);
+                if (r.error)
+                    return r;
+
                 return r;
             }
         }
@@ -1643,10 +1655,37 @@ namespace KServer
 
         public Response DJModifyAchievement(Achievement achievement, long DJKey)
         {
-            Response r = new Response();
-            r.error = true;
-            r.message = "Not implemented";
-            return r;
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                foreach (AchievementSelect a in achievement.selectList)
+                {
+                    if (a.startDate.Year < 1754)
+                    {
+                        a.startDate = new DateTime(1900, 1, 1);
+                    }
+                }
+
+                r = db.DJModifyAchievement(DJID, achievement);
+                if (r.error)
+                    return r;
+
+                r = RunAchievements(DJID, db);
+                if (r.error)
+                    return r;
+
+                return r;
+            }
         }
 
         public Response DJDeleteAchievement(int achievementID, long DJKey)
@@ -1722,6 +1761,46 @@ namespace KServer
                 return r;
             }
 
+        }
+
+        public Response ViewAchievementSql(long DJKey, int achievementID)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                List<Achievement> achievements;
+                r = db.DJViewAchievements(DJID, out achievements);
+                if (r.error)
+                    return r;
+
+                foreach (Achievement a in achievements)
+                {
+                    if (a.ID == achievementID)
+                    {
+                        string sql;
+                        List<SqlCommand> sqlCommands;
+                        r = AchievementParser.CreateAchievementSQL(a, DJID, out sql, out sqlCommands);
+                        if (r.error)
+                            return r;
+                        r.message = sql;
+                        r.error = false;
+                        return r;
+                    }
+                }
+                r.error = true;
+                r.message = "Achievement not found";
+                return r;
+            }
         }
 
         #endregion
@@ -1828,12 +1907,12 @@ namespace KServer
             if (r.error)
                 return r;
 
-            //if (!a.isPermanant)
-            //{
-            //    r = db.DeleteAchievementsByID(a.ID);
-            //    if (r.error)
-            //        return r;
-            //}
+            if (!a.isPermanant)
+            {
+                r = db.DeleteAchievementsByID(a.ID);
+                if (r.error)
+                    return r;
+            }
 
             foreach (int userID in qualifiedUsers)
             {

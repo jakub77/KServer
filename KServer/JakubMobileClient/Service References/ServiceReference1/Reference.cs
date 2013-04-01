@@ -709,6 +709,99 @@ namespace JakubMobileClient.ServiceReference1 {
         }
     }
     
+    [System.Diagnostics.DebuggerStepThroughAttribute()]
+    [System.CodeDom.Compiler.GeneratedCodeAttribute("System.Runtime.Serialization", "4.0.0.0")]
+    [System.Runtime.Serialization.DataContractAttribute(Name="MobileAchievement", Namespace="http://schemas.datacontract.org/2004/07/KServer")]
+    [System.SerializableAttribute()]
+    public partial class MobileAchievement : object, System.Runtime.Serialization.IExtensibleDataObject, System.ComponentModel.INotifyPropertyChanged {
+        
+        [System.NonSerializedAttribute()]
+        private System.Runtime.Serialization.ExtensionDataObject extensionDataField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private int IDField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string descriptionField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string imageField;
+        
+        [System.Runtime.Serialization.OptionalFieldAttribute()]
+        private string nameField;
+        
+        [global::System.ComponentModel.BrowsableAttribute(false)]
+        public System.Runtime.Serialization.ExtensionDataObject ExtensionData {
+            get {
+                return this.extensionDataField;
+            }
+            set {
+                this.extensionDataField = value;
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public int ID {
+            get {
+                return this.IDField;
+            }
+            set {
+                if ((this.IDField.Equals(value) != true)) {
+                    this.IDField = value;
+                    this.RaisePropertyChanged("ID");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string description {
+            get {
+                return this.descriptionField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.descriptionField, value) != true)) {
+                    this.descriptionField = value;
+                    this.RaisePropertyChanged("description");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string image {
+            get {
+                return this.imageField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.imageField, value) != true)) {
+                    this.imageField = value;
+                    this.RaisePropertyChanged("image");
+                }
+            }
+        }
+        
+        [System.Runtime.Serialization.DataMemberAttribute()]
+        public string name {
+            get {
+                return this.nameField;
+            }
+            set {
+                if ((object.ReferenceEquals(this.nameField, value) != true)) {
+                    this.nameField = value;
+                    this.RaisePropertyChanged("name");
+                }
+            }
+        }
+        
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        
+        protected void RaisePropertyChanged(string propertyName) {
+            System.ComponentModel.PropertyChangedEventHandler propertyChanged = this.PropertyChanged;
+            if ((propertyChanged != null)) {
+                propertyChanged(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+            }
+        }
+    }
+    
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
     [System.ServiceModel.ServiceContractAttribute(ConfigurationName="ServiceReference1.IMobile")]
     public interface IMobile {
@@ -716,20 +809,29 @@ namespace JakubMobileClient.ServiceReference1 {
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/test", ReplyAction="http://tempuri.org/IMobile/testResponse")]
         JakubMobileClient.ServiceReference1.Response test(string s);
         
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/GetDateTime", ReplyAction="http://tempuri.org/IMobile/GetDateTimeResponse")]
+        System.DateTime GetDateTime();
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/TestPushNotification", ReplyAction="http://tempuri.org/IMobile/TestPushNotificationResponse")]
+        string TestPushNotification(string deviceID);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/TestPushToMobile", ReplyAction="http://tempuri.org/IMobile/TestPushToMobileResponse")]
+        JakubMobileClient.ServiceReference1.Response TestPushToMobile(long userKey, string message);
+        
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileSignUp", ReplyAction="http://tempuri.org/IMobile/MobileSignUpResponse")]
-        JakubMobileClient.ServiceReference1.Response MobileSignUp(string username, string password);
+        JakubMobileClient.ServiceReference1.Response MobileSignUp(string username, string password, string email);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileSignIn", ReplyAction="http://tempuri.org/IMobile/MobileSignInResponse")]
-        JakubMobileClient.ServiceReference1.LogInResponse MobileSignIn(string username, string password);
+        JakubMobileClient.ServiceReference1.LogInResponse MobileSignIn(string username, string password, string deviceID);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileSignOut", ReplyAction="http://tempuri.org/IMobile/MobileSignOutResponse")]
         JakubMobileClient.ServiceReference1.Response MobileSignOut(long userKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileSongSearch", ReplyAction="http://tempuri.org/IMobile/MobileSongSearchResponse")]
-        JakubMobileClient.ServiceReference1.Song[] MobileSongSearch(string title, string artist, int venueID);
+        JakubMobileClient.ServiceReference1.Song[] MobileSongSearch(string title, string artist, int start, int count, int venueID, long userKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileSongBrowse", ReplyAction="http://tempuri.org/IMobile/MobileSongBrowseResponse")]
-        JakubMobileClient.ServiceReference1.Song[] MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID);
+        JakubMobileClient.ServiceReference1.Song[] MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID, long userKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileSongRequest", ReplyAction="http://tempuri.org/IMobile/MobileSongRequestResponse")]
         JakubMobileClient.ServiceReference1.Response MobileSongRequest(int songID, long userKey);
@@ -739,6 +841,9 @@ namespace JakubMobileClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileRemoveSongRequest", ReplyAction="http://tempuri.org/IMobile/MobileRemoveSongRequestResponse")]
         JakubMobileClient.ServiceReference1.Response MobileRemoveSongRequest(int songID, long userKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileMoveSongRequestToTop", ReplyAction="http://tempuri.org/IMobile/MobileMoveSongRequestToTopResponse")]
+        JakubMobileClient.ServiceReference1.Response MobileMoveSongRequestToTop(int songID, long userKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileViewQueue", ReplyAction="http://tempuri.org/IMobile/MobileViewQueueResponse")]
         JakubMobileClient.ServiceReference1.queueSinger[] MobileViewQueue(long userKey);
@@ -768,10 +873,16 @@ namespace JakubMobileClient.ServiceReference1 {
         JakubMobileClient.ServiceReference1.Playlist[] MobileGetPlayLists(int venueID, long userKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileRateSong", ReplyAction="http://tempuri.org/IMobile/MobileRateSongResponse")]
-        JakubMobileClient.ServiceReference1.Response MobileRateSong(int songID, int venueID, long userKey);
+        JakubMobileClient.ServiceReference1.Response MobileRateSong(int songID, int rating, int venueID, long userKey);
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileViewSongRating", ReplyAction="http://tempuri.org/IMobile/MobileViewSongRatingResponse")]
         JakubMobileClient.ServiceReference1.Response MobileViewSongRating(int songID, int venueID, long userKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileGetMostPopularSongs", ReplyAction="http://tempuri.org/IMobile/MobileGetMostPopularSongsResponse")]
+        JakubMobileClient.ServiceReference1.Song[] MobileGetMostPopularSongs(int venueID, int start, int count);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IMobile/MobileGetAchievements", ReplyAction="http://tempuri.org/IMobile/MobileGetAchievementsResponse")]
+        JakubMobileClient.ServiceReference1.MobileAchievement[] MobileGetAchievements(int venueID, long userKey, int start, int count);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -805,24 +916,36 @@ namespace JakubMobileClient.ServiceReference1 {
             return base.Channel.test(s);
         }
         
-        public JakubMobileClient.ServiceReference1.Response MobileSignUp(string username, string password) {
-            return base.Channel.MobileSignUp(username, password);
+        public System.DateTime GetDateTime() {
+            return base.Channel.GetDateTime();
         }
         
-        public JakubMobileClient.ServiceReference1.LogInResponse MobileSignIn(string username, string password) {
-            return base.Channel.MobileSignIn(username, password);
+        public string TestPushNotification(string deviceID) {
+            return base.Channel.TestPushNotification(deviceID);
+        }
+        
+        public JakubMobileClient.ServiceReference1.Response TestPushToMobile(long userKey, string message) {
+            return base.Channel.TestPushToMobile(userKey, message);
+        }
+        
+        public JakubMobileClient.ServiceReference1.Response MobileSignUp(string username, string password, string email) {
+            return base.Channel.MobileSignUp(username, password, email);
+        }
+        
+        public JakubMobileClient.ServiceReference1.LogInResponse MobileSignIn(string username, string password, string deviceID) {
+            return base.Channel.MobileSignIn(username, password, deviceID);
         }
         
         public JakubMobileClient.ServiceReference1.Response MobileSignOut(long userKey) {
             return base.Channel.MobileSignOut(userKey);
         }
         
-        public JakubMobileClient.ServiceReference1.Song[] MobileSongSearch(string title, string artist, int venueID) {
-            return base.Channel.MobileSongSearch(title, artist, venueID);
+        public JakubMobileClient.ServiceReference1.Song[] MobileSongSearch(string title, string artist, int start, int count, int venueID, long userKey) {
+            return base.Channel.MobileSongSearch(title, artist, start, count, venueID, userKey);
         }
         
-        public JakubMobileClient.ServiceReference1.Song[] MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID) {
-            return base.Channel.MobileSongBrowse(firstLetter, isArtist, start, count, venueID);
+        public JakubMobileClient.ServiceReference1.Song[] MobileSongBrowse(string firstLetter, bool isArtist, int start, int count, int venueID, long userKey) {
+            return base.Channel.MobileSongBrowse(firstLetter, isArtist, start, count, venueID, userKey);
         }
         
         public JakubMobileClient.ServiceReference1.Response MobileSongRequest(int songID, long userKey) {
@@ -835,6 +958,10 @@ namespace JakubMobileClient.ServiceReference1 {
         
         public JakubMobileClient.ServiceReference1.Response MobileRemoveSongRequest(int songID, long userKey) {
             return base.Channel.MobileRemoveSongRequest(songID, userKey);
+        }
+        
+        public JakubMobileClient.ServiceReference1.Response MobileMoveSongRequestToTop(int songID, long userKey) {
+            return base.Channel.MobileMoveSongRequestToTop(songID, userKey);
         }
         
         public JakubMobileClient.ServiceReference1.queueSinger[] MobileViewQueue(long userKey) {
@@ -873,12 +1000,20 @@ namespace JakubMobileClient.ServiceReference1 {
             return base.Channel.MobileGetPlayLists(venueID, userKey);
         }
         
-        public JakubMobileClient.ServiceReference1.Response MobileRateSong(int songID, int venueID, long userKey) {
-            return base.Channel.MobileRateSong(songID, venueID, userKey);
+        public JakubMobileClient.ServiceReference1.Response MobileRateSong(int songID, int rating, int venueID, long userKey) {
+            return base.Channel.MobileRateSong(songID, rating, venueID, userKey);
         }
         
         public JakubMobileClient.ServiceReference1.Response MobileViewSongRating(int songID, int venueID, long userKey) {
             return base.Channel.MobileViewSongRating(songID, venueID, userKey);
+        }
+        
+        public JakubMobileClient.ServiceReference1.Song[] MobileGetMostPopularSongs(int venueID, int start, int count) {
+            return base.Channel.MobileGetMostPopularSongs(venueID, start, count);
+        }
+        
+        public JakubMobileClient.ServiceReference1.MobileAchievement[] MobileGetAchievements(int venueID, long userKey, int start, int count) {
+            return base.Channel.MobileGetAchievements(venueID, userKey, start, count);
         }
     }
 }
