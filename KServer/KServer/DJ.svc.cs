@@ -1433,6 +1433,8 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                DJRemoveUser(userToBan.userID, DJKey);
+
                 return r;
             }
         }
