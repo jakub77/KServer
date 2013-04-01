@@ -38,7 +38,7 @@ namespace DJTestClient
         private static Achievement createAchievement2()
         {
             Achievement a = new Achievement();
-            a.name = "Beatles/Rolling Stones";
+            a.name = "Beatles and Rolling Stones";
             a.description = "Sing at least one beatles and at least one rolling stones song.";
             a.ID = 0;
             a.imageArray = new byte[1];
@@ -81,6 +81,33 @@ namespace DJTestClient
             a.selectList[0] = select;
             return a;
         }
+        private static Achievement createAchievement4()
+        {
+            Achievement a = new Achievement();
+            a.name = "Beatles or Rolling Stones";
+            a.description = "Sing at least one beatles or at least one rolling stones song.";
+            a.ID = 0;
+            a.imageArray = new byte[1];
+            a.statementsAnd = false;
+            a.selectList = new AchievementSelect[2];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.CountGreaterThan;
+            select.selectValue = "0";
+            select.clauseKeyword = ClauseKeyword.Artist;
+            select.clauseValue = "Rolling Stones";
+            a.selectList[0] = select;
+            AchievementSelect select2 = new AchievementSelect();
+            select2.startDate = DateTime.MinValue;
+            select2.endDate = DateTime.MaxValue;
+            select2.selectKeyword = SelectKeyword.CountGreaterThan;
+            select2.selectValue = "0";
+            select2.clauseKeyword = ClauseKeyword.Artist;
+            select2.clauseValue = "Beatles";
+            a.selectList[1] = select2;
+            return a;
+        }
         private static string achievementString(Achievement a)
         {
             string s = String.Empty;
@@ -119,20 +146,51 @@ namespace DJTestClient
                     Console.WriteLine("changeRequest<cr>, moveUser<mu>, removeUser<ru>, createSession<cs>");
                     Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>, moveSongRequest<mr>, mostPopular<mp>");
                     Console.WriteLine("BanUser<bu>, UnbanUser<uu>, ListBans<lb>, addAchievement<aa>, listAchievemts<la>");
-                    Console.WriteLine("deleteAchivement<da>");
+                    Console.WriteLine("deleteAchivement<da>, evaluateAchievements<ea>");
+                }
+                else if (command.StartsWith("x"))
+                {
+                    try
+                    {
+                        Console.WriteLine(DateTime.MinValue.ToLongDateString());
+                        Console.WriteLine(DateTime.MaxValue.ToLongDateString());
+
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Error: " + e.Message);
+                    }
+
+                }
+                else if (command.StartsWith("ea"))
+                {
+                    Response r;
+                    try
+                    {
+                        r = proxy.DJEvaluateAchievement(DJKey);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("aa"))
                 {
                     Response r;
                     Console.WriteLine("Achievement number");
-                    int number = int.Parse(Console.ReadLine());
+                    int number = int.Parse(Console.ReadLine().Trim());
                     Achievement achievement;
-                     if (number == 1)
-                         achievement = createAchievement1();
-                     if (number == 2)
-                         achievement = createAchievement2();
-                     else
-                         achievement = createAchievement3();
+                    if (number == 1)
+                        achievement = createAchievement1();
+                    else if (number == 2)
+                        achievement = createAchievement2();
+                    else if (number == 3)
+                        achievement = createAchievement3();
+                    else
+                        achievement = createAchievement4();
                     try
                     {
                         r = proxy.DJAddAchievement(achievement, DJKey);
@@ -142,7 +200,7 @@ namespace DJTestClient
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Exception Add Achievement: " + e.Message + " " + e.StackTrace);
+                        Console.WriteLine("Exception: " + e.Message);
                     }
                 }
                 else if (command.StartsWith("da"))
@@ -347,31 +405,6 @@ namespace DJTestClient
                     {
                         Console.WriteLine("Exception: " + e.Message);
                     }
-                }
-                else if (command.StartsWith("x"))
-                {
-                    try
-                    {
-                        Console.WriteLine("password");
-                        string plainPassword = Console.ReadLine().Trim();
-                        RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
-                        byte[] buf = new byte[16];
-                        rng.GetBytes(buf);
-                        string salt = Convert.ToBase64String(buf);
-                        Console.WriteLine(salt);
-
-                        HashAlgorithm algorithm = new SHA256Managed();
-                        string preHash = plainPassword + salt;
-
-                        byte[] postHash = algorithm.ComputeHash(System.Text.Encoding.UTF8.GetBytes(preHash));
-                        Console.WriteLine(Convert.ToBase64String(postHash));
-
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Error: " + e.Message);
-                    }
-
                 }
                 else if (command.StartsWith("q")) // QUIT
                 {

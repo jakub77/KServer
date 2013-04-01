@@ -115,5 +115,9 @@ namespace KServer
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileGetMostPopularSongs/?venueID={venueID}&start={start}&count={count}")]
         List<Song> MobileGetMostPopularSongs(int venueID, int start, int count);
+
+        [OperationContract]
+        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileGetAchievements/?venueID={venueID}&userKey={userKey}")]
+        List<MobileAchievement> MobileGetAchievements(int venueID, long userKey);
     }
 }

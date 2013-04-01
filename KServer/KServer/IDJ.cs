@@ -75,6 +75,8 @@ namespace KServer
         Response DJDeleteAchievement(int achievementID, long DJKey);
         [OperationContract]
         Response DJViewAchievements(long DJKey, out List<Achievement> achievements);
+        [OperationContract]
+        Response DJEvaluateAchievements(long DJKey);
     }
 
     [DataContract]
@@ -145,6 +147,19 @@ namespace KServer
         public bool statementsAnd { get; set; }
         [DataMember]
         public List<AchievementSelect> selectList { get; set; }
+        [DataMember]
+        public bool isPermanant { get; set; }
+    }
+
+    [DataContract]
+    public class MobileAchievement
+    {
+        [DataMember]
+        public int ID { get; set; }
+        [DataMember]
+        public string name { get; set; }
+        [DataMember]
+        public string description { get; set; }
     }
 
     // Describes a song history object.

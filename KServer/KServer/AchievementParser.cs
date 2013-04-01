@@ -73,12 +73,16 @@ namespace KServer
                 return r;
             }
 
-            cmd.CommandText = "select MobileID from MobileSongHistory where " + ClauseKeywordToString(a) + " = @clauseKeyword ";
+            //and Title like @title
+            cmd.CommandText = "select MobileID from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID ";
+            cmd.CommandText += "where DJSongs." + ClauseKeywordToString(a) + " like @clauseKeyword ";
             cmd.Parameters.AddWithValue("@clauseKeyword", a.clauseValue);
             cmd.CommandText += "and VenueID = @DJID and DateSung > @minDate and DateSung < @maxDate ";
+            cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@minDate", a.startDate);
             cmd.Parameters.AddWithValue("@maxDate", a.endDate);
             cmd.CommandText += "group by MobileID having count(mobileID) " + SelectKeywordToString(a) + " @value;";
+            cmd.Parameters.AddWithValue("@value", a.selectValue);
             return r;
         }
 
@@ -97,9 +101,11 @@ namespace KServer
             }
             offset++;
 
-            cmd.CommandText = "select MobileID from MobileSongHistory where " + ClauseKeywordToString(a) + " = @clauseKeyword ";
+            cmd.CommandText = "select MobileID from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID ";      
+            cmd.CommandText+= "where DJSongs." + ClauseKeywordToString(a) + " like @clauseKeyword ";
             cmd.Parameters.AddWithValue("@clauseKeyword", a.clauseValue);
             cmd.CommandText += "and VenueID = @DJID and DateSung > @minDate and DateSung < @maxDate ";
+            cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@minDate", a.startDate);
             cmd.Parameters.AddWithValue("@maxDate", a.endDate);
             cmd.CommandText += "group by MobileID order by count(MobileID) " + SelectKeywordToString(a) + " ";
@@ -124,9 +130,11 @@ namespace KServer
             }
             offset++;
 
-            cmd.CommandText = "select MobileID from MobileSongHistory where " + ClauseKeywordToString(a) + " = @clauseKeyword ";
+            cmd.CommandText = "select MobileID from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID ";      
+            cmd.CommandText+= "where DJSongs." + ClauseKeywordToString(a) + " like @clauseKeyword ";
             cmd.Parameters.AddWithValue("@clauseKeyword", a.clauseValue);
             cmd.CommandText += "and VenueID = @DJID and DateSung > @minDate and DateSung < @maxDate ";
+            cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@minDate", a.startDate);
             cmd.Parameters.AddWithValue("@maxDate", a.endDate);
             cmd.CommandText += "order by DateSung " + SelectKeywordToString(a) + " ";

@@ -961,6 +961,9 @@ namespace DJTestClient.ServiceReference1 {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJViewAchievements", ReplyAction="http://tempuri.org/IDJ/DJViewAchievementsResponse")]
         DJTestClient.ServiceReference1.Response DJViewAchievements(out DJTestClient.ServiceReference1.Achievement[] achievements, long DJKey);
+        
+        [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IDJ/DJEvaluateAchievement", ReplyAction="http://tempuri.org/IDJ/DJEvaluateAchievementResponse")]
+        DJTestClient.ServiceReference1.Response DJEvaluateAchievement(long DJKey);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]
@@ -1096,6 +1099,10 @@ namespace DJTestClient.ServiceReference1 {
         
         public DJTestClient.ServiceReference1.Response DJViewAchievements(out DJTestClient.ServiceReference1.Achievement[] achievements, long DJKey) {
             return base.Channel.DJViewAchievements(out achievements, DJKey);
+        }
+        
+        public DJTestClient.ServiceReference1.Response DJEvaluateAchievement(long DJKey) {
+            return base.Channel.DJEvaluateAchievement(DJKey);
         }
     }
 }

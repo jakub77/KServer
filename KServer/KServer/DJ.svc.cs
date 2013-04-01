@@ -21,6 +21,7 @@ using System.Data.SqlClient;
 // There are manual users in the database, are they cleared on DJ logout?
 // make banning users kick the user out of the venue and not just can't join.
 // make database browse ignore non alphanumberic characters until it finds alphanumeric.
+// implement ispermanant for achievements.
 
 namespace KServer
 {
@@ -600,12 +601,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                Song song;
-                r = Common.GetSongInformation(sr.songID, DJID, -1, out song, db);
-                if (r.error)
-                    return r;
-
-                r = db.MobileAddSongHistory(sr.user.userID, DJID, song, DateTime.Now);
+                r = db.MobileAddSongHistory(sr.user.userID, DJID, sr.songID, DateTime.Now);
                 if (r.error)
                     Common.LogError(r.message, Environment.StackTrace, r, 1);
 
@@ -1629,6 +1625,14 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                foreach(AchievementSelect a in achievement.selectList)
+                {
+                    if (a.startDate.Year < 1754)
+                    {
+                        a.startDate = new DateTime(1900, 1, 1);
+                    }
+                }
+
 
                 r = db.DJAddAchievement(DJID, achievement);
                 if (r.error)
@@ -1656,7 +1660,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                if (r.result < 1)
+                if (r.result < 1 && achievementID != -1)
                 {
                     r.error = true;
                     r.message = "The achievement didn't exist? nothing deleted";
@@ -1689,7 +1693,28 @@ namespace KServer
             }
         }
 
+        public Response DJEvaluateAchievements(long DJKey)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
 
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                r = RunAchievements(DJID, db);
+                if (r.error)
+                    return r;
+                return r;
+            }
+
+        }
 
         #endregion
 
@@ -1713,9 +1738,8 @@ namespace KServer
                     return r;
             }
 
-            return new Response();
+            return r;
         }
-
         private Response CombineLists(List<List<int>> users, out List<int> results, bool andLists)
         {
             Response r = new Response();
@@ -1729,6 +1753,19 @@ namespace KServer
                     return r;
                 }
 
+                //// DEBUG
+                //foreach (List<int> u in users)
+                //{
+                //    r.message += "Statement: ";
+                //    foreach (int i in u)
+                //    {
+                //        r.message += i + " ";
+                //    }
+                //    r.message += "\n";
+                //}
+                //// END DEBUG
+
+
                 results = users[0];
                 for (int i = 1; i < users.Count; i++)
                 {
@@ -1738,16 +1775,25 @@ namespace KServer
                         results = results.Union(users[i]).ToList();
                 }
 
+                //// DEBUG
+                //r.message += "Result: ";
+                //foreach (int i in results)
+                //{
+                //    r.message += i.ToString() + " ";
+                //}
+                //r.message += "\n";
+                //r.error = true;
+                //// END DEBUG
+
                 return r;
             }
             catch (Exception e)
             {
                 r.error = true;
-                r.message = e.Message;
+                r.message = "Combine Lists error: " + e.ToString();
                 return r;
             }
         }
-
         private Response EvaluateAchievement(int DJID, Achievement a, DatabaseConnectivity db)
         {
             string sqlText;
@@ -1756,13 +1802,15 @@ namespace KServer
             Response r = AchievementParser.CreateAchievementSQL(a, DJID, out sqlText, out cmds);
             if (r.error)
                 return r;
+
             r = db.EvaluateAchievementStatements(DJID, cmds, out results);
             if (r.error)
                 return r;
+
             if (results.Count == 0)
             {
                 r.error = true;
-                r.message = "List is of size zero, something went wrong";
+                r.message = "EvaulateAchievement: List is of size zero, something went wrong";
                 return r;
 
             }
@@ -1771,6 +1819,13 @@ namespace KServer
             r = CombineLists(results, out qualifiedUsers, a.statementsAnd);
             if (r.error)
                 return r;
+
+            //if (!a.isPermanant)
+            //{
+            //    r = db.DeleteAchievementsByID(a.ID);
+            //    if (r.error)
+            //        return r;
+            //}
 
             foreach (int userID in qualifiedUsers)
             {

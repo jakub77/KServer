@@ -1448,15 +1448,13 @@ namespace KServer
         /// <param name="songID">The songID.</param>
         /// <param name="dateSung">The date of singing.</param>
         /// <returns>The outcome of the operation.</returns>
-        public Response MobileAddSongHistory(int mobileID, int venueID, Song song, DateTime dateSung)
+        public Response MobileAddSongHistory(int mobileID, int venueID, int songID, DateTime dateSung)
         {
-            SqlCommand cmd = new SqlCommand("insert into MobileSongHistory (VenueID, MobileID, SongID, DateSung, Title, Artist) values (@venueID, @mobileID, @songID, @dateSung, @title, @artist);");
+            SqlCommand cmd = new SqlCommand("insert into MobileSongHistory (VenueID, MobileID, SongID, DateSung) values (@venueID, @mobileID, @songID, @dateSung);");
             cmd.Parameters.AddWithValue("@venueID", venueID);
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
-            cmd.Parameters.AddWithValue("@songID", song.ID);
+            cmd.Parameters.AddWithValue("@songID", songID);
             cmd.Parameters.AddWithValue("@dateSung", dateSung);
-            cmd.Parameters.AddWithValue("@title", song.title);
-            cmd.Parameters.AddWithValue("@artist", song.artist);
             return DBNonQuery(cmd);
         }
 
@@ -1963,18 +1961,22 @@ namespace KServer
         public Response DJBanUser(int DJID, int mobileID)
         {
             Response r = new Response();
-            SqlCommand cmd = new SqlCommand("delete from DJBannedUsers where DJID = @DJID and MobileID = @mobileID;", con);
+            SqlCommand cmd = new SqlCommand("insert into DJBannedUsers (DJID, mobileID) values (@DJID, @mobileID);", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
 
-            SqlCommand cmd2 = new SqlCommand("insert into DJBannedUsers (DJID, mobileID) values (@DJID, @mobileID);", con);
-            cmd2.Parameters.AddWithValue("@DJID", DJID);
-            cmd2.Parameters.AddWithValue("@mobileID", mobileID);
-
             try
             {
-                cmd.ExecuteNonQuery();
-                r.result = cmd2.ExecuteNonQuery();
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (SqlException e)
+            {
+                r.result = e.Number;
+                if (e.Number == 2601)
+                    r.message = "That User is already banned.";
+                else
+                    r.message = e.Message;
                 return r;
             }
             catch (Exception e)
@@ -2081,6 +2083,15 @@ namespace KServer
                 r.result = int.Parse(cmd.ExecuteScalar().ToString());
                 return r;
             }
+            catch (SqlException e)
+            {
+                r.result = e.Number;
+                if (e.Number == 2601)
+                    r.message = "An achievement with that name already exists, please choose a new name.";
+                else
+                    r.message = e.Message;
+                return r;
+            }
             catch (Exception e)
             {
                 r.error = true;
@@ -2094,6 +2105,12 @@ namespace KServer
             Response r = new Response();
             SqlCommand cmd = new SqlCommand("delete from Achievements where DJID = @DJID", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
+            if (achievementID != -1)
+            {
+                cmd.CommandText += " and ID = @achievementID";
+                cmd.Parameters.AddWithValue("@achievementID", achievementID);
+            }
+            cmd.CommandText += ";";
 
             try
             {
@@ -2148,70 +2165,72 @@ namespace KServer
 
             try
             {
-                for (int i = 0; i < cmds.Count; i++)
+                foreach (SqlCommand cmd in cmds)
                 {
-                    cmds[i].Connection = con;
-                    userIDs.Add(new List<int>());
-                    using (SqlDataReader reader = cmds[0].ExecuteReader())
+                    cmd.Connection = con;
+                    List<int> validUsers = new List<int>();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
-                        {
-                            userIDs[i].Add(reader.GetInt32(0));
-                        }
+                            validUsers.Add(reader.GetInt32(0));
                     }
-
+                    userIDs.Add(validUsers);
                 }
                 return r;
             }
             catch (Exception e)
             {
                 r.error = true;
-                r.message = "Exception in EvaluateAchievementStatements: " + e.Message;
+                r.message = "Exception in EvaluateAchievementStatements: " + e.ToString();
                 return r;
             }
 
 
         }
 
-
-        internal Response AwardAchievement(int userID, int achievementID)
+        internal Response DeleteAchievementsByID(int achievementID)
         {
-            return new Response();
-//            //AwardedAchievements
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("delete from AwardedAchievements where AchievementID = @achievementID;", con);
+            cmd.Parameters.AddWithValue("@achievementID", achievementID);
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DeleteAchievementsByID: " + e.ToString();
+                return r;
+            }
+        }
 
-//            Response r = new Response();
-//            string cmdText = @"Merge AwardedAchievements as target
-//                                            using (values(@pathOnDisk, @duration))
-//	                                            as source (PathOnDisk, Duration)
-//	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
-//                                            when matched then
-//	                                            update set PathOnDisk = source.PathOnDisk, Duration = source.Duration
-//                                            when not matched then
-//	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
-//	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
-//            merge AwardedAchievements as target
-//using (values('1','4'))
-//as source(MobileID, AchievementID)
-//on target.MobileID = 1 and target.AchievementID = 4
-//when not matched then
-//insert (MobileID, AchievementID) values ('1', '4');
-//            SqlCommand cmd = new SqlCommand(cmdText, con);
-//            //cmd.Parameters.AddWithValue("@DJID", DJID);
-//            //cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
-//            //cmd.Parameters.AddWithValue("@name", achievement.name);
-//            //cmd.Parameters.AddWithValue("@objectSize", serializedAchievementBytes.Length);
+        internal Response AwardAchievement(int mobileID, int achievementID)
+        {
+            Response r = new Response();
+            string cmdText = @"Merge AwardedAchievements as target
+                                using (values(@mobileID, @achievementID))
+                                  as source(MobileID, AchievementID)
+                                  on target.MobileID = @mobileID and target.AchievementID = @achievementID
+                                when not matched then
+                                  insert(MobileID, AchievementID) values (@mobileID, @achievementID);";
 
-//            try
-//            {
-//                r.result = int.Parse(cmd.ExecuteScalar().ToString());
-//                return r;
-//            }
-//            catch (Exception e)
-//            {
-//                r.error = true;
-//                r.message = "Exception in DBDJAddAchievement: " + e.ToString();
-//                return r;
-//            }
+            SqlCommand cmd = new SqlCommand(cmdText, con);
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+            cmd.Parameters.AddWithValue("@achievementID", achievementID);
+
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in AwardAchievement: " + e.ToString();
+                return r;
+            }
         }
     }
 }

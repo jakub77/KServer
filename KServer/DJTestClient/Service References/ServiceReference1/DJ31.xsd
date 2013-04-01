@@ -410,4 +410,18 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="DJEvaluateAchievement">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJEvaluateAchievementResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q46="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJEvaluateAchievementResult" nillable="true" type="q46:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
 </xs:schema>

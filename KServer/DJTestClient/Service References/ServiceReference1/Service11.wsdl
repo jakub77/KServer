@@ -170,6 +170,12 @@
   <wsdl:message name="IDJ_DJViewAchievements_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJViewAchievementsResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJEvaluateAchievement_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJEvaluateAchievement" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJEvaluateAchievement_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJEvaluateAchievementResponse" />
+  </wsdl:message>
   <wsdl:portType name="IDJ">
     <wsdl:operation name="DJSignUp">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJSignUp" message="tns:IDJ_DJSignUp_InputMessage" />
@@ -278,6 +284,10 @@
     <wsdl:operation name="DJViewAchievements">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJViewAchievements" message="tns:IDJ_DJViewAchievements_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJViewAchievementsResponse" message="tns:IDJ_DJViewAchievements_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="DJEvaluateAchievement">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJEvaluateAchievement" message="tns:IDJ_DJEvaluateAchievement_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJEvaluateAchievementResponse" message="tns:IDJ_DJEvaluateAchievement_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IDJ" type="tns:IDJ">
@@ -518,6 +528,15 @@
     </wsdl:operation>
     <wsdl:operation name="DJViewAchievements">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJViewAchievements" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJEvaluateAchievement">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJEvaluateAchievement" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
