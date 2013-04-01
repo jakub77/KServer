@@ -2100,6 +2100,40 @@ namespace KServer
             }
         }
 
+        public Response DJModifyAchievement(int DJID, Achievement achievement)
+        {
+            MemoryStream streamAchievement = new MemoryStream();
+            DataContractSerializer achievementSerializer = new DataContractSerializer(typeof(Achievement));
+            achievementSerializer.WriteObject(streamAchievement, achievement);
+            byte[] serializedAchievementBytes = streamAchievement.ToArray();
+
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("update Achievements set Object = @achievement, Name = @name, ObjectSize = @achievementSize where ID = @achievementID and DJID = @DJID", con);
+            cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
+            cmd.Parameters.AddWithValue("@name", achievement.name);
+            cmd.Parameters.AddWithValue("@achievementSize", serializedAchievementBytes.Length);
+            cmd.Parameters.AddWithValue("@achievementID", achievement.ID);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (SqlException e)
+            {
+                r.result = e.Number;
+                r.message = "SQLException in DBDJModifyAchievement number: " + e.Number + " " + e.Message;
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in DBDJAddAchievement: " + e.ToString();
+                return r;
+            }
+        }
+
         public Response DJDeleteAchievement(int DJID, int achievementID)
         {
             Response r = new Response();

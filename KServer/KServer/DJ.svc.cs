@@ -1641,6 +1641,14 @@ namespace KServer
             }
         }
 
+        public Response DJModifyAchievement(Achievement achievement, long DJKey)
+        {
+            Response r = new Response();
+            r.error = true;
+            r.message = "Not implemented";
+            return r;
+        }
+
         public Response DJDeleteAchievement(int achievementID, long DJKey)
         {
             int DJID = -1;

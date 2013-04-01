@@ -72,6 +72,8 @@ namespace KServer
         [OperationContract]
         Response DJAddAchievement(Achievement achievement, long DJKey);
         [OperationContract]
+        Response DJModifyAchievement(Achievement achievement, long DJKey);
+        [OperationContract]
         Response DJDeleteAchievement(int achievementID, long DJKey);
         [OperationContract]
         Response DJViewAchievements(long DJKey, out List<Achievement> achievements);
