@@ -1807,6 +1807,40 @@ namespace KServer
 
         #endregion
 
+        public Response InsertFauxSongHistory(long DJKey, List<string> bands, int numberPerBand, int mobileID)
+        {
+            int DJID = -1;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return r;
+
+                // Convert the DJKey to a DJID
+                r = DJKeyToID(DJKey, out DJID, db);
+                if (r.error)
+                    return r;
+
+                string extraMessage = string.Empty;
+                foreach (string band in bands)
+                {
+                    List<int> songIDs = new List<int>();
+                    r = db.GetRandomSongsForArtist(band, DJID, numberPerBand, out songIDs);
+                    if (r.error)
+                        extraMessage += "Error looking for : " + band + "\n";
+
+                    for (int i = 0; i < songIDs.Count; i++)
+                    {
+                        r = db.MobileAddSongHistory(mobileID, DJID, songIDs[i], DateTime.Now);
+                        if (r.error)
+                            return r;
+                    }
+                    r.message = extraMessage;
+                }
+                return r;
+            }
+        }
 
 
         #region PrivateMethods

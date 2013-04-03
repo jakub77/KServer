@@ -123,7 +123,5 @@ namespace KServer
         [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileGetUnearnedAchievements/?venueID={venueID}&userKey={userKey}&start={start}&count={count}")]
         List<MobileAchievement> MobileGetUnearnedAchievements(int venueID, long userKey, int start, int count);
-
-
     }
 }

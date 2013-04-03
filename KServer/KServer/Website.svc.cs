@@ -219,7 +219,6 @@ namespace KServer
             }
         }
 
-
         /// <summary>
         /// "Weblogin" to the system. Returns the user's ID upon success.
         /// </summary>

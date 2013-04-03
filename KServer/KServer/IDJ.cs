@@ -16,7 +16,7 @@ namespace KServer
     [ServiceContract()]
     public interface IDJ
     {
-        // Log in /etc
+        #region LoginEtc
         [OperationContract]
         Response DJSignUp(string userName, string password, Venue venue, string email);
         [OperationContract]
@@ -31,16 +31,20 @@ namespace KServer
         Response DJGetQRNumber(long DJKey);
         [OperationContract]
         Response DJGenerateNewQRNumber(long DJKey);
+        #endregion
 
-        // Song management
+        #region Songs
         [OperationContract]
         Response DJAddSongs(List<Song> songs, long DJKey);
         [OperationContract]
         Response DJRemoveSongs(List<Song> songs, long DJKey);
         [OperationContract]
         Response DJListSongs(out List<Song> songs, long DJKey);
+        [OperationContract]
+        Response DJGetMostPopularSongs(long DJKey, bool limitToVenue, int start, int count, out List<Song> songs, out List<int> counts);
+        #endregion
 
-        // Queue management
+        #region Queue
         [OperationContract]
         Response DJAddQueue(SongRequest sr, int queueIndex, long DJKey);
         [OperationContract]
@@ -61,14 +65,18 @@ namespace KServer
         Response DJNewUserWaitTime(long DJKey);
         [OperationContract]
         Response DJTestQueueFill(long DJKey);
-        [OperationContract]
-        Response DJGetMostPopularSongs(long DJKey, bool limitToVenue, int start, int count, out List<Song> songs, out List<int> counts);
+        #endregion
+
+        #region BanUsers
         [OperationContract]
         Response DJBanUser(User userToBan, long DJKey);
         [OperationContract]
         Response DJUnbanUser(User userToUnban, long DJKey);
         [OperationContract]
         Response DJGetBannedUsers(long DJKey, out List<User> users);
+        #endregion
+
+        #region Acheivements
         [OperationContract]
         Response DJAddAchievement(Achievement achievement, long DJKey);
         [OperationContract]
@@ -81,7 +89,13 @@ namespace KServer
         Response DJEvaluateAchievements(long DJKey);
         [OperationContract]
         Response ViewAchievementSql(long DJKey, int achievementID);
+        #endregion
+
+        [OperationContract]
+        Response InsertFauxSongHistory(long DJKey, List<string> bands, int numberPerBand, int mobileID);
     }
+
+    #region DataTypes
 
     [DataContract]
     public class AchievementSelect
@@ -134,7 +148,6 @@ namespace KServer
         [EnumMember]
         SongID
     }
-
     [DataContract]
     public enum AchievementImage
     {
@@ -159,7 +172,6 @@ namespace KServer
         [EnumMember]
         Image9,
     }
-
     [DataContract]
     public class Achievement
     {
@@ -182,7 +194,6 @@ namespace KServer
         [DataMember]
         public bool visible { get; set; }
     }
-
     [DataContract]
     public class MobileAchievement
     {
@@ -195,7 +206,6 @@ namespace KServer
         [DataMember]
         public string image { get; set; }
     }
-
     // Describes a song history object.
     [DataContract]
     public class SongHistory
@@ -207,7 +217,6 @@ namespace KServer
         [DataMember]
         public DateTime date { get; set; }
     }
-
     // Describe individual venues.
     [DataContract]
     public class Venue
@@ -219,7 +228,6 @@ namespace KServer
         [DataMember]
         public string venueAddress { get; set; }
     }
-
     // Describe individual users.
     [DataContract]
     public class User
@@ -229,7 +237,6 @@ namespace KServer
         [DataMember]
         public string userName { get; set; }
     }
-
     // Describe a playlist.
     [DataContract]
     public class Playlist
@@ -245,7 +252,6 @@ namespace KServer
         [DataMember]
         public DateTime dateCreated { get; set; }
     }
-
     // Describe a song
     [DataContract]
     public class Song
@@ -269,7 +275,6 @@ namespace KServer
         [DataMember]
         public int rating { get; set; }
     }
-
     // Describe a session
     [DataContract]
     public class Session
@@ -279,7 +284,6 @@ namespace KServer
         [DataMember]
         public int sessionID { get; set; }
     }
-
     // Song Request
     [DataContract]
     public class SongRequest
@@ -289,7 +293,6 @@ namespace KServer
         [DataMember]
         public int songID { get; set; }
     }
-
     // Describe a user in the queue.
     [DataContract]
     public class queueSinger
@@ -299,7 +302,6 @@ namespace KServer
         [DataMember]
         public List<Song> songs { get; set; }
     }
-
     // Desribe a response passed between functions.
     [DataContract]
     public class Response
@@ -317,7 +319,6 @@ namespace KServer
         [DataMember]
         public int result { get; set; }
     }
-
     // Describe a reponse only used for logins.
     [DataContract]
     public class LogInResponse
@@ -351,7 +352,6 @@ namespace KServer
         [DataMember]
         public int result { get; set; }
     }
-
     // Describe a user's credentials.
     [DataContract]
     public class Credentials
@@ -361,4 +361,5 @@ namespace KServer
         [DataMember]
         public string password { get; set; }
     }
+#endregion
 }

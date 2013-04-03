@@ -17,14 +17,14 @@ namespace KServer
     public static class Common
     {
         // The guesstimated time between singers.
-        public static readonly int TIME_BETWEEN_REQUESTS = 30;
+        internal static readonly int TIME_BETWEEN_REQUESTS = 30;
         // A unique and constant deliminator to use when needed.
-        public static readonly string DELIMINATOR = "#~Q";
+        internal static readonly string DELIMINATOR = "#~Q";
         // ID numbers used for Google Cloud Messaging.
-        public static readonly string SENDER_ID = "599874388677";
-        public static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
+        internal static readonly string SENDER_ID = "599874388677";
+        internal static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
 
-        public static int GetBitFromBool(bool boolean)
+        internal static int GetBitFromBool(bool boolean)
         {
             if (boolean)
                 return 1;
@@ -36,7 +36,7 @@ namespace KServer
         /// </summary>
         /// <param name="size">The size of the salt to use.</param>
         /// <returns></returns>
-        public static string CreateSalt(int size)
+        internal static string CreateSalt(int size)
         {
             RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider();
             byte[] buf = new byte[size];
@@ -50,7 +50,7 @@ namespace KServer
         /// <param name="plainPassword">The plain text password.</param>
         /// <param name="salt">The salt associated with this user.</param>
         /// <returns>The salted and hashed password.</returns>
-        public static string CreatePasswordHash(string plainPassword, string salt)
+        internal static string CreatePasswordHash(string plainPassword, string salt)
         {
             HashAlgorithm algorithm = new SHA256Managed();
             string preHash = plainPassword + salt;
@@ -63,7 +63,7 @@ namespace KServer
         /// </summary>
         /// <param name="s">The string to split.</param>
         /// <returns>An array of strings.</returns>
-        public static string[] splitByDel(string s)
+        internal static string[] splitByDel(string s)
         {
             return s.Split(new string[] { DELIMINATOR }, StringSplitOptions.None);
         }
@@ -74,7 +74,7 @@ namespace KServer
         /// <param name="queue">The queue to work off of.</param>
         /// <param name="raw">Out parameter is set to a compressed representation of the queue.</param>
         /// <returns>Returns a response indicating no error.</returns>
-        public static Response MinimalListToDB(List<queueSinger> queue, out string raw)
+        internal static Response MinimalListToDB(List<queueSinger> queue, out string raw)
         {
             raw = string.Empty;
             foreach (queueSinger qs in queue)
@@ -98,7 +98,7 @@ namespace KServer
         /// <param name="raw">The database representation of the queue.</param>
         /// <param name="queue">Out object represenation of the queue.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response DBToMinimalList(string raw, out List<queueSinger> queue)
+        internal static Response DBToMinimalList(string raw, out List<queueSinger> queue)
         {
             int count = 0;
             Response r = new Response();
@@ -143,7 +143,7 @@ namespace KServer
         /// <param name="DJID">The DJID of the DJ.</param>
         /// <param name="db">An object that allows for database connectivity.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
+        internal static Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
             Response r = new Response();
@@ -209,7 +209,7 @@ namespace KServer
         /// <param name="db">The conenctivity to the database.</param>
         /// <param name="includePath">Whether or not to include the pathOnDisk in the song.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response GetSongInformation(int songID, int venueID, int mobileID, out Song song, DatabaseConnectivity db, bool includePath = false)
+        internal static Response GetSongInformation(int songID, int venueID, int mobileID, out Song song, DatabaseConnectivity db, bool includePath = false)
         {
             song = new Song();
             Response r = db.SongInformation(venueID, songID);
@@ -259,7 +259,7 @@ namespace KServer
         /// <param name="mobileID">The ID of the mobile user.</param>
         /// <param name="db">Connectivity of the database.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response LoadSongRating(ref Song song, int mobileID, DatabaseConnectivity db)
+        internal static Response LoadSongRating(ref Song song, int mobileID, DatabaseConnectivity db)
         {
             int rating;
             Response r = db.MobileGetSongRating(mobileID, song.ID);
@@ -291,7 +291,7 @@ namespace KServer
         /// <param name="queue">The queue.</param>
         /// <param name="message">The message to send.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response PushMessageToUsersOfDJ(int DJID, string message, DatabaseConnectivity db)
+        internal static Response PushMessageToUsersOfDJ(int DJID, string message, DatabaseConnectivity db)
         {
             Response r = new Response();
             List<int> clients;
@@ -316,7 +316,7 @@ namespace KServer
         /// <param name="mobileID">The mobileID of the client.</param>
         /// <param name="message">The message to push.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response PushMessageToMobile(int mobileID, string message, DatabaseConnectivity db)
+        internal static Response PushMessageToMobile(int mobileID, string message, DatabaseConnectivity db)
         {
             Response r = new Response();
 
@@ -349,7 +349,7 @@ namespace KServer
         /// <param name="deviceID">The deviceID of the device.</param>
         /// <param name="message">The message to push.</param>
         /// <returns>The outcome of the operation.</returns>
-        public static Response PushAndroidNotification(string deviceID, string message)
+        internal static Response PushAndroidNotification(string deviceID, string message)
         {
             Response r = new Response();
             var value = message;
@@ -385,7 +385,7 @@ namespace KServer
         /// <param name="passThru">A parameter to return</param>
         /// <param name="Case">0 = mobile_log, 1 = dj_log, 2 = debug</param>
         /// <returns>The passThru object</returns>
-        public static object LogError(string messagePart1, string messagePart2, object passThru, int Case)
+        internal static object LogError(string messagePart1, string messagePart2, object passThru, int Case)
         {
             switch (Case)
             {

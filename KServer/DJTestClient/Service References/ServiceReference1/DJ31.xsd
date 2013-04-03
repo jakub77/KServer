@@ -149,10 +149,29 @@
       </xs:sequence>
     </xs:complexType>
   </xs:element>
+  <xs:element name="DJGetMostPopularSongs">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+        <xs:element minOccurs="0" name="limitToVenue" type="xs:boolean" />
+        <xs:element minOccurs="0" name="start" type="xs:int" />
+        <xs:element minOccurs="0" name="count" type="xs:int" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="DJGetMostPopularSongsResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q15="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJGetMostPopularSongsResult" nillable="true" type="q15:Response" />
+        <xs:element xmlns:q16="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="songs" nillable="true" type="q16:ArrayOfSong" />
+        <xs:element xmlns:q17="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="counts" nillable="true" type="q17:ArrayOfint" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
   <xs:element name="DJAddQueue">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q15="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q15:SongRequest" />
+        <xs:element xmlns:q18="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q18:SongRequest" />
         <xs:element minOccurs="0" name="queueIndex" type="xs:int" />
         <xs:element minOccurs="0" name="DJKey" type="xs:long" />
       </xs:sequence>
@@ -161,14 +180,14 @@
   <xs:element name="DJAddQueueResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q16="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJAddQueueResult" nillable="true" type="q16:Response" />
+        <xs:element xmlns:q19="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJAddQueueResult" nillable="true" type="q19:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="DJRemoveSongRequest">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q17="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q17:SongRequest" />
+        <xs:element xmlns:q20="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q20:SongRequest" />
         <xs:element minOccurs="0" name="DJKey" type="xs:long" />
       </xs:sequence>
     </xs:complexType>
@@ -176,15 +195,15 @@
   <xs:element name="DJRemoveSongRequestResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q18="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJRemoveSongRequestResult" nillable="true" type="q18:Response" />
+        <xs:element xmlns:q21="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJRemoveSongRequestResult" nillable="true" type="q21:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="DJChangeSongRequest">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q19="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="newSR" nillable="true" type="q19:SongRequest" />
-        <xs:element xmlns:q20="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="oldSR" nillable="true" type="q20:SongRequest" />
+        <xs:element xmlns:q22="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="newSR" nillable="true" type="q22:SongRequest" />
+        <xs:element xmlns:q23="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="oldSR" nillable="true" type="q23:SongRequest" />
         <xs:element minOccurs="0" name="DJKey" type="xs:long" />
       </xs:sequence>
     </xs:complexType>
@@ -192,14 +211,14 @@
   <xs:element name="DJChangeSongRequestResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q21="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJChangeSongRequestResult" nillable="true" type="q21:Response" />
+        <xs:element xmlns:q24="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJChangeSongRequestResult" nillable="true" type="q24:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="DJMoveSongRequest">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q22="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q22:SongRequest" />
+        <xs:element xmlns:q25="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q25:SongRequest" />
         <xs:element minOccurs="0" name="newIndex" type="xs:int" />
         <xs:element minOccurs="0" name="DJKey" type="xs:long" />
       </xs:sequence>
@@ -208,7 +227,7 @@
   <xs:element name="DJMoveSongRequestResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q23="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJMoveSongRequestResult" nillable="true" type="q23:Response" />
+        <xs:element xmlns:q26="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJMoveSongRequestResult" nillable="true" type="q26:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -223,7 +242,7 @@
   <xs:element name="DJRemoveUserResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q24="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJRemoveUserResult" nillable="true" type="q24:Response" />
+        <xs:element xmlns:q27="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJRemoveUserResult" nillable="true" type="q27:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -239,7 +258,7 @@
   <xs:element name="DJMoveUserResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q25="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJMoveUserResult" nillable="true" type="q25:Response" />
+        <xs:element xmlns:q28="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJMoveUserResult" nillable="true" type="q28:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -253,15 +272,15 @@
   <xs:element name="DJGetQueueResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q26="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJGetQueueResult" nillable="true" type="q26:Response" />
-        <xs:element xmlns:q27="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="queue" nillable="true" type="q27:ArrayOfqueueSinger" />
+        <xs:element xmlns:q29="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJGetQueueResult" nillable="true" type="q29:Response" />
+        <xs:element xmlns:q30="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="queue" nillable="true" type="q30:ArrayOfqueueSinger" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
   <xs:element name="DJPopQueue">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q28="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q28:SongRequest" />
+        <xs:element xmlns:q31="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="sr" nillable="true" type="q31:SongRequest" />
         <xs:element minOccurs="0" name="DJKey" type="xs:long" />
       </xs:sequence>
     </xs:complexType>
@@ -269,7 +288,7 @@
   <xs:element name="DJPopQueueResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q29="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJPopQueueResult" nillable="true" type="q29:Response" />
+        <xs:element xmlns:q32="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJPopQueueResult" nillable="true" type="q32:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -283,7 +302,7 @@
   <xs:element name="DJNewUserWaitTimeResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q30="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJNewUserWaitTimeResult" nillable="true" type="q30:Response" />
+        <xs:element xmlns:q33="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJNewUserWaitTimeResult" nillable="true" type="q33:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -297,26 +316,7 @@
   <xs:element name="DJTestQueueFillResponse">
     <xs:complexType>
       <xs:sequence>
-        <xs:element xmlns:q31="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJTestQueueFillResult" nillable="true" type="q31:Response" />
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="DJGetMostPopularSongs">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
-        <xs:element minOccurs="0" name="limitToVenue" type="xs:boolean" />
-        <xs:element minOccurs="0" name="start" type="xs:int" />
-        <xs:element minOccurs="0" name="count" type="xs:int" />
-      </xs:sequence>
-    </xs:complexType>
-  </xs:element>
-  <xs:element name="DJGetMostPopularSongsResponse">
-    <xs:complexType>
-      <xs:sequence>
-        <xs:element xmlns:q32="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJGetMostPopularSongsResult" nillable="true" type="q32:Response" />
-        <xs:element xmlns:q33="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="songs" nillable="true" type="q33:ArrayOfSong" />
-        <xs:element xmlns:q34="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="counts" nillable="true" type="q34:ArrayOfint" />
+        <xs:element xmlns:q34="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="DJTestQueueFillResult" nillable="true" type="q34:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>
@@ -451,6 +451,23 @@
     <xs:complexType>
       <xs:sequence>
         <xs:element xmlns:q49="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="ViewAchievementSqlResult" nillable="true" type="q49:Response" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="InsertFauxSongHistory">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element minOccurs="0" name="DJKey" type="xs:long" />
+        <xs:element xmlns:q50="http://schemas.microsoft.com/2003/10/Serialization/Arrays" minOccurs="0" name="bands" nillable="true" type="q50:ArrayOfstring" />
+        <xs:element minOccurs="0" name="numberPerBand" type="xs:int" />
+        <xs:element minOccurs="0" name="mobileID" type="xs:int" />
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="InsertFauxSongHistoryResponse">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element xmlns:q51="http://schemas.datacontract.org/2004/07/KServer" minOccurs="0" name="InsertFauxSongHistoryResult" nillable="true" type="q51:Response" />
       </xs:sequence>
     </xs:complexType>
   </xs:element>

@@ -68,6 +68,12 @@
   <wsdl:message name="IDJ_DJListSongs_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJListSongsResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_DJGetMostPopularSongs_InputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetMostPopularSongs" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_DJGetMostPopularSongs_OutputMessage">
+    <wsdl:part name="parameters" element="tns:DJGetMostPopularSongsResponse" />
+  </wsdl:message>
   <wsdl:message name="IDJ_DJAddQueue_InputMessage">
     <wsdl:part name="parameters" element="tns:DJAddQueue" />
   </wsdl:message>
@@ -128,12 +134,6 @@
   <wsdl:message name="IDJ_DJTestQueueFill_OutputMessage">
     <wsdl:part name="parameters" element="tns:DJTestQueueFillResponse" />
   </wsdl:message>
-  <wsdl:message name="IDJ_DJGetMostPopularSongs_InputMessage">
-    <wsdl:part name="parameters" element="tns:DJGetMostPopularSongs" />
-  </wsdl:message>
-  <wsdl:message name="IDJ_DJGetMostPopularSongs_OutputMessage">
-    <wsdl:part name="parameters" element="tns:DJGetMostPopularSongsResponse" />
-  </wsdl:message>
   <wsdl:message name="IDJ_DJBanUser_InputMessage">
     <wsdl:part name="parameters" element="tns:DJBanUser" />
   </wsdl:message>
@@ -188,6 +188,12 @@
   <wsdl:message name="IDJ_ViewAchievementSql_OutputMessage">
     <wsdl:part name="parameters" element="tns:ViewAchievementSqlResponse" />
   </wsdl:message>
+  <wsdl:message name="IDJ_InsertFauxSongHistory_InputMessage">
+    <wsdl:part name="parameters" element="tns:InsertFauxSongHistory" />
+  </wsdl:message>
+  <wsdl:message name="IDJ_InsertFauxSongHistory_OutputMessage">
+    <wsdl:part name="parameters" element="tns:InsertFauxSongHistoryResponse" />
+  </wsdl:message>
   <wsdl:portType name="IDJ">
     <wsdl:operation name="DJSignUp">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJSignUp" message="tns:IDJ_DJSignUp_InputMessage" />
@@ -229,6 +235,10 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJListSongs" message="tns:IDJ_DJListSongs_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJListSongsResponse" message="tns:IDJ_DJListSongs_OutputMessage" />
     </wsdl:operation>
+    <wsdl:operation name="DJGetMostPopularSongs">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGetMostPopularSongs" message="tns:IDJ_DJGetMostPopularSongs_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGetMostPopularSongsResponse" message="tns:IDJ_DJGetMostPopularSongs_OutputMessage" />
+    </wsdl:operation>
     <wsdl:operation name="DJAddQueue">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJAddQueue" message="tns:IDJ_DJAddQueue_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJAddQueueResponse" message="tns:IDJ_DJAddQueue_OutputMessage" />
@@ -269,10 +279,6 @@
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJTestQueueFill" message="tns:IDJ_DJTestQueueFill_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJTestQueueFillResponse" message="tns:IDJ_DJTestQueueFill_OutputMessage" />
     </wsdl:operation>
-    <wsdl:operation name="DJGetMostPopularSongs">
-      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJGetMostPopularSongs" message="tns:IDJ_DJGetMostPopularSongs_InputMessage" />
-      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJGetMostPopularSongsResponse" message="tns:IDJ_DJGetMostPopularSongs_OutputMessage" />
-    </wsdl:operation>
     <wsdl:operation name="DJBanUser">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/DJBanUser" message="tns:IDJ_DJBanUser_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/DJBanUserResponse" message="tns:IDJ_DJBanUser_OutputMessage" />
@@ -308,6 +314,10 @@
     <wsdl:operation name="ViewAchievementSql">
       <wsdl:input wsaw:Action="http://tempuri.org/IDJ/ViewAchievementSql" message="tns:IDJ_ViewAchievementSql_InputMessage" />
       <wsdl:output wsaw:Action="http://tempuri.org/IDJ/ViewAchievementSqlResponse" message="tns:IDJ_ViewAchievementSql_OutputMessage" />
+    </wsdl:operation>
+    <wsdl:operation name="InsertFauxSongHistory">
+      <wsdl:input wsaw:Action="http://tempuri.org/IDJ/InsertFauxSongHistory" message="tns:IDJ_InsertFauxSongHistory_InputMessage" />
+      <wsdl:output wsaw:Action="http://tempuri.org/IDJ/InsertFauxSongHistoryResponse" message="tns:IDJ_InsertFauxSongHistory_OutputMessage" />
     </wsdl:operation>
   </wsdl:portType>
   <wsdl:binding name="BasicHttpBinding_IDJ" type="tns:IDJ">
@@ -395,6 +405,15 @@
     </wsdl:operation>
     <wsdl:operation name="DJListSongs">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJListSongs" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="DJGetMostPopularSongs">
+      <soap:operation soapAction="http://tempuri.org/IDJ/DJGetMostPopularSongs" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>
@@ -492,15 +511,6 @@
         <soap:body use="literal" />
       </wsdl:output>
     </wsdl:operation>
-    <wsdl:operation name="DJGetMostPopularSongs">
-      <soap:operation soapAction="http://tempuri.org/IDJ/DJGetMostPopularSongs" style="document" />
-      <wsdl:input>
-        <soap:body use="literal" />
-      </wsdl:input>
-      <wsdl:output>
-        <soap:body use="literal" />
-      </wsdl:output>
-    </wsdl:operation>
     <wsdl:operation name="DJBanUser">
       <soap:operation soapAction="http://tempuri.org/IDJ/DJBanUser" style="document" />
       <wsdl:input>
@@ -575,6 +585,15 @@
     </wsdl:operation>
     <wsdl:operation name="ViewAchievementSql">
       <soap:operation soapAction="http://tempuri.org/IDJ/ViewAchievementSql" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+    <wsdl:operation name="InsertFauxSongHistory">
+      <soap:operation soapAction="http://tempuri.org/IDJ/InsertFauxSongHistory" style="document" />
       <wsdl:input>
         <soap:body use="literal" />
       </wsdl:input>

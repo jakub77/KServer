@@ -69,7 +69,6 @@
     <Content Include="Mobile.svc" />
     <Content Include="DJ.svc" />
     <Content Include="Website.svc" />
-    <Content Include="ClassDiagram1.cd" />
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

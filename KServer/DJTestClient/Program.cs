@@ -16,121 +16,6 @@ namespace DJTestClient
 {
     class Program
     {
-        private static Achievement createAchievement1()
-        {
-            Achievement a = new Achievement();
-            a.name = "Kansas";
-            a.description = "Carry on.";
-            a.ID = 0;
-            a.image = AchievementImage.Image0;
-            a.statementsAnd = true;
-            a.selectList = new AchievementSelect[1];
-            AchievementSelect select = new AchievementSelect();
-            select.startDate = DateTime.MinValue;
-            select.endDate = DateTime.MaxValue;
-            select.selectKeyword = SelectKeyword.Max;
-            select.selectValue = "1";
-            select.clauseKeyword = ClauseKeyword.Title;
-            select.clauseValue = "Carry on Wayward Son";
-            a.isPermanant = false;
-            a.selectList[0] = select;
-            a.visible = false;
-            return a;
-        }
-        private static Achievement createAchievement2()
-        {
-            Achievement a = new Achievement();
-            a.name = "Beatles and Rolling Stones";
-            a.description = "Sing at least one beatles and at least one rolling stones song.";
-            a.ID = 0;
-            a.image = AchievementImage.Image1;
-            a.statementsAnd = true;
-            a.selectList = new AchievementSelect[2];
-            AchievementSelect select = new AchievementSelect();
-            select.startDate = DateTime.MinValue;
-            select.endDate = DateTime.MaxValue;
-            select.selectKeyword = SelectKeyword.CountGreaterThan;
-            select.selectValue = "0";
-            select.clauseKeyword = ClauseKeyword.Artist;
-            select.clauseValue = "Rolling Stones";
-            a.selectList[0] = select;
-            AchievementSelect select2 = new AchievementSelect();
-            select2.startDate = DateTime.MinValue;
-            select2.endDate = DateTime.MaxValue;
-            select2.selectKeyword = SelectKeyword.CountGreaterThan;
-            select2.selectValue = "0";
-            select2.clauseKeyword = ClauseKeyword.Artist;
-            select2.clauseValue = "Beatles";
-            a.selectList[1] = select2;
-            a.isPermanant = false;
-            a.visible = true;
-            return a;
-        }
-        private static Achievement createAchievement3()
-        {
-            Achievement a = new Achievement();
-            a.name = "Most Recent";
-            a.description = "Sing the most recent song.";
-            a.ID = 0;
-            a.image = AchievementImage.Image2;
-            a.statementsAnd = true;
-            a.selectList = new AchievementSelect[1];
-            AchievementSelect select = new AchievementSelect();
-            select.startDate = DateTime.MinValue;
-            select.endDate = DateTime.MaxValue;
-            select.selectKeyword = SelectKeyword.Newest;
-            select.selectValue = "1";
-            select.clauseKeyword = ClauseKeyword.Title;
-            select.clauseValue = "%";
-            a.selectList[0] = select;
-            a.isPermanant = false;
-            a.visible = true;
-            return a;
-        }
-        private static Achievement createAchievement4()
-        {
-            Achievement a = new Achievement();
-            a.name = "Beatles or Rolling Stones";
-            a.description = "Sing at least one beatles or at least one rolling stones song.";
-            a.ID = 0;
-            a.image = AchievementImage.Image3;
-            a.statementsAnd = false;
-            a.selectList = new AchievementSelect[2];
-            AchievementSelect select = new AchievementSelect();
-            select.startDate = DateTime.MinValue;
-            select.endDate = DateTime.MaxValue;
-            select.selectKeyword = SelectKeyword.CountGreaterThan;
-            select.selectValue = "0";
-            select.clauseKeyword = ClauseKeyword.Artist;
-            select.clauseValue = "Rolling Stones";
-            a.selectList[0] = select;
-            AchievementSelect select2 = new AchievementSelect();
-            select2.startDate = DateTime.MinValue;
-            select2.endDate = DateTime.MaxValue;
-            select2.selectKeyword = SelectKeyword.CountGreaterThan;
-            select2.selectValue = "0";
-            select2.clauseKeyword = ClauseKeyword.Artist;
-            select2.clauseValue = "Beatles";
-            a.selectList[1] = select2;
-            a.isPermanant = false;
-            a.visible = true;
-            return a;
-        }
-        private static string achievementString(Achievement a)
-        {
-            string s = String.Empty;
-            s += a.ID + ", " + a.name + ", " + a.description + "\n";
-            foreach (AchievementSelect select in a.selectList)
-            {
-                s += "\t" + select.selectKeyword.ToString() + " = '" + select.selectValue + "' where " + select.clauseKeyword.ToString() + " = '" + select.clauseValue + "' ";
-                if (a.statementsAnd)
-                    s += "and\n";
-                else
-                    s += "or\n";
-            }
-            return s;
-        }
-
         static void Main(string[] args)
         {
             // User the proxy to communicate with server.
@@ -155,7 +40,7 @@ namespace DJTestClient
                     Console.WriteLine("newUserWaitTime<nw>, testQueueFill<tf>, moveSongRequest<mr>, mostPopular<mp>");
                     Console.WriteLine("BanUser<bu>, UnbanUser<uu>, ListBans<lb>, addAchievement<aa>,listAchievemts<la>");
                     Console.WriteLine("deleteAchivement<da>, evaluateAchievements<ea>, modifyAchievement<ma>");
-                    Console.WriteLine("viewAchievementSql<vs>");
+                    Console.WriteLine("viewAchievementSql<vs>, GenerateSongHistory<gs>");
                 }
                 else if (command.StartsWith("x"))
                 {
@@ -171,9 +56,32 @@ namespace DJTestClient
                     }
 
                 }
+                else if (command.StartsWith("gs"))
+                {
+                    Response r;
+                    try
+                    {
+                        Console.WriteLine("Enter MobileID:");
+                        int mobileID = int.Parse(Console.ReadLine());
+                        Console.WriteLine("Enter number of songs per band");
+                        int numberPerBand = int.Parse(Console.ReadLine());
+                        Console.WriteLine("Enter artists (Comma separated)");
+                        string rawBands = Console.ReadLine();
+                        string[] bands = rawBands.Split(',');
+
+                        r = proxy.InsertFauxSongHistory(DJKey, bands, numberPerBand, mobileID);
+                        Console.WriteLine("Error: " + r.error);
+                        Console.WriteLine("Result: " + r.result);
+                        Console.WriteLine("Message:\n" + r.message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
+                }
                 else if (command.StartsWith("vs"))
                 {
-                                        Response r;
+                    Response r;
                     try
                     {
                         Console.WriteLine("Enter ID:");
@@ -825,6 +733,121 @@ namespace DJTestClient
                     Console.WriteLine("Invalid Command!");
                 }
             }
+        }
+
+        private static Achievement createAchievement1()
+        {
+            Achievement a = new Achievement();
+            a.name = "Kansas";
+            a.description = "Carry on.";
+            a.ID = 0;
+            a.image = AchievementImage.Image0;
+            a.statementsAnd = true;
+            a.selectList = new AchievementSelect[1];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.Max;
+            select.selectValue = "1";
+            select.clauseKeyword = ClauseKeyword.Title;
+            select.clauseValue = "Carry on Wayward Son";
+            a.isPermanant = false;
+            a.selectList[0] = select;
+            a.visible = false;
+            return a;
+        }
+        private static Achievement createAchievement2()
+        {
+            Achievement a = new Achievement();
+            a.name = "Beatles and Rolling Stones";
+            a.description = "Sing at least one beatles and at least one rolling stones song.";
+            a.ID = 0;
+            a.image = AchievementImage.Image1;
+            a.statementsAnd = true;
+            a.selectList = new AchievementSelect[2];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.CountGreaterThan;
+            select.selectValue = "0";
+            select.clauseKeyword = ClauseKeyword.Artist;
+            select.clauseValue = "Rolling Stones";
+            a.selectList[0] = select;
+            AchievementSelect select2 = new AchievementSelect();
+            select2.startDate = DateTime.MinValue;
+            select2.endDate = DateTime.MaxValue;
+            select2.selectKeyword = SelectKeyword.CountGreaterThan;
+            select2.selectValue = "0";
+            select2.clauseKeyword = ClauseKeyword.Artist;
+            select2.clauseValue = "Beatles";
+            a.selectList[1] = select2;
+            a.isPermanant = false;
+            a.visible = true;
+            return a;
+        }
+        private static Achievement createAchievement3()
+        {
+            Achievement a = new Achievement();
+            a.name = "Most Recent";
+            a.description = "Sing the most recent song.";
+            a.ID = 0;
+            a.image = AchievementImage.Image2;
+            a.statementsAnd = true;
+            a.selectList = new AchievementSelect[1];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.Newest;
+            select.selectValue = "1";
+            select.clauseKeyword = ClauseKeyword.Title;
+            select.clauseValue = "%";
+            a.selectList[0] = select;
+            a.isPermanant = false;
+            a.visible = true;
+            return a;
+        }
+        private static Achievement createAchievement4()
+        {
+            Achievement a = new Achievement();
+            a.name = "Beatles or Rolling Stones";
+            a.description = "Sing at least one beatles or at least one rolling stones song.";
+            a.ID = 0;
+            a.image = AchievementImage.Image3;
+            a.statementsAnd = false;
+            a.selectList = new AchievementSelect[2];
+            AchievementSelect select = new AchievementSelect();
+            select.startDate = DateTime.MinValue;
+            select.endDate = DateTime.MaxValue;
+            select.selectKeyword = SelectKeyword.CountGreaterThan;
+            select.selectValue = "0";
+            select.clauseKeyword = ClauseKeyword.Artist;
+            select.clauseValue = "Rolling Stones";
+            a.selectList[0] = select;
+            AchievementSelect select2 = new AchievementSelect();
+            select2.startDate = DateTime.MinValue;
+            select2.endDate = DateTime.MaxValue;
+            select2.selectKeyword = SelectKeyword.CountGreaterThan;
+            select2.selectValue = "0";
+            select2.clauseKeyword = ClauseKeyword.Artist;
+            select2.clauseValue = "Beatles";
+            a.selectList[1] = select2;
+            a.isPermanant = false;
+            a.visible = true;
+            return a;
+        }
+        private static string achievementString(Achievement a)
+        {
+            string s = String.Empty;
+            s += a.ID + ", " + a.name + ", " + a.description + "\n";
+            foreach (AchievementSelect select in a.selectList)
+            {
+                s += "\t" + select.selectKeyword.ToString() + " = '" + select.selectValue + "' where " + select.clauseKeyword.ToString() + " = '" + select.clauseValue + "' ";
+                if (a.statementsAnd)
+                    s += "and\n";
+                else
+                    s += "or\n";
+            }
+            return s;
         }
     }
 }
