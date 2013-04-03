@@ -34,6 +34,7 @@ namespace DJTestClient
             select.clauseValue = "Carry on Wayward Son";
             a.isPermanant = false;
             a.selectList[0] = select;
+            a.visible = false;
             return a;
         }
         private static Achievement createAchievement2()
@@ -62,6 +63,7 @@ namespace DJTestClient
             select2.clauseValue = "Beatles";
             a.selectList[1] = select2;
             a.isPermanant = false;
+            a.visible = true;
             return a;
         }
         private static Achievement createAchievement3()
@@ -82,6 +84,7 @@ namespace DJTestClient
             select.clauseValue = "%";
             a.selectList[0] = select;
             a.isPermanant = false;
+            a.visible = true;
             return a;
         }
         private static Achievement createAchievement4()
@@ -110,6 +113,7 @@ namespace DJTestClient
             select2.clauseValue = "Beatles";
             a.selectList[1] = select2;
             a.isPermanant = false;
+            a.visible = true;
             return a;
         }
         private static string achievementString(Achievement a)
@@ -314,12 +318,12 @@ namespace DJTestClient
                 }
                 else if (command.StartsWith("uu"))
                 {
-                    Console.WriteLine("Enter UserID to unban");
-                    User u = new User();
-                    u.userID = int.Parse(Console.ReadLine());
                     Response r;
                     try
                     {
+                        Console.WriteLine("Enter UserID to unban");
+                        User u = new User();
+                        u.userID = int.Parse(Console.ReadLine());
                         r = proxy.DJUnbanUser(u, DJKey);
                         Console.WriteLine("Error: " + r.error);
                         Console.WriteLine("Result: " + r.result);

@@ -47,7 +47,38 @@ namespace JakubMobileClient
                     Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
                     Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>, songHistory<sh>,");
                     Console.WriteLine("RateSong<rs>, GetRating<gr>, MoveSongRequestToTop<st>, mostPopular<mp>");
-                    Console.WriteLine("GetAchievements<ga>");
+                    Console.WriteLine("GetAchievements<ga>, GetUnearnedAchievements<gu>");
+                }
+                else if (command.StartsWith("gu"))
+                {
+                    ///MobileGetAchievements/?venueID={venueID}&userKey={userKey}
+                    Console.WriteLine("Enter venueID or 0 to use last venue ID, or -1 for all venues");
+                    int venueIDL = int.Parse(Console.ReadLine().Trim());
+                    if (venueIDL == 0)
+                        venueIDL = venueID;
+                    Console.WriteLine("Enter start");
+                    int start = int.Parse(Console.ReadLine());
+                    Console.WriteLine("Enter count");
+                    int count = int.Parse(Console.ReadLine());
+                    Stream data = client.OpenRead(baseAddress + "/MobileGetUnearnedAchievements/?venueID=" + venueIDL + "&userKey=" + userKey + "&start=" + start + "&count=" + count);
+                    StreamReader reader = new StreamReader(data);
+                    string s = reader.ReadToEnd();
+                    if (s == "")
+                    {
+                        Console.WriteLine("An error occured");
+                        continue;
+                    }
+
+                    List<MobileAchievement> r = strToJSON<List<MobileAchievement>>(s);
+                    if (displayJSON)
+                        Console.WriteLine("JSON: " + s);
+                    else
+                    {
+                        foreach (MobileAchievement ma in r)
+                        {
+                            Console.WriteLine(ma.ID + " " + ma.name + " " + ma.description + " " + ma.image);
+                        }
+                    }
                 }
                 else if (command.StartsWith("ga"))
                 {

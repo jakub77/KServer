@@ -1686,6 +1686,56 @@ namespace KServer
             }
         }
 
+        public List<MobileAchievement> MobileGetUnearnedAchievements(int venueID, long userKey, int start, int count)
+        {
+            int mobileID = -1;
+            int venueStatus;
+            using (DatabaseConnectivity db = new DatabaseConnectivity())
+            {
+                // Try to establish a database connection
+                Response r = db.OpenConnection();
+                if (r.error)
+                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Convert the userKey to MobileID
+                r = MobileKeyToID(userKey, out mobileID, db);
+                if (r.error)
+                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                // Validate venueID if the any venueID not given.
+                if (venueID != -1)
+                {
+                    // Make sure the venueID exists.
+                    r = db.DJGetStatus(venueID);
+                    if (r.error)
+                        return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                    if (!int.TryParse(r.message.Trim(), out venueStatus))
+                        return (List<MobileAchievement>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                }
+
+                List<Achievement> unearnedAchievements;
+
+                r = db.MobileGetUnearnedVisibleAchievements(mobileID, venueID, out unearnedAchievements);
+                if (r.error)
+                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                List<MobileAchievement> mobileUnearnedAchievements = new List<MobileAchievement>();
+                foreach (Achievement a in unearnedAchievements)
+                {
+                    MobileAchievement ma = new MobileAchievement();
+                    ma.ID = a.ID;
+                    ma.name = a.name;
+                    ma.description = a.description;
+                    ma.image = a.image.ToString();
+                    mobileUnearnedAchievements.Add(ma);
+                }
+
+
+                return mobileUnearnedAchievements;
+            }
+        }
+
 
         /// <summary>
         /// Check to see if a status of a venue is equal to the desired status. 

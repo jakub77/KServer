@@ -24,6 +24,13 @@ namespace KServer
         public static readonly string SENDER_ID = "599874388677";
         public static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
 
+        public static int GetBitFromBool(bool boolean)
+        {
+            if (boolean)
+                return 1;
+            return 0;
+        }
+
         /// <summary>
         /// Creates a random string to use as a salt for password hashing.
         /// </summary>

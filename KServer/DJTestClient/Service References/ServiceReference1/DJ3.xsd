@@ -85,6 +85,7 @@
       <xs:element minOccurs="0" name="name" nillable="true" type="xs:string" />
       <xs:element minOccurs="0" name="selectList" nillable="true" type="tns:ArrayOfAchievementSelect" />
       <xs:element minOccurs="0" name="statementsAnd" type="xs:boolean" />
+      <xs:element minOccurs="0" name="visible" type="xs:boolean" />
     </xs:sequence>
   </xs:complexType>
   <xs:element name="Achievement" nillable="true" type="tns:Achievement" />

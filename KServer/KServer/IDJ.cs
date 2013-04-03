@@ -179,6 +179,8 @@ namespace KServer
         public List<AchievementSelect> selectList { get; set; }
         [DataMember]
         public bool isPermanant { get; set; }
+        [DataMember]
+        public bool visible { get; set; }
     }
 
     [DataContract]

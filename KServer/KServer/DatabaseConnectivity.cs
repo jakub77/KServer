@@ -2101,11 +2101,12 @@ namespace KServer
             byte[] serializedAchievementBytes = streamAchievement.ToArray();
 
             Response r = new Response();
-            SqlCommand cmd = new SqlCommand("insert into Achievements (DJID, Object, Name, ObjectSize) values (@DJID, @achievement, @name, @objectSize); SELECT SCOPE_IDENTITY();", con);
+            SqlCommand cmd = new SqlCommand("insert into Achievements (DJID, Object, Name, ObjectSize, Visible) values (@DJID, @achievement, @name, @objectSize, @visible); SELECT SCOPE_IDENTITY();", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
             cmd.Parameters.AddWithValue("@name", achievement.name);
             cmd.Parameters.AddWithValue("@objectSize", serializedAchievementBytes.Length);
+            cmd.Parameters.AddWithValue("@visible", Common.GetBitFromBool(achievement.visible));
 
             try
             {
@@ -2137,11 +2138,12 @@ namespace KServer
             byte[] serializedAchievementBytes = streamAchievement.ToArray();
 
             Response r = new Response();
-            SqlCommand cmd = new SqlCommand("update Achievements set Object = @achievement, Name = @name, ObjectSize = @achievementSize where ID = @achievementID and DJID = @DJID", con);
+            SqlCommand cmd = new SqlCommand("update Achievements set Object = @achievement, Name = @name, ObjectSize = @achievementSize, Visible = @visible where ID = @achievementID and DJID = @DJID", con);
             cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
             cmd.Parameters.AddWithValue("@name", achievement.name);
             cmd.Parameters.AddWithValue("@achievementSize", serializedAchievementBytes.Length);
-            cmd.Parameters.AddWithValue("@achievementID", achievement.ID);
+            cmd.Parameters.AddWithValue("@visible", achievement.visible);
+            cmd.Parameters.AddWithValue("@achievementID", Common.GetBitFromBool(achievement.visible));
             cmd.Parameters.AddWithValue("@DJID", DJID);
 
             try
@@ -2338,7 +2340,50 @@ namespace KServer
                 r.message = "Exception in DBMobileGetAchievements: " + e.Message;
                 return r;
             }
+        }
 
+        internal Response MobileGetUnearnedVisibleAchievements(int mobileID, int venueID, out List<Achievement> achievements)
+        {
+            // select ObjectSize, Object, Achievements.ID from Achievements 
+            // where Achievements.ID not in(select AchievementID from AwardedAchievements where MobileID = '3') and DJID = '4';
+            Response r = new Response();
+            achievements = new List<Achievement>();
+            SqlCommand cmd = new SqlCommand("select ObjectSize, Object, Achievements.ID from Achievements ", con);
+            cmd.CommandText += "where Achievements.ID not in(select AchievementID from AwardedAchievements where MobileID = @mobileID) and Visible = '1'";
+            cmd.Parameters.AddWithValue("@mobileID", mobileID);
+
+            if (venueID != -1)
+            {
+                cmd.CommandText += " and Achievements.DJID = @DJID";
+                cmd.Parameters.AddWithValue("@DJID", venueID);
+            }
+
+            cmd.CommandText += ";";
+
+            try
+            {
+                DataContractSerializer serializer = new DataContractSerializer(typeof(Achievement));
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        int objectSize = reader.GetInt32(0);
+                        byte[] buffer = new byte[objectSize];
+                        reader.GetBytes(1, 0, buffer, 0, buffer.Length);
+                        MemoryStream stream = new MemoryStream(buffer);
+                        Achievement achievement = (Achievement)serializer.ReadObject(stream);
+                        achievement.ID = reader.GetInt32(2);
+                        achievements.Add(achievement);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetUnearnedAchievements: " + e.Message;
+                return r;
+            }
         }
     }
 }
