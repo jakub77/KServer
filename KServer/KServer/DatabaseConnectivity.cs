@@ -2088,22 +2088,23 @@ namespace KServer
         }
         internal Response DJModifyAchievement(int DJID, Achievement achievement)
         {
-            MemoryStream streamAchievement = new MemoryStream();
-            DataContractSerializer achievementSerializer = new DataContractSerializer(typeof(Achievement));
-            achievementSerializer.WriteObject(streamAchievement, achievement);
-            byte[] serializedAchievementBytes = streamAchievement.ToArray();
-
             Response r = new Response();
-            SqlCommand cmd = new SqlCommand("update Achievements set Object = @achievement, Name = @name, ObjectSize = @achievementSize, Visible = @visible where ID = @achievementID and DJID = @DJID", con);
-            cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
-            cmd.Parameters.AddWithValue("@name", achievement.name);
-            cmd.Parameters.AddWithValue("@achievementSize", serializedAchievementBytes.Length);
-            cmd.Parameters.AddWithValue("@visible", achievement.visible);
-            cmd.Parameters.AddWithValue("@achievementID", Common.GetBitFromBool(achievement.visible));
-            cmd.Parameters.AddWithValue("@DJID", DJID);
-
             try
             {
+                MemoryStream streamAchievement = new MemoryStream();
+                DataContractSerializer achievementSerializer = new DataContractSerializer(typeof(Achievement));
+                achievementSerializer.WriteObject(streamAchievement, achievement);
+                byte[] serializedAchievementBytes = streamAchievement.ToArray();
+
+
+                SqlCommand cmd = new SqlCommand("update Achievements set Object = @achievement, Name = @name, ObjectSize = @achievementSize, Visible = @visible where ID = @achievementID and DJID = @DJID;", con);
+                cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
+                cmd.Parameters.AddWithValue("@name", achievement.name);
+                cmd.Parameters.AddWithValue("@achievementSize", serializedAchievementBytes.Length);
+                cmd.Parameters.AddWithValue("@visible", Common.GetBitFromBool(achievement.visible));
+                cmd.Parameters.AddWithValue("@achievementID", achievement.ID);
+                cmd.Parameters.AddWithValue("@DJID", DJID);
+
                 r.result = cmd.ExecuteNonQuery();
                 return r;
             }
@@ -2205,7 +2206,7 @@ namespace KServer
 
 
         }
-        internal Response DeleteAchievementsByID(int achievementID)
+        internal Response DeleteEarnedAchievementsByID(int achievementID)
         {
             Response r = new Response();
             SqlCommand cmd = new SqlCommand("delete from AwardedAchievements where AchievementID = @achievementID;", con);

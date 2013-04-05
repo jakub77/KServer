@@ -1682,9 +1682,12 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                r = RunAchievements(DJID, db);
+                r = EvaluateAchievement(DJID, achievement, db);
                 if (r.error)
                     return r;
+                //r = RunAchievements(DJID, db);
+                //if (r.error)
+                //    return r;
 
                 return r;
             }
@@ -1945,7 +1948,7 @@ namespace KServer
 
             if (!a.isPermanant)
             {
-                r = db.DeleteAchievementsByID(a.ID);
+                r = db.DeleteEarnedAchievementsByID(a.ID);
                 if (r.error)
                     return r;
             }

@@ -142,6 +142,7 @@ namespace DJTestClient
                     Response r;
                     Console.WriteLine("Enter old achievement ID");
                     int ID = int.Parse(Console.ReadLine());
+
                     Console.WriteLine("New achievement number");
                     int number = int.Parse(Console.ReadLine().Trim());
                     Achievement achievement;
