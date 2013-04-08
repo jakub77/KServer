@@ -13,6 +13,7 @@
             <p><asp:Button ID ="enableRegistration" runat="server" OnClick="enableRegistration_Click" Text="Enable Registration"/></p>
             <p><asp:Button ID ="disableRegistration" runat="server" OnClick="disableRegistration_Click" Text="Disable Registration" /></p>
             <p><asp:Label ID ="resultLabel" runat="server" /></p>
+            <p><asp:Label ID = "upTimeLabel" runat ="server" /></p>
     </article>
 
     <%--    <aside>
