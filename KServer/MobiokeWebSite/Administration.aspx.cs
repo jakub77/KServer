@@ -5,6 +5,7 @@ using System.Web;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using MobiokeWebSite.ServiceReference1;
+using System.Diagnostics;
 
 namespace MobiokeWebSite
 {
@@ -14,6 +15,14 @@ namespace MobiokeWebSite
         protected void Page_Load(object sender, EventArgs e)
         {
             proxy = new WebsiteClient();
+            try
+            {
+                upTimeLabel.Text = "Uptime at least: " + TimeSpan.FromMilliseconds(Environment.TickCount).ToString();
+            }
+            catch (Exception)
+            {
+                upTimeLabel.Text = "Uptime unknown";
+            }
         }
 
         protected void enableRegistration_Click(object sender, EventArgs e)
