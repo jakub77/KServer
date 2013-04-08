@@ -131,10 +131,8 @@
   <xs:element name="ClauseKeyword" nillable="true" type="tns:ClauseKeyword" />
   <xs:simpleType name="SelectKeyword">
     <xs:restriction base="xs:string">
-      <xs:enumeration value="CountEqual" />
-      <xs:enumeration value="CountNotEqual" />
-      <xs:enumeration value="CountGreaterThan" />
-      <xs:enumeration value="CountLessThan" />
+      <xs:enumeration value="CountGTE" />
+      <xs:enumeration value="CountLTE" />
       <xs:enumeration value="Max" />
       <xs:enumeration value="Min" />
       <xs:enumeration value="Newest" />

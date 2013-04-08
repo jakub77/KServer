@@ -43,17 +43,11 @@ namespace KServer
                 case SelectKeyword.Oldest:
                     keyword = "asc";
                     break;
-                case SelectKeyword.CountEqual:
-                    keyword = "=";
+                case SelectKeyword.CountGTE:
+                    keyword = ">=";
                     break;
-                case SelectKeyword.CountNotEqual:
-                    keyword = "!=";
-                    break;
-                case SelectKeyword.CountGreaterThan:
-                    keyword = ">";
-                    break;
-                case SelectKeyword.CountLessThan:
-                    keyword = "<";
+                case SelectKeyword.CountLTE:
+                    keyword = "<=";
                     break;
                 default:
                     return string.Empty;
@@ -153,10 +147,8 @@ namespace KServer
                 case SelectKeyword.Newest:    
                 case SelectKeyword.Oldest:
                     return CreateStatementOldestNewest(a, DJID, out cmd);
-                case SelectKeyword.CountEqual:
-                case SelectKeyword.CountNotEqual:
-                case SelectKeyword.CountGreaterThan:
-                case SelectKeyword.CountLessThan:
+                case SelectKeyword.CountGTE:
+                case SelectKeyword.CountLTE:
                     return CreateStatementCount(a, DJID, out cmd);
                 default:
                     Response r = new Response();

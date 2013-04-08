@@ -121,14 +121,11 @@ namespace KServer
     [DataContract]
     public enum SelectKeyword
     {
+
         [EnumMember]
-        CountEqual,
+        CountGTE,
         [EnumMember]
-        CountNotEqual,
-        [EnumMember]
-        CountGreaterThan,
-        [EnumMember]
-        CountLessThan,
+        CountLTE,
         [EnumMember]
         Max,
         [EnumMember]

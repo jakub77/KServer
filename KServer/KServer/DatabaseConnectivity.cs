@@ -2148,7 +2148,7 @@ namespace KServer
         {
             Response r = new Response();
             achievements = new List<Achievement>();
-            SqlCommand cmd = new SqlCommand("select ObjectSize, Object, ID from Achievements where DJID = @DJID;", con);
+            SqlCommand cmd = new SqlCommand("select ObjectSize, Object, ID from Achievements where DJID = @DJID order by Name;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
 
             try
@@ -2345,11 +2345,10 @@ namespace KServer
 
             Response r = new Response();
             songIDs = new List<int>();
-            using (SqlCommand cmd = new SqlCommand("select top (@count) SongID from DJSongs where Artist = @artist and DJListID = @DJID order by NEWID();", con))
+            using (SqlCommand cmd = new SqlCommand("select top (@count) SongID from DJSongs where Artist like @artist and DJListID = @DJID order by NEWID();", con))
             {
-                cmd.CommandText += "where AwardedAchievements.MobileID = @mobileID";
                 cmd.Parameters.AddWithValue("@count", count);
-                cmd.Parameters.AddWithValue("@artist", artist);
+                cmd.Parameters.AddWithValue("@artist", "%" + artist.Trim() + "%");
                 cmd.Parameters.AddWithValue("@DJID", DJID);
 
                 try

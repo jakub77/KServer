@@ -920,28 +920,22 @@ namespace DJTestClient.ServiceReference1 {
     public enum SelectKeyword : int {
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        CountEqual = 0,
+        CountGTE = 0,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        CountNotEqual = 1,
+        CountLTE = 1,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        CountGreaterThan = 2,
+        Max = 2,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        CountLessThan = 3,
+        Min = 3,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        Max = 4,
+        Newest = 4,
         
         [System.Runtime.Serialization.EnumMemberAttribute()]
-        Min = 5,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        Newest = 6,
-        
-        [System.Runtime.Serialization.EnumMemberAttribute()]
-        Oldest = 7,
+        Oldest = 5,
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("System.ServiceModel", "4.0.0.0")]

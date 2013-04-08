@@ -734,7 +734,6 @@ namespace DJTestClient
                 }
             }
         }
-
         private static Achievement createAchievement1()
         {
             Achievement a = new Achievement();
@@ -768,16 +767,16 @@ namespace DJTestClient
             AchievementSelect select = new AchievementSelect();
             select.startDate = DateTime.MinValue;
             select.endDate = DateTime.MaxValue;
-            select.selectKeyword = SelectKeyword.CountGreaterThan;
-            select.selectValue = "0";
+            select.selectKeyword = SelectKeyword.CountGTE;
+            select.selectValue = "1";
             select.clauseKeyword = ClauseKeyword.Artist;
             select.clauseValue = "Rolling Stones";
             a.selectList[0] = select;
             AchievementSelect select2 = new AchievementSelect();
             select2.startDate = DateTime.MinValue;
             select2.endDate = DateTime.MaxValue;
-            select2.selectKeyword = SelectKeyword.CountGreaterThan;
-            select2.selectValue = "0";
+            select2.selectKeyword = SelectKeyword.CountGTE;
+            select2.selectValue = "1";
             select2.clauseKeyword = ClauseKeyword.Artist;
             select2.clauseValue = "Beatles";
             a.selectList[1] = select2;
@@ -818,16 +817,16 @@ namespace DJTestClient
             AchievementSelect select = new AchievementSelect();
             select.startDate = DateTime.MinValue;
             select.endDate = DateTime.MaxValue;
-            select.selectKeyword = SelectKeyword.CountGreaterThan;
-            select.selectValue = "0";
+            select.selectKeyword = SelectKeyword.CountGTE;
+            select.selectValue = "1";
             select.clauseKeyword = ClauseKeyword.Artist;
             select.clauseValue = "Rolling Stones";
             a.selectList[0] = select;
             AchievementSelect select2 = new AchievementSelect();
             select2.startDate = DateTime.MinValue;
             select2.endDate = DateTime.MaxValue;
-            select2.selectKeyword = SelectKeyword.CountGreaterThan;
-            select2.selectValue = "0";
+            select2.selectKeyword = SelectKeyword.CountGTE;
+            select2.selectValue = "1";
             select2.clauseKeyword = ClauseKeyword.Artist;
             select2.clauseValue = "Beatles";
             a.selectList[1] = select2;
@@ -838,7 +837,7 @@ namespace DJTestClient
         private static string achievementString(Achievement a)
         {
             string s = String.Empty;
-            s += a.ID + ", " + a.name + ", " + a.description + "\n";
+            s += a.ID + ", " + a.name + ", " + a.description + " P: " + a.isPermanant + " V: " + a.visible + "\n";
             foreach (AchievementSelect select in a.selectList)
             {
                 s += "\t" + select.selectKeyword.ToString() + " = '" + select.selectValue + "' where " + select.clauseKeyword.ToString() + " = '" + select.clauseValue + "' ";

@@ -1828,7 +1828,7 @@ namespace KServer
                     List<int> songIDs = new List<int>();
                     r = db.GetRandomSongsForArtist(band, DJID, numberPerBand, out songIDs);
                     if (r.error)
-                        extraMessage += "Error looking for : " + band + "\n";
+                        extraMessage += "Error looking for : " + band + "\n" + r.message;
 
                     for (int i = 0; i < songIDs.Count; i++)
                     {
