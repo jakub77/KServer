@@ -2251,7 +2251,7 @@ namespace KServer
                 }
             }
         }
-        internal Response MobileGetAchievements(int mobileID, int venueID, out List<Achievement> achievements)
+        internal Response MobileGetAchievements(int mobileID, int venueID, out List<Achievement> achievements, int start, int count)
         {
             //select ObjectSize, Object, Achievements.ID from Achievements inner join AwardedAchievements on AwardedAchievements.AchievementID = Achievements.ID
             // where AwardedAchievements.MobileID = '1' and Achievements.DJID = '4';
@@ -2267,7 +2267,9 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@DJID", venueID);
             }
 
-            cmd.CommandText += ";";
+            cmd.CommandText += " order by Name asc offset @start rows fetch next @count rows only;";
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@count", count);
 
             try
             {
@@ -2294,7 +2296,7 @@ namespace KServer
                 return r;
             }
         }
-        internal Response MobileGetUnearnedVisibleAchievements(int mobileID, int venueID, out List<Achievement> achievements)
+        internal Response MobileGetUnearnedVisibleAchievements(int mobileID, int venueID, out List<Achievement> achievements, int start, int count)
         {
             // select ObjectSize, Object, Achievements.ID from Achievements 
             // where Achievements.ID not in(select AchievementID from AwardedAchievements where MobileID = '3') and DJID = '4';
@@ -2310,7 +2312,9 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@DJID", venueID);
             }
 
-            cmd.CommandText += ";";
+            cmd.CommandText += " order by Name asc offset @start rows fetch next @count rows only;";
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@count", count);
 
             try
             {

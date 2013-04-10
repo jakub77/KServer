@@ -111,20 +111,35 @@ namespace JakubMobileClient
                         }
                     }
                 }
-                else if (command.StartsWith("xx"))
+                else if (command.StartsWith("x"))
                 {
                     try
                     {
-                        Stream data = client.OpenRead(baseAddress + "/GetDateTime/");
+                        string title, artist;
+                        title = String.Empty;
+                        Console.Write("Artist: ");
+                        artist = Console.ReadLine();
+                        int start = 0;
+                        int count = 20;
+                        Stream data = client.OpenRead(baseAddress + "/MobileSongSearch/?title=" + title.Trim() + "&artist=" + artist.Trim() + "&start=" + start + "&count=" + count + "&venueID=" + venueID + "&userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
-                        DateTime r = strToJSON<DateTime>(s);
+
+                        if (s == "")
+                        {
+                            Console.WriteLine("An error occured");
+                            continue;
+                        }
+
+                        List<Song> r = strToJSON<List<Song>>(s);
                         if (displayJSON)
                             Console.WriteLine("JSON: " + s);
                         else
                         {
-                            Console.WriteLine(r.ToString());
-                            Console.WriteLine(r.ToShortDateString());
+                            foreach (Song song in r)
+                            {
+                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.duration + ", " + song.rating);
+                            }
                         }
                     }
                     catch (Exception e)

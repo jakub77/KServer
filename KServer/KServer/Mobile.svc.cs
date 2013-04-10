@@ -1666,7 +1666,7 @@ namespace KServer
 
                 List<Achievement> achievements;
 
-                r = db.MobileGetAchievements(mobileID, venueID, out achievements);
+                r = db.MobileGetAchievements(mobileID, venueID, out achievements, start, count);
                 if (r.error)
                     return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
@@ -1715,7 +1715,7 @@ namespace KServer
 
                 List<Achievement> unearnedAchievements;
 
-                r = db.MobileGetUnearnedVisibleAchievements(mobileID, venueID, out unearnedAchievements);
+                r = db.MobileGetUnearnedVisibleAchievements(mobileID, venueID, out unearnedAchievements, start, count);
                 if (r.error)
                     return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
@@ -1735,6 +1735,18 @@ namespace KServer
             }
         }
         #endregion
+
+        public List<Song> MobileGetSongSuggestions(int venueID, long userKey, int start, int count)
+        {
+            // Get all the songs I have sung.
+            // Find people who have sung the same songs.
+            // Get the songs these people have sung
+            // If these songs have the same band as some song I've sung, award 2x points
+            // If multiple people have sung the same song, points are cumalitive.
+            // If we aren't finding songs, look up artists I have sung in the DB, and get other songs by that artist.
+            // Insert a popular song into the mix for variablility.
+            return null;
+        }
 
         #region PrivateMethods
         /// <summary>
