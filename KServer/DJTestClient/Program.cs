@@ -753,7 +753,7 @@ namespace DJTestClient
             select.clauseValue = "Carry on Wayward Son";
             a.isPermanant = false;
             a.selectList[0] = select;
-            a.visible = false;
+            a.visible = true;
             return a;
         }
         private static Achievement createAchievement2()

@@ -327,9 +327,7 @@ namespace KServer
 
             if (deviceID.Trim().Length == 0)
             {
-                r.message = "Warning: No DeviceID was registered for this device";
-                r.message += Environment.StackTrace;
-                LogError("Message not sent to (No DeviceID associated): " + mobileID, message, null, 2);
+                //LogError("Message not sent to (No DeviceID associated): " + mobileID, String.Empty, null, 2);
                 return r;
             }
 
@@ -337,9 +335,9 @@ namespace KServer
             if (r.message.ToLower().Contains("error"))
             {
                 r.error = true;
-                LogError("Message had error sending to: " + mobileID, message, null, 2);
+                LogError("Message had error sending to: " + mobileID + " response was: " + r.message, message, null, 2);
             }
-            LogError("Message sent without error to: " + mobileID, message, null, 2);
+            LogError("Message sent without error to: " + mobileID + " response was: " + r.message, message, null, 2);
             return r;
         }
 
@@ -351,6 +349,16 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         internal static Response PushAndroidNotification(string deviceID, string message)
         {
+            string collapseKey = String.Empty;
+            if (message == "queue")
+                collapseKey = "queue";
+            else if (message == "turn")
+                collapseKey = "turn";
+            else if (message == "next")
+                collapseKey = "next";
+            else
+                collapseKey = "other";
+
             Response r = new Response();
             var value = message;
             WebRequest tRequest;
@@ -359,7 +367,7 @@ namespace KServer
             tRequest.ContentType = " application/x-www-form-urlencoded;charset=UTF-8";
             tRequest.Headers.Add(string.Format("Authorization: key={0}", APPLICATION_ID));
             tRequest.Headers.Add(string.Format("Sender: id={0}", SENDER_ID));
-            string postData = "collapse_key=score_update&time_to_live=108&delay_while_idle=1&data.message=" + value + "&data.time=" + System.DateTime.Now.ToString() + "&registration_id=" + deviceID + "";
+            string postData = "collapse_key=" + collapseKey + "&time_to_live=0&delay_while_idle=false&data.message=" + value + "&data.time=" + System.DateTime.Now.ToString() + "&registration_id=" + deviceID + "";
             Console.WriteLine(postData);
             Byte[] byteArray = Encoding.UTF8.GetBytes(postData);
             tRequest.ContentLength = byteArray.Length;

@@ -744,7 +744,8 @@ namespace KServer
                     r = db.SetSongRequests(venueID, requests);
                     if (r.error)
                         return r;
-                    Common.PushMessageToMobile(mobileID, "queue", db);
+                    //Common.PushMessageToMobile(mobileID, "queue", db);
+                    Common.PushMessageToUsersOfDJ(venueID, "queue", db);
                     return r;
                 }
 
@@ -1677,7 +1678,7 @@ namespace KServer
                     ma.ID = a.ID;
                     ma.name = a.name;
                     ma.description = a.description;
-                    ma.image = a.image.ToString();
+                    ma.image = a.image.ToString() + ".png";
                     mobileAchievements.Add(ma);
                 }
 
@@ -1726,10 +1727,9 @@ namespace KServer
                     ma.ID = a.ID;
                     ma.name = a.name;
                     ma.description = a.description;
-                    ma.image = a.image.ToString();
+                    ma.image = a.image.ToString() + ".png";
                     mobileUnearnedAchievements.Add(ma);
                 }
-
 
                 return mobileUnearnedAchievements;
             }
@@ -1738,6 +1738,7 @@ namespace KServer
 
         public List<Song> MobileGetSongSuggestions(int venueID, long userKey, int start, int count)
         {
+
             // Get all the songs I have sung.
             // Find people who have sung the same songs.
             // Get the songs these people have sung
@@ -1745,7 +1746,8 @@ namespace KServer
             // If multiple people have sung the same song, points are cumalitive.
             // If we aren't finding songs, look up artists I have sung in the DB, and get other songs by that artist.
             // Insert a popular song into the mix for variablility.
-            return null;
+
+            return MobileGetMostPopularSongs(venueID, start, count);
         }
 
         #region PrivateMethods

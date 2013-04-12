@@ -19,6 +19,7 @@ using System.Data.SqlClient;
 // Notes:
 // improve error message.
 // make database browse ignore non alphanumberic characters until it finds alphanumeric.
+// Only send queue message when user changes their first song since mobile user doesn't see other songs. Still send queue message to the user that changed the other stuff though.
 
 namespace KServer
 {
@@ -589,7 +590,7 @@ namespace KServer
                 }
 
                 
-                if (queue.Count > 0 && nextUserID > 0)
+                if (queue.Count > 0)
                 {
                     nextUserID = queue[0].user.userID;
                     if(nextUserID > 0)
@@ -604,9 +605,12 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                r = db.MobileAddSongHistory(sr.user.userID, DJID, sr.songID, DateTime.Now);
-                if (r.error)
-                    Common.LogError(r.message, Environment.StackTrace, r, 1);
+                if (sr.user.userID > 0)
+                {
+                    r = db.MobileAddSongHistory(sr.user.userID, DJID, sr.songID, DateTime.Now);
+                    if (r.error)
+                        Common.LogError(r.message, Environment.StackTrace, r, 1);
+                }
 
                 Common.PushMessageToUsersOfDJ(DJID, "queue", db);
 
@@ -799,7 +803,8 @@ namespace KServer
                 if (requests.Trim().Length == 0)
                 {
                     newRequests = clientID.ToString() + "~" + sr.songID.ToString();
-                    r = Common.PushMessageToMobile(sr.user.userID, "queue", db);
+                    //r = Common.PushMessageToMobile(sr.user.userID, "queue", db);
+                    Common.PushMessageToUsersOfDJ(DJID, "queue", db);
                     r = db.SetSongRequests(DJID, newRequests);
                     return r;
                 }
