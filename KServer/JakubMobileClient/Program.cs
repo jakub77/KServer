@@ -47,7 +47,44 @@ namespace JakubMobileClient
                     Console.WriteLine("CreatePlaylist<cp>, DeletePlaylist<dp>, AddToPlaylist<ap>,");
                     Console.WriteLine("RemoveFromPlaylist<rp>, ListPlaylists<lp>, getWait<gw>, songHistory<sh>,");
                     Console.WriteLine("RateSong<rs>, GetRating<gr>, MoveSongRequestToTop<st>, mostPopular<mp>");
-                    Console.WriteLine("GetAchievements<ga>, GetUnearnedAchievements<gu>");
+                    Console.WriteLine("GetAchievements<ga>, GetUnearnedAchievements<gu>, songSuggestions<sg>");
+                }
+                //MobileGetSongSuggestions/?venueID={venueID}&userKey={userKey}&start={start}&count={count}
+                else if (command.StartsWith("sg"))
+                {
+                    try
+                    {
+                        int start = 0;
+                        int count = 5;
+                        Console.WriteLine("Count:");
+                        count = int.Parse(Console.ReadLine());
+                        Stream data = client.OpenRead(baseAddress + "/MobileGetSongSuggestions/?venueID=" + venueID + "&userKey=" + userKey + "&start=" + start + "&count=" + count);
+                        
+                        
+                        StreamReader reader = new StreamReader(data);
+                        string s = reader.ReadToEnd();
+
+                        if (s == "")
+                        {
+                            Console.WriteLine("An error occured");
+                            continue;
+                        }
+
+                        List<Song> r = strToJSON<List<Song>>(s);
+                        if (displayJSON)
+                            Console.WriteLine("JSON: " + s);
+                        else
+                        {
+                            foreach (Song song in r)
+                            {
+                                Console.WriteLine(song.ID + ", " + song.title + ", " + song.artist + ", " + song.duration + ", " + song.rating);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Exception: " + e.Message);
+                    }
                 }
                 else if (command.StartsWith("gu"))
                 {

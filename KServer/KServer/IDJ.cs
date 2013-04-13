@@ -97,6 +97,20 @@ namespace KServer
 
     #region DataTypes
 
+    public class SameSongUser
+    {
+        public int songID { get; set; }
+        public int userID { get; set; }
+    }
+
+    public class SongAndCount
+    {
+        public Song song { get; set; }
+        public int count { get; set; }
+        public int tmp { get; set; }
+        public int tmp2 { get; set; }
+    }
+
     [DataContract]
     public class AchievementSelect
     {

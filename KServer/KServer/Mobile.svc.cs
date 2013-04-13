@@ -432,57 +432,29 @@ namespace KServer
                 if (r.error)
                     return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
-                r = db.MobileGetSongHistory(mobileID, start, count);
+                r = db.MobileGetSongHistory(mobileID, start, count, out songHistory);
                 if (r.error)
                     return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
-                // Case of empty playlists.
-                if (r.message.Trim().Length == 0)
-                    return songHistory;
-
-                //"ID", "VenueID", "MobileID", "SongID", "DateSung"
-                try
+                for (int i = 0; i < songHistory.Count; i++)
                 {
-                    string[] songHistoryLines = r.message.Trim().Split('\n');
-                    foreach (string songHistoryLine in songHistoryLines)
-                    {
-                        string[] songHistoryParts = Common.splitByDel(songHistoryLine);
-                        SongHistory sh = new SongHistory();
+                    r = db.GetVenueName(songHistory[i].venue.venueID);
+                    if (r.error)
+                        return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    songHistory[i].venue.venueName = r.message.Trim();
+                    r = db.GetVenueAddress(songHistory[i].venue.venueID);
+                    if (r.error)
+                        return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    songHistory[i].venue.venueAddress = r.message.Trim();
 
-                        int vid;
-                        if (!int.TryParse(songHistoryParts[1], out vid))
-                            return (List<SongHistory>)Common.LogError("MobileGetSongHistory venueID parse fail from MobileSongHistory.", Environment.StackTrace, null, 0);
-                        sh.venue = new Venue();
-                        sh.venue.venueID = vid;
-
-                        r = db.GetVenueName(vid);
-                        if (r.error)
-                            return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
-                        sh.venue.venueName = r.message.Trim();
-
-                        r = db.GetVenueAddress(vid);
-                        if (r.error)
-                            return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
-                        sh.venue.venueAddress = r.message.Trim();
-
-                        int songID;
-                        if (!int.TryParse(songHistoryParts[3], out songID))
-                            return (List<SongHistory>)Common.LogError("MobileGetSongHistory songID parse fail from MobileSongHistory.", Environment.StackTrace, null, 0);
-
-                        Song song;
-                        r = Common.GetSongInformation(songID, vid, mobileID, out song, db, false);
-                        if (r.error)
-                            return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
-                        sh.song = song;
-                        sh.date = Convert.ToDateTime(songHistoryParts[4]);
-                        songHistory.Add(sh);
-                    }
-                    return songHistory;
+                    Song song;
+                    r = Common.GetSongInformation(songHistory[i].song.ID, songHistory[i].venue.venueID, mobileID, out song, db, false);
+                    if (r.error)
+                        return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    songHistory[i].song = song;
                 }
-                catch (Exception e)
-                {
-                    return (List<SongHistory>)Common.LogError(e.Message, e.StackTrace, null, 0);
-                }
+
+                return songHistory;
             }
         }
         /// <summary>
@@ -1738,19 +1710,170 @@ namespace KServer
 
         public List<Song> MobileGetSongSuggestions(int venueID, long userKey, int start, int count)
         {
+            try
+            {
+                // Get all the songs I have sung.
+                // Find people who have sung the same songs.
+                // Get the songs these people have sung
+                // If these songs have the same band as some song I've sung, award 2x points
+                // If multiple people have sung the same song, points are cumalitive.
+                // If we aren't finding songs, look up artists I have sung in the DB, and get other songs by that artist.
+                // Insert a popular song into the mix for variablility.
 
-            // Get all the songs I have sung.
-            // Find people who have sung the same songs.
-            // Get the songs these people have sung
-            // If these songs have the same band as some song I've sung, award 2x points
-            // If multiple people have sung the same song, points are cumalitive.
-            // If we aren't finding songs, look up artists I have sung in the DB, and get other songs by that artist.
-            // Insert a popular song into the mix for variablility.
+                int mobileID = -1;
+                using (DatabaseConnectivity db = new DatabaseConnectivity())
+                {
+                    #region SongSuggestionBoilerPlate
+                    // Try to establish a database connection
+                    Response r = db.OpenConnection();
+                    if (r.error)
+                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
-            return MobileGetMostPopularSongs(venueID, start, count);
+                    // Convert the userKey to MobileID
+                    r = MobileKeyToID(userKey, out mobileID, db);
+                    if (r.error)
+                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                    // Validate venueID if the any venueID not given.
+                    if (venueID != -1)
+                    {
+                        // Make sure the venueID exists.
+                        r = db.DJGetStatus(venueID);
+                        if (r.error)
+                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                        int venueStatus;
+                        if (!int.TryParse(r.message.Trim(), out venueStatus))
+                            return (List<Song>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                    }
+
+                    #endregion
+
+                    // The users's song history.
+                    List<SongHistory> userHistory;
+                    r = db.MobileGetSongHistory(mobileID, 0, 10, out userHistory);
+                    if (r.error)
+                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                    List<Song> suggestCollab;
+                    r = SuggestCollabFilter(userHistory, mobileID, venueID, count, out suggestCollab, db);
+
+                    // Get song suggestions based off of artist
+                    List<Song> suggestByArtist;
+                    // Suggest songs not sung by the user, but which have an artist the user has sung.
+                    r = SuggestSongsNotSungByMostSungArtists(count, mobileID, venueID, out suggestByArtist, db);
+                    if (r.error)
+                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                    // Go through song suggestions and combine them accordingly
+                    List<Song> finalSuggestions = new List<Song>();
+                    foreach (Song s in suggestByArtist)
+                    {
+                        Song song;
+                        r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
+                        if (r.error)
+                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        finalSuggestions.Add(song);
+                    }
+                    return finalSuggestions;
+                }
+            }
+            catch (Exception e)
+            {
+                return (List<Song>)Common.LogError("Exception in Suggest Song", e.ToString(), new List<Song>(), 2);
+            }
         }
 
+
+            
+
+
         #region PrivateMethods
+
+        private Response SuggestCollabFilter(List<SongHistory> userHistory, int mobileID, int venueID, int count, out List<Song> suggestCollab, DatabaseConnectivity db)
+        {
+            // Go through user history, find all users who have sung the same song.
+            // Now we have all people who have sung same songs as me.
+            // Assign potential songs a value. If a user has 3 songs in common with me, every song suggestable should get 3 pts.
+            // If 3 users have songs in common with me, and they each have a song in commong with themselves, that song gets 3 pts since it's from 3 users.
+            // Later on rank by points.
+            Response r = new Response();
+            suggestCollab = new List<Song>();
+            return r;
+        }
+
+        /// <summary>
+        /// Generates up to maxSuggestsions song suggestions for a user based off of their song history.
+        /// Suggested songs are from the same artists as songs they have previously sung with a bias
+        /// to artists they have sung more often. Suggestions are always song they have not sung yet.
+        /// </summary>
+        /// <param name="maxSuggestions"></param>
+        /// <param name="mobileID"></param>
+        /// <param name="DJID"></param>
+        /// <param name="songs"></param>
+        /// <param name="db"></param>
+        /// <returns></returns>
+        private Response SuggestSongsNotSungByMostSungArtists(int maxSuggestions, int mobileID, int DJID, out List<Song> songs, DatabaseConnectivity db)
+        {
+            Common.LogError("Entered method", "Max Sugg: " + maxSuggestions, null, 2);
+
+            List<SongAndCount> sAc;
+            songs = new List<Song>();
+            Response r;
+
+            // Get up to 10 unique artists this user has sung, ordered by the most sung first.
+            r = db.MobileGetUniqueArtistsSung(mobileID, 0, 10, out sAc);
+            if (r.error)
+                return r;
+
+            // Loop through the unique artists.
+            // store total number of song sings in singCount
+            // Store the iteration singCount in tmp for each sAc.
+            int singCount = 0;
+            for (int i = 0; i < sAc.Count; i++)
+            {
+                singCount += sAc[i].count;
+                sAc[i].tmp = singCount;
+            }
+
+            // Generate a random number between 0 and the number of total sings.
+            // Loop through the artists, if the random number is less than the 
+            // store singCount iteration number, choose to suggest a song based off that artist.
+            Random rand = new Random(DateTime.Now.Millisecond);
+            
+            for (int i = 0; i < maxSuggestions; i++)
+            {
+                int rn = rand.Next(0, singCount);
+                for (int j = 0; j < sAc.Count; j++)
+                {
+                    if (rn < sAc[j].tmp)
+                    {
+                        sAc[j].tmp2++;
+                        break;
+                    }
+                }
+            }
+
+            // For each artist, if we selected to suggest based off them, do so the number of times requested.
+            foreach (SongAndCount s in sAc)
+            {
+                if (s.tmp2 > 0)
+                {
+                    List<int> songIDs;
+                    r = db.MobileGetRandomSongsFromExactArtistNeverSung(s.song.artist, DJID, s.tmp2, mobileID, out songIDs);
+                    if (r.error)
+                        return r;
+                    foreach (int id in songIDs)
+                    {
+                        Song song = new Song();
+                        song.ID = id;
+                        songs.Add(song);
+                    }
+                }
+            }
+
+            return r;
+        }
         /// <summary>
         /// Check to see if a status of a venue is equal to the desired status. 
         /// </summary>

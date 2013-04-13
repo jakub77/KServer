@@ -1892,21 +1892,46 @@ namespace KServer
         }
         #endregion
 
-        #region SongHistory
-        /// <summary>
-        /// Get the song history for a mobile user.
+        #region SongHistoryAndSuggestions
+        /// Get the song history for a mobile user. ONLY sets the SONGID, VENUEID, and DATESUNG in each songhistory object.
         /// </summary>
-        /// <param name="userID">The userID.</param>
-        /// <param name="start">The starting index.</param>
+        /// <param name="userID">The mobile user ID</param>
+        /// <param name="start">The starting index</param>
         /// <param name="count">The number of results.</param>
-        /// <returns>The outcome of the opeation.</returns>
-        internal Response MobileGetSongHistory(int userID, int start, int count)
+        /// <param name="history">Out stores the song history.</param>
+        /// <returns>The outcome of the operation.</returns>
+        internal Response MobileGetSongHistory(int userID, int start, int count, out List<SongHistory> history)
         {
-            SqlCommand cmd = new SqlCommand("select A.* from MobileSongHistory A inner join (select ROW_NUMBER() over(order by DateSung DESC) as 'RN', * from MobileSongHistory where MobileID = @userID) B on A.ID = B.ID and B.rn between @start and @count order by DateSung DESC;");
+            history = new List<SongHistory>();
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select VenueID, SongID, DateSung from MobileSongHistory where MobileID = @userID order by DateSung desc offset @start rows fetch next @count rows only;", con);
             cmd.Parameters.AddWithValue("@userID", userID);
-            cmd.Parameters.AddWithValue("@start", start + 1);
-            cmd.Parameters.AddWithValue("@count", start + count);
-            return DBQuery(cmd, new string[5] { "ID", "VenueID", "MobileID", "SongID", "DateSung" });
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@count", count);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SongHistory sh = new SongHistory();
+                        sh.venue = new Venue();
+                        sh.song = new Song();
+                        sh.venue.venueID = reader.GetInt32(0);
+                        sh.song.ID = reader.GetInt32(1);
+                        sh.date = reader.GetDateTime(2);
+                        history.Add(sh);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetSongHistory: " + e.Message;
+                return r;
+            }
         }
         /// <summary>
         /// Add a song to a mobile user's song history.
@@ -1924,6 +1949,101 @@ namespace KServer
             cmd.Parameters.AddWithValue("@songID", songID);
             cmd.Parameters.AddWithValue("@dateSung", dateSung);
             return DBNonQuery(cmd);
+        }
+
+        internal Response MobileGetUniqueArtistsSung(int userID, int start, int count, out List<SongAndCount> sAc)
+        {
+            sAc = new List<SongAndCount>();
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select Artist, Count(Artist) from DJSongs inner join MobileSongHistory on MobileSongHistory.SongID = DJSongs.SongID ", con);
+            cmd.CommandText += "where MobileSongHistory.MobileID = @userID group by Artist order by Count(Artist) desc offset @start rows fetch next @count rows only;";
+            cmd.Parameters.AddWithValue("@userID", userID);
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@count", count);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SongAndCount songCount = new SongAndCount();
+                        songCount.song = new Song();
+                        songCount.song.artist = reader.GetString(0);
+                        songCount.count = reader.GetInt32(1);
+                        sAc.Add(songCount);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetUniqueArtistsSung: " + e.Message;
+                return r;
+            }
+        }
+
+        internal Response MobileGetRandomSongsFromExactArtistNeverSung(string artist, int DJID, int count, int mobileID, out List<int> songIDs)
+        {
+            Response r = new Response();
+            songIDs = new List<int>();
+            using (SqlCommand cmd = new SqlCommand("select top(@count) SongID from DJSongs where SongID not in(select SongID from MobileSongHistory where MobileID = @mobileID) and Artist like @artist and DJListID = @DJID order by NEWID();", con))
+            {
+                cmd.Parameters.AddWithValue("@count", count);
+                cmd.Parameters.AddWithValue("@mobileID", mobileID);
+                cmd.Parameters.AddWithValue("@artist", artist.Trim());
+                cmd.Parameters.AddWithValue("@DJID", DJID);
+
+                try
+                {
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+
+                        while (reader.Read())
+                        {
+                            songIDs.Add(reader.GetInt32(0));
+                        }
+                    }
+                    return r;
+                }
+                catch (Exception e)
+                {
+                    r.error = true;
+                    r.message = "Exception in MobileGetRandomSongsFromExactArtistNeverSung: " + e.Message;
+                    return r;
+                }
+            }
+        }
+
+        internal Response MobileGetOthersWhoSangSong(int userID, int count, List<SameSongUser> ssu)
+        {
+            ssu = new List<SameSongUser>();
+            Response r = new Response();
+            SqlCommand cmd = new SqlCommand("select SongID, MobileID MobileSongHistory where MobileID != @userID order by DateSung desc offset 0 rows fetch next @count rows only;", con);
+            cmd.Parameters.AddWithValue("@userID", userID);
+            cmd.Parameters.AddWithValue("@count", count);
+
+            try
+            {
+                using (SqlDataReader reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        SameSongUser s = new SameSongUser();
+                        s.songID = reader.GetInt32(0);
+                        s.userID = reader.GetInt32(1);
+                        ssu.Add(s);
+                    }
+                }
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.error = true;
+                r.message = "Exception in MobileGetOthersWhoSangSong: " + e.Message;
+                return r;
+            }
         }
 
         #endregion
@@ -2342,6 +2462,9 @@ namespace KServer
             }
         }
         #endregion
+
+
+
 
 
         internal Response GetRandomSongsForArtist(string artist, int DJID, int count, out List<int> songIDs)
