@@ -97,10 +97,32 @@ namespace KServer
 
     #region DataTypes
 
-    public class SameSongUser
+    public class SangSong
     {
-        public int songID { get; set; }
+        public string title { get; set; }
+        public string artist { get; set; }
+        public List<KeyValuePair<int,int>> userIDsAndCount { get; set; }
+        public SangSong()
+        {
+            userIDsAndCount = new List<KeyValuePair<int, int>>();
+        }
+    }
+
+    public class UserAndSongs
+    {
+        public List<KeyValuePair<string[], int>> songs { get; set; }
         public int userID { get; set; }
+        public int commonScore { get; set; }
+        public UserAndSongs()
+        {
+            songs = new List<KeyValuePair<string[], int>>();
+        }
+        public UserAndSongs(int userID, int commonScore, List<KeyValuePair<string[], int>> songs)
+        {
+            this.userID = userID;
+            this.commonScore = commonScore;
+            this.songs = songs;
+        }
     }
 
     public class SongAndCount

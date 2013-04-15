@@ -1710,6 +1710,7 @@ namespace KServer
 
         public List<Song> MobileGetSongSuggestions(int venueID, long userKey, int start, int count)
         {
+            int count1 = count - count / 2;
             try
             {
                 // Get all the songs I have sung.
@@ -1723,6 +1724,7 @@ namespace KServer
                 int mobileID = -1;
                 using (DatabaseConnectivity db = new DatabaseConnectivity())
                 {
+                    List<Song> finalSuggestions = new List<Song>();
                     #region SongSuggestionBoilerPlate
                     // Try to establish a database connection
                     Response r = db.OpenConnection();
@@ -1749,32 +1751,67 @@ namespace KServer
 
                     #endregion
 
-                    // The users's song history.
-                    List<SongHistory> userHistory;
-                    r = db.MobileGetSongHistory(mobileID, 0, 10, out userHistory);
+                    // The user's distinct song history.
+                    List<KeyValuePair<string[], int>> songsAndCount; // Song Title/Artist and how many times it shows up.
+                    r = db.MobileGetDistictSongHistory(mobileID, 0, 10, out songsAndCount);
                     if (r.error)
                         return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
+                    // Get song suggestions based on what other people sang.
                     List<Song> suggestCollab;
-                    r = SuggestCollabFilter(userHistory, mobileID, venueID, count, out suggestCollab, db);
-
-                    // Get song suggestions based off of artist
-                    List<Song> suggestByArtist;
-                    // Suggest songs not sung by the user, but which have an artist the user has sung.
-                    r = SuggestSongsNotSungByMostSungArtists(count, mobileID, venueID, out suggestByArtist, db);
-                    if (r.error)
+                    r = SuggestCollabFilter(songsAndCount, mobileID, venueID, count1, out suggestCollab, db);
+                    if(r.error)
                         return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
 
-                    // Go through song suggestions and combine them accordingly
-                    List<Song> finalSuggestions = new List<Song>();
-                    foreach (Song s in suggestByArtist)
+                    // Add these songs to fill up to half of the final suggestions.
+                    for (int i = 0; i < suggestCollab.Count; i++)
                     {
-                        Song song;
-                        r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
+                        Song s = suggestCollab[i];
+                        r = Common.LoadSongRating(ref s, mobileID, db);
                         if (r.error)
                             return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
-                        finalSuggestions.Add(song);
+                        finalSuggestions.Add(s);
                     }
+
+                    if (finalSuggestions.Count < count)
+                    {
+                        // Get song suggestions based off of artist
+                        List<Song> suggestByArtist;
+                        // Suggest songs not sung by the user, but which have an artist the user has sung.
+                        r = SuggestSongsNotSungByMostSungArtists(count - finalSuggestions.Count, mobileID, venueID, out suggestByArtist, db);
+                        if (r.error)
+                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                        // Add the artist suggestions to fill out the suggetsions.
+                        foreach (Song s in suggestByArtist)
+                        {
+                            Song song;
+                            r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
+                            if (r.error)
+                                return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                            finalSuggestions.Add(song);
+                        }
+                    }
+
+                    if (finalSuggestions.Count < count)
+                    {
+                        // If we are lacking songs still, get from popular songs.
+                        List<Song> popSongs;
+                        List<int> popCounts;
+                        r = db.GetMostPopularSongs(venueID, 0, count - finalSuggestions.Count, out popSongs, out popCounts);
+                        if (r.error)
+                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+
+                        foreach (Song s in popSongs)
+                        {
+                            Song song;
+                            r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
+                            if (r.error)
+                                return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                            finalSuggestions.Add(song);
+                        }
+                    }
+
                     return finalSuggestions;
                 }
             }
@@ -1784,24 +1821,193 @@ namespace KServer
             }
         }
 
-
-            
-
-
         #region PrivateMethods
 
-        private Response SuggestCollabFilter(List<SongHistory> userHistory, int mobileID, int venueID, int count, out List<Song> suggestCollab, DatabaseConnectivity db)
+        private Response SuggestCollabFilter(List<KeyValuePair<string[], int>> userSongsAndCount, int mobileID, int venueID, int count, out List<Song> suggestCollab, DatabaseConnectivity db)
         {
-            // Go through user history, find all users who have sung the same song.
-            // Now we have all people who have sung same songs as me.
             // Assign potential songs a value. If a user has 3 songs in common with me, every song suggestable should get 3 pts.
             // If 3 users have songs in common with me, and they each have a song in commong with themselves, that song gets 3 pts since it's from 3 users.
             // Later on rank by points.
             Response r = new Response();
             suggestCollab = new List<Song>();
+
+            // Go through user history, get all the users who sang songs that I sang.
+            // List of userIds, and how many songs we have in common.
+            List<KeyValuePair<int, int>> userCountInCommon;
+            r = GetUsersSongsInCommon(userSongsAndCount, mobileID, db, out userCountInCommon);
+            if (r.error)
+                return r;
+
+            String mes = string.Empty;
+            
+            // Stores each user, how similar to them we are, what songs they have sung, and how often they have sung those songs.
+            List<UserAndSongs> userAndSongs = new List<UserAndSongs>();
+
+            // Get songs that the in common users have sung at this venue.
+            foreach (KeyValuePair<int, int> other in userCountInCommon)
+            {
+                mes = "User: " + other.Key + " Count: " + other.Value + "\r\n";
+                Common.LogError("NEW USER", mes, null, 2);
+
+                List<KeyValuePair<string[], int>> OSAC;
+
+                r = db.MobileGetOtherDistictSongHistory(other.Key, 0, 2*count, out OSAC);
+                if (r.error)
+                    return r;
+
+
+                mes = string.Empty;
+                foreach (KeyValuePair<string[], int> s in OSAC)
+                {
+                    mes += "Song: " + s.Key[0] + " - " + s.Key[1] + " Count: " + s.Value + "\r\n";
+                }
+                Common.LogError("Raw Songs", mes, null, 2);
+
+
+                // Remove any songs from other user's history that we have already sang.
+                foreach (KeyValuePair<string[], int> excludeSong in userSongsAndCount)
+                {
+                    for (int i = 0; i < OSAC.Count; i++)
+                    {
+                        if (OSAC[i].Key[0].Equals(excludeSong.Key[0]) && OSAC[i].Key[1].Equals(excludeSong.Key[1]))
+                        {
+                            OSAC.RemoveAt(i);
+                            break;
+                        }
+                    }
+                }
+
+                mes = string.Empty;
+                foreach (KeyValuePair<string[], int> s in OSAC)
+                {
+                    mes += "Song: " + s.Key[0] + " - " + s.Key[1] + " Count: " + s.Value + "\r\n";
+                }
+                Common.LogError("Remaining Songs", mes, null, 2);
+
+                userAndSongs.Add(new UserAndSongs(other.Key, other.Value, OSAC));             
+            }
+
+
+            Random rand = new Random(DateTime.Now.Millisecond);
+            while (userAndSongs.Count > 0)
+            {
+                int userIndex = selectRandWeightedUser(rand, userAndSongs);
+                int songIndex = selectRandomSong(rand, userAndSongs[userIndex].songs);
+                string title = userAndSongs[userIndex].songs[songIndex].Key[0];
+                string artist = userAndSongs[userIndex].songs[songIndex].Key[1];
+                userAndSongs[userIndex].songs.RemoveAt(songIndex);
+                if (userAndSongs[userIndex].songs.Count == 0)
+                    userAndSongs.RemoveAt(userIndex);
+
+                Song song;
+                r = db.MobileGetSongFromTitleArtist(title, artist, venueID, out song);
+                if (r.error)
+                    return r;
+                if (song != null)
+                    suggestCollab.Add(song);
+                if (suggestCollab.Count >= count)
+                    return r;
+            }
+            // Get count songs.
+
+
+            //// Now weighted randomly select users, then weighted randomly select songs out of there.
+            //foreach (UserAndSongs uas in userAndSongs)
+            //{
+            //    foreach (KeyValuePair<string[], int> s in uas.songs)
+            //    {
+            //        Song song;
+            //        r = db.MobileGetSongFromTitleArtist(s.Key[0], s.Key[1], venueID, out song);
+            //        if (r.error)
+            //            return r;
+            //        if(song != null)
+            //            suggestCollab.Add(song);
+            //        if (suggestCollab.Count >= count)
+            //            return r;
+            //    }
+            //}
             return r;
         }
 
+        private int selectRandomSong(Random rand, List<KeyValuePair<string[], int>> all)
+        {
+            int totalSongScore = 0;
+            foreach (KeyValuePair<string[], int> s in all)
+                totalSongScore += s.Value;
+
+            int sum = 0;
+            int rn = rand.Next(1, totalSongScore);
+            int count = 0;
+            foreach (KeyValuePair<string[], int> s in all)
+            {
+                sum += s.Value;
+                if (rn <= sum)
+                    return count;
+                count++;
+            }
+
+            Common.LogError("selectRandomSong logic fail", "Had to select first song", null, 2);
+            return 0;
+        }
+
+        private int selectRandWeightedUser(Random rand, List<UserAndSongs> all)
+        {
+            int totalUserScore = 0;
+            foreach (UserAndSongs uas in all)
+                totalUserScore += uas.commonScore;
+
+            int sum = 0;
+            int rn = rand.Next(1, totalUserScore);
+            int count = 0;
+            foreach (UserAndSongs uas in all)
+            {
+                sum += uas.commonScore;
+                if (rn <= sum)
+                    return count;
+                count++;
+            }
+            Common.LogError("SelectRandWeigtedUser logic fail", "Had to select first user", null, 2);
+            return 0;
+        }
+
+        /// <summary>
+        /// Returns a list of keyvaluepairs where the key is the userID of a user who has a song in common with us, and the value is the number of songs they have in common.
+        /// </summary>
+        /// <param name="userHistory"></param>
+        /// <param name="mobileID"></param>
+        /// <param name="db"></param>
+        /// <param name="songsInCommonList"></param>
+        /// <returns></returns>
+        private Response GetUsersSongsInCommon(List<KeyValuePair<string[], int>> songsAndCount, int mobileID, DatabaseConnectivity db, out List<KeyValuePair<int, int>> songsInCommonList)
+        {
+            songsInCommonList = new List<KeyValuePair<int, int>>();
+            Response r = new Response();
+            // For each user, see how many songs we have in common.
+            IDictionary<int, int> songsInCommonDict = new Dictionary<int, int>(); // UserID, count
+
+            // Loop through all of my songs.
+            foreach (KeyValuePair<string[],int> sAc in songsAndCount)
+            {
+                SangSong ss;
+                // Get everyone that shares this song.
+                r = db.MobileGetOthersWhoSangSong(mobileID, sAc.Key[0], sAc.Key[1], 10, out ss);
+                if (r.error)
+                    return r;
+                foreach (KeyValuePair<int, int> users in ss.userIDsAndCount)
+                {
+                    if (songsInCommonDict.ContainsKey(users.Key))
+                        songsInCommonDict[users.Key] += Math.Min(users.Value, sAc.Value);
+                    else
+                        songsInCommonDict.Add(users.Key, Math.Min(users.Value, sAc.Value));
+                }
+            }
+
+            // List of users and the number of songs we have in common, sort them in order of people we have most in common with.
+            songsInCommonList = songsInCommonDict.ToList();
+            songsInCommonList.Sort((one, two) => { return one.Value.CompareTo(two.Value); });
+            string mes = string.Empty;
+            return r;
+        }
         /// <summary>
         /// Generates up to maxSuggestsions song suggestions for a user based off of their song history.
         /// Suggested songs are from the same artists as songs they have previously sung with a bias
@@ -1815,8 +2021,6 @@ namespace KServer
         /// <returns></returns>
         private Response SuggestSongsNotSungByMostSungArtists(int maxSuggestions, int mobileID, int DJID, out List<Song> songs, DatabaseConnectivity db)
         {
-            Common.LogError("Entered method", "Max Sugg: " + maxSuggestions, null, 2);
-
             List<SongAndCount> sAc;
             songs = new List<Song>();
             Response r;
