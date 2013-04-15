@@ -1484,12 +1484,11 @@ namespace KServer
             r.result = 0;
             try
             {
-                string cmdText = @"Merge DJSongs as target
-                                            using (values(@pathOnDisk, @duration))
-	                                            as source (PathOnDisk, Duration)
-	                                            on target.Title = @title and target.Artist = @title and DJListID = @DJID
+                string cmdText = @"Merge DJSongs as t
+                                            using (select @DJID as DJListID, @title as Title, @artist as Artist) as s
+	                                            on t.DJListID = s.DJListID and t.Title = s.Title and t.Artist = s.Artist
                                             when matched then
-	                                            update set PathOnDisk = source.PathOnDisk, Duration = source.Duration
+	                                            update set t.PathOnDisk = @pathOnDisk, t.Duration = @duration
                                             when not matched then
 	                                            insert (DJListID, Title, Artist, PathOnDisk, Duration)
 	                                            values (@DJID, @title, @artist, @pathOnDisk, @duration);";
@@ -2385,11 +2384,10 @@ namespace KServer
         internal ExpResponse AwardAchievement(int mobileID, int achievementID)
         {
             ExpResponse r = new ExpResponse();
-            string cmdText = @"Merge AwardedAchievements as target
-                                using (values(@mobileID, @achievementID))
-                                  as source(MobileID, AchievementID)
-                                  on target.MobileID = @mobileID and target.AchievementID = @achievementID
-                                when not matched then
+            string cmdText = @"Merge AwardedAchievements as t
+                               using(select @mobileID as MobileID, @achievementID as AchievementID) as s
+                                  on t.MobileID = s.MobileID and t.AchievementID = s.AchievementID
+                               when not matched then
                                   insert(MobileID, AchievementID) values (@mobileID, @achievementID);";
 
             using (SqlCommand cmd = new SqlCommand(cmdText, con))

@@ -19,6 +19,10 @@ using System.Data.SqlClient;
 // Notes:
 // improve error message.
 // make database browse ignore non alphanumberic characters until it finds alphanumeric.
+// DJAddIgDup query is broken.
+// Replace count of zero with just returning or such.
+// No bieber songs achievement. select returning nothing would indicate success, not otherwise. count <= 0 artist = just bieber
+// When adding an achievement, evaluate it right away.
 
 namespace KServer
 {
