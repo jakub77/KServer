@@ -24,11 +24,16 @@ namespace KServer
         internal static readonly string SENDER_ID = "599874388677";
         internal static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
 
+        /// <summary>
+        /// Which log file to write to.
+        /// </summary>
         public enum LogFile
         {
             Mobile,
             DJ,
-            Debug
+            Debug,
+            Web,
+            Messages
         }
 
         internal static int GetBitFromBool(bool boolean)
@@ -149,10 +154,10 @@ namespace KServer
         /// <param name="DJID">The DJID of the DJ.</param>
         /// <param name="db">An object that allows for database connectivity.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal static Response DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
+        internal static ExpResponse DBToFullList(string raw, out List<queueSinger> queue, int DJID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             int count = 0;
 
             string[] clientRequests = raw.Split('`');
@@ -161,8 +166,7 @@ namespace KServer
                 string[] parts = clientRequests[i].Split('~');
                 if (parts.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Error in DBtoList 1";
+                    r.setErMsgStk(true, "Error in DBtoList 1", Environment.StackTrace);
                     return r;
                 }
 
@@ -180,8 +184,7 @@ namespace KServer
                     return r;
                 if (r.message.Trim().Length == 0)
                 {
-                    r.error = true;
-                    r.message = "DB Username lookup exception in DBToFullList!";
+                    r.setErMsgStk(true, "DB Username lookup exception in DBToFullList!", Environment.StackTrace);
                     return r;
                 }
 
@@ -292,9 +295,9 @@ namespace KServer
         /// <param name="queue">The queue.</param>
         /// <param name="message">The message to send.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal static Response PushMessageToUsersOfDJ(int DJID, string message, DatabaseConnectivity db)
+        internal static ExpResponse PushMessageToUsersOfDJ(int DJID, string message, DatabaseConnectivity db)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             List<int> clients;
             r = db.DJGetAssociatedClients(DJID, out clients);
             if (r.error)
@@ -304,9 +307,7 @@ namespace KServer
             {
                 r = PushMessageToMobile(clientID, message, db);
                 if (r.error)
-                    LogError(r.message, Environment.StackTrace, null, 2);
-                if (r.message.StartsWith("Warning:"))
-                    LogError(r.message, "UserID: " + clientID, null, 2);
+                    return r;
             }
             return r;
         }
@@ -317,9 +318,9 @@ namespace KServer
         /// <param name="mobileID">The mobileID of the client.</param>
         /// <param name="message">The message to push.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal static Response PushMessageToMobile(int mobileID, string message, DatabaseConnectivity db)
+        internal static ExpResponse PushMessageToMobile(int mobileID, string message, DatabaseConnectivity db)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             if (mobileID < 1)
                 return r;
 
@@ -330,18 +331,18 @@ namespace KServer
 
             if (deviceID.Trim().Length == 0)
             {
-                //LogError("Message not sent to (No DeviceID associated): " + mobileID, String.Empty, null, 2);
-                return r;
+                r.setErMsg(false, "Not sending message to " + mobileID + " no device ID associated");
+                return Common.LogErrorRetGen<ExpResponse>(r, new ExpResponse(), LogFile.Messages);
             }
 
             r = PushAndroidNotification(deviceID, message);
-            if (r.message.ToLower().Contains("error"))
+            if(r.error)
             {
-                r.error = true;
-                LogError("Message had error sending to: " + mobileID + " response was: " + r.message, message, null, 2);
+                r.setErMsgStk(true, "Message had error sending to: " + mobileID + " response was: " + r.message, string.Empty);
+                return Common.LogErrorRetGen<ExpResponse>(r, new ExpResponse(), LogFile.Messages);
             }
-            LogError("Message sent without error to: " + mobileID + " response was: " + r.message, message, null, 2);
-            return r;
+            r.setErMsgStk(false, "Message sent without error to: " + mobileID + " response was: " + r.message, message);
+            return Common.LogErrorRetGen<ExpResponse>(r, new ExpResponse(), LogFile.Messages);
         }
 
         /// <summary>
@@ -350,7 +351,7 @@ namespace KServer
         /// <param name="deviceID">The deviceID of the device.</param>
         /// <param name="message">The message to push.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal static Response PushAndroidNotification(string deviceID, string message)
+        internal static ExpResponse PushAndroidNotification(string deviceID, string message)
         {
             string collapseKey = String.Empty;
             if (message == "queue")
@@ -362,7 +363,7 @@ namespace KServer
             else
                 collapseKey = "other";
 
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             var value = message;
             WebRequest tRequest;
             tRequest = WebRequest.Create("https://android.googleapis.com/gcm/send");
@@ -384,10 +385,20 @@ namespace KServer
             tReader.Close();
             dataStream.Close();
             tResponse.Close();
-            r.message = sResponseFromServer;
+            if(sResponseFromServer.ToLower().Contains("error"))
+                r.setErMsg(true, sResponseFromServer);
+            else
+                r.setErMsg(false, sResponseFromServer);
             return r;
         }
 
+        /// <summary>
+        /// Log an ExpResponse to a file and return a new Response with the given message and error set to true.
+        /// </summary>
+        /// <param name="r">The ExpResponse to write.</param>
+        /// <param name="clientMsgToRet">The message to return.</param>
+        /// <param name="logFile">Which log to write to.</param>
+        /// <returns>The response set with the given message.</returns>
         internal static Response LogErrorRetNewMsg(ExpResponse r, string clientMsgToRet, LogFile logFile)
         {
             switch (logFile)
@@ -401,10 +412,24 @@ namespace KServer
                 case LogFile.Debug:
                     writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\debug.txt");
                     break;
+                case LogFile.Web:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\web.txt");
+                    break;
+                case LogFile.Messages:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\messages.txt");
+                    break;
             }
             return new Response(true, clientMsgToRet);
         }
 
+        /// <summary>
+        /// Log an ExpResponse to a file and pass the given object through.
+        /// </summary>
+        /// <typeparam name="T">The type of object to pass through.</typeparam>
+        /// <param name="r">The ExpResponse to write.</param>
+        /// <param name="passThrough">The object to pass through.</param>
+        /// <param name="logFile">Which log to write to.</param>
+        /// <returns>The passed through object.</returns>
         internal static T LogErrorRetGen<T>(ExpResponse r, T passThrough, LogFile logFile)
         {
             switch (logFile)
@@ -418,10 +443,22 @@ namespace KServer
                 case LogFile.Debug:
                     writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\debug.txt");
                     break;
+                case LogFile.Web:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\web.txt");
+                    break;
+                case LogFile.Messages:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\messages.txt");
+                    break;
             }
             return passThrough;
         }
 
+        /// <summary>
+        /// Logs and expresponse and passes the object back.
+        /// </summary>
+        /// <param name="r">The expresponse to log.</param>
+        /// <param name="logFile">Which logfile to write to.</param>
+        /// <returns>The expresponse passed in.</returns>
         internal static ExpResponse LogErrorPassThru(ExpResponse r, LogFile logFile)
         {
             switch (logFile)
@@ -435,18 +472,25 @@ namespace KServer
                 case LogFile.Debug:
                     writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\debug.txt");
                     break;
+                case LogFile.Web:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\web.txt");
+                    break;
+                case LogFile.Messages:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\messages.txt");
+                    break;
             }
             return r;
         }
 
         /// <summary>
-        /// Log an error message.
+        /// DEPRECIATED - Logs an error message and passes an object through.
         /// </summary>
         /// <param name="messagePart1">The message</param>
         /// <param name="messagePart2">The stack</param>
         /// <param name="passThru">A parameter to return</param>
         /// <param name="Case">0 = mobile_log, 1 = dj_log, 2 = debug</param>
         /// <returns>The passThru object</returns>
+        //[Obsolete("Please use LogErrorRetNewMsg, LogErrorRetGen, or LogErrorPassThru now", false)]
         internal static object LogError(string messagePart1, string messagePart2, object passThru, int Case)
         {
             switch (Case)
@@ -481,6 +525,11 @@ namespace KServer
             w.Close();
         }
 
+        /// <summary>
+        /// Appends an ExpResponse to a file.
+        /// </summary>
+        /// <param name="r">The ExpResponse</param>
+        /// <param name="file">The output file path to append to.</param>
         private static void writeExpRspToFile(ExpResponse r, string file)
         {
             StreamWriter w = File.AppendText(file);

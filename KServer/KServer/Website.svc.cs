@@ -22,24 +22,24 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response SendEmailWithUsername(string email)
         {
-            Response r;
+            ExpResponse r = new ExpResponse();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 List<string> DJUsernames;
                 List<string> mobileUsernames;
 
                 r = db.DJGetUsernamesByEmail(email, out DJUsernames);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 r = db.MobileGetUsernamesByEmail(email, out mobileUsernames);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 List<string> usernames = new List<string>();
                 List<string> roles = new List<string>();
@@ -68,8 +68,7 @@ namespace KServer
                 }
                 catch (Exception e)
                 {
-                    r.error = true;
-                    r.message = "Exception in SendEmailWithUsername: " + e.Message;
+                    r.setErMsgStk(true, e.Message, e.StackTrace);
                     return r;
                 }                             
             }
@@ -84,32 +83,26 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response StartPasswordReset(string email, string username, bool isDJ, string websiteAddress)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 int ID;
                 if (isDJ)
-                {
                     r = db.DJValidateUsernameEmail(username, email, out ID);
-                    if (r.error)
-                        return r;
-                }
                 else
-                {
                     r = db.MobileValidateUsernameEmail(username, email, out ID);
-                    if (r.error)
-                        return r;
-                }
+
+                if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 if(ID == -1)
                 {
-                    r.error=true;
-                    r.message="Username / email / Are you a DJ incorrect";
+                    r.setErMsg(true, Messages.ERR_BAD_EMAIL);
                     return r;
                 }
 
@@ -121,33 +114,25 @@ namespace KServer
                 while (uniqueIsNegOne != -1)
                 {
                     if (isDJ)
-                    {
                         r = db.DJGetPasswordResetID(random, out uniqueIsNegOne);
-                        if (r.error)
-                            return r;
-                    }
                     else
-                    {
                         r = db.MobileGetPasswordResetID(random, out uniqueIsNegOne);
-                        if (r.error)
-                            return r;
-                    }
+
+                    if(r.error)
+                        return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
+
                     random = Common.CreateSalt(32);
                     random = rgx.Replace(random, "x");
                 }
 
                 if (isDJ)
-                {
                     r = db.DJSetPasswordReset(ID, random);
-                    if (r.error)
-                        return r;
-                }
                 else
-                {
                     r = db.MobileSetPasswordReset(ID, random);
-                    if (r.error)
-                        return r;
-                }
+
+                if(r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
+
 
                 try
                 {
@@ -163,8 +148,7 @@ namespace KServer
                 }
                 catch (Exception e)
                 {
-                    r.error = true;
-                    r.message = "Exception in SendEmailWithUsername: " + e.Message;
+                    r.setErMsgStk(true, e.Message, e.StackTrace);
                     return r;
                 } 
             }
@@ -193,7 +177,7 @@ namespace KServer
 
         public Response ValidatePasswordResetKey(string key, bool isDJ, out int ID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             ID = -1;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {

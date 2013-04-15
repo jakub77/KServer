@@ -631,6 +631,134 @@ namespace KServer
                 return songs;
             }
         }
+        /// <summary>
+        /// Suggest songs for the user to sing. Based off of the song history of the current user.
+        /// Some song suggestions given based on collaborative filtering with other user's song histories.
+        /// Some suggestions based on other songs by artists sang. Returns most popular songs if prior
+        /// information not available.
+        /// </summary>
+        /// <param name="venueID">The venue to suggest songs at.</param>
+        /// <param name="userKey">The user's key.</param>
+        /// <param name="start">The starting position of song suggestions.</param>
+        /// <param name="count">The number of song suggestions.</param>
+        /// <returns>The outcome of the operation</returns>
+        public List<Song> MobileGetSongSuggestions(int venueID, long userKey, int start, int count)
+        {
+            start = 0;
+            int count1 = count - count / 2;
+            try
+            {
+                // Get all the songs I have sung.
+                // Find people who have sung the same songs.
+                // Get the songs these people have sung
+                // If these songs have the same band as some song I've sung, award 2x points
+                // If multiple people have sung the same song, points are cumalitive.
+                // If we aren't finding songs, look up artists I have sung in the DB, and get other songs by that artist.
+                // Insert a popular song into the mix for variablility.
+
+                int mobileID = -1;
+                using (DatabaseConnectivity db = new DatabaseConnectivity())
+                {
+                    List<Song> finalSuggestions = new List<Song>();
+                    #region SongSuggestionBoilerPlate
+                    // Try to establish a database connection
+                    ExpResponse r = db.OpenConnection();
+                    if (r.error)
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                    // Convert the userKey to MobileID
+                    r = MobileKeyToID(userKey, out mobileID, db);
+                    if (r.error)
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                    // Validate venueID if the any venueID not given.
+                    if (venueID != -1)
+                    {
+                        // Make sure the venueID exists.
+                        r = db.DJGetStatus(venueID);
+                        if (r.error)
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                        int venueStatus;
+                        if (!int.TryParse(r.message.Trim(), out venueStatus))
+                        {
+                            r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                        }
+                    }
+
+                    #endregion
+
+                    // The user's distinct song history.
+                    List<KeyValuePair<string[], int>> songsAndCount; // Song Title/Artist and how many times it shows up.
+                    r = db.MobileGetDistictSongHistory(mobileID, 0, 10, out songsAndCount);
+                    if (r.error)
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                    // Get song suggestions based on what other people sang.
+                    List<Song> suggestCollab;
+                    r = SuggestCollabFilter(songsAndCount, mobileID, venueID, count1, out suggestCollab, db);
+                    if (r.error)
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                    // Add these songs to fill up to half of the final suggestions.
+                    for (int i = 0; i < suggestCollab.Count; i++)
+                    {
+                        Song s = suggestCollab[i];
+                        r = Common.LoadSongRating(ref s, mobileID, db);
+                        if (r.error)
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                        finalSuggestions.Add(s);
+                    }
+
+                    if (finalSuggestions.Count < count)
+                    {
+                        // Get song suggestions based off of artist
+                        List<Song> suggestByArtist;
+                        // Suggest songs not sung by the user, but which have an artist the user has sung.
+                        r = SuggestSongsNotSungByMostSungArtists(count - finalSuggestions.Count, mobileID, venueID, out suggestByArtist, db);
+                        if (r.error)
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                        // Add the artist suggestions to fill out the suggetsions.
+                        foreach (Song s in suggestByArtist)
+                        {
+                            Song song;
+                            r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
+                            if (r.error)
+                                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                            finalSuggestions.Add(song);
+                        }
+                    }
+
+                    if (finalSuggestions.Count < count)
+                    {
+                        // If we are lacking songs still, get from popular songs.
+                        List<Song> popSongs;
+                        List<int> popCounts;
+                        r = db.GetMostPopularSongs(venueID, 0, count - finalSuggestions.Count, out popSongs, out popCounts);
+                        if (r.error)
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                        foreach (Song s in popSongs)
+                        {
+                            Song song;
+                            r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
+                            if (r.error)
+                                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                            finalSuggestions.Add(song);
+                        }
+                    }
+
+                    return finalSuggestions;
+                }
+            }
+            catch (Exception e)
+            {
+                ExpResponse r = new ExpResponse(true, "Exception in Suggest Song:", e.StackTrace);
+                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+            }
+        }
         #endregion
 
         #region SongRequests
@@ -1182,7 +1310,7 @@ namespace KServer
                     return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
                 if (!validStatus)
                 {
-                    r.setErMsgStk(true, "Bad venue status", Environment.StackTrace);
+                    r.setErMsgStk(true, "Bad venue status for viewing queue.", Environment.StackTrace);
                     return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
                 }
 
@@ -1244,10 +1372,16 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
+                if (r.message.Trim().Length == 0)
+                {
+                    r.setErMsg(true, Messages.ERR_QR_BAD);
+                    return r;
+                }
+
                 // Parse the venueID.
                 if (!int.TryParse(r.message.Trim(), out venueID))
                 {
-                    r.setErMsg(true, Messages.ERR_QR_BAD);
+                    r.setErMsgStk(true, "QR code couldnot be parsed from db", Environment.StackTrace);
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
@@ -1801,125 +1935,18 @@ namespace KServer
         }
         #endregion
 
-        public List<Song> MobileGetSongSuggestions(int venueID, long userKey, int start, int count)
-        {
-            int count1 = count - count / 2;
-            try
-            {
-                // Get all the songs I have sung.
-                // Find people who have sung the same songs.
-                // Get the songs these people have sung
-                // If these songs have the same band as some song I've sung, award 2x points
-                // If multiple people have sung the same song, points are cumalitive.
-                // If we aren't finding songs, look up artists I have sung in the DB, and get other songs by that artist.
-                // Insert a popular song into the mix for variablility.
-
-                int mobileID = -1;
-                using (DatabaseConnectivity db = new DatabaseConnectivity())
-                {
-                    List<Song> finalSuggestions = new List<Song>();
-                    #region SongSuggestionBoilerPlate
-                    // Try to establish a database connection
-                    ExpResponse r = db.OpenConnection();
-                    if (r.error)
-                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-
-                    // Convert the userKey to MobileID
-                    r = MobileKeyToID(userKey, out mobileID, db);
-                    if (r.error)
-                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-
-                    // Validate venueID if the any venueID not given.
-                    if (venueID != -1)
-                    {
-                        // Make sure the venueID exists.
-                        r = db.DJGetStatus(venueID);
-                        if (r.error)
-                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-
-                        int venueStatus;
-                        if (!int.TryParse(r.message.Trim(), out venueStatus))
-                        {
-                            r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
-                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-                        }
-                    }
-
-                    #endregion
-
-                    // The user's distinct song history.
-                    List<KeyValuePair<string[], int>> songsAndCount; // Song Title/Artist and how many times it shows up.
-                    r = db.MobileGetDistictSongHistory(mobileID, 0, 10, out songsAndCount);
-                    if (r.error)
-                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-
-                    // Get song suggestions based on what other people sang.
-                    List<Song> suggestCollab;
-                    r = SuggestCollabFilter(songsAndCount, mobileID, venueID, count1, out suggestCollab, db);
-                    if(r.error)
-                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-
-                    // Add these songs to fill up to half of the final suggestions.
-                    for (int i = 0; i < suggestCollab.Count; i++)
-                    {
-                        Song s = suggestCollab[i];
-                        r = Common.LoadSongRating(ref s, mobileID, db);
-                        if (r.error)
-                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-                        finalSuggestions.Add(s);
-                    }
-
-                    if (finalSuggestions.Count < count)
-                    {
-                        // Get song suggestions based off of artist
-                        List<Song> suggestByArtist;
-                        // Suggest songs not sung by the user, but which have an artist the user has sung.
-                        r = SuggestSongsNotSungByMostSungArtists(count - finalSuggestions.Count, mobileID, venueID, out suggestByArtist, db);
-                        if (r.error)
-                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-
-                        // Add the artist suggestions to fill out the suggetsions.
-                        foreach (Song s in suggestByArtist)
-                        {
-                            Song song;
-                            r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
-                            if (r.error)
-                                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-                            finalSuggestions.Add(song);
-                        }
-                    }
-
-                    if (finalSuggestions.Count < count)
-                    {
-                        // If we are lacking songs still, get from popular songs.
-                        List<Song> popSongs;
-                        List<int> popCounts;
-                        r = db.GetMostPopularSongs(venueID, 0, count - finalSuggestions.Count, out popSongs, out popCounts);
-                        if (r.error)
-                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-
-                        foreach (Song s in popSongs)
-                        {
-                            Song song;
-                            r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
-                            if (r.error)
-                                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-                            finalSuggestions.Add(song);
-                        }
-                    }
-
-                    return finalSuggestions;
-                }
-            }
-            catch (Exception e)
-            {
-                ExpResponse r = new ExpResponse(true, "Exception in Suggest Song:", e.StackTrace);
-                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-            }
-        }
-
         #region PrivateMethods
-
+        /// <summary>
+        /// Suggests songs based on collaborative filtering of the user's song history with other
+        /// singers' song histories. Songs objects returned are pre-populated except for path on disk.
+        /// </summary>
+        /// <param name="userSongsAndCount">The user's songs and how often sung.</param>
+        /// <param name="mobileID">The mobileID of the user.</param>
+        /// <param name="venueID">The venueID</param>
+        /// <param name="count">How many songs to suggest.</param>
+        /// <param name="suggestCollab">Out parameter of suggested songs.</param>
+        /// <param name="db">Database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
         private ExpResponse SuggestCollabFilter(List<KeyValuePair<string[], int>> userSongsAndCount, int mobileID, int venueID, int count, out List<Song> suggestCollab, DatabaseConnectivity db)
         {
             // Assign potential songs a value. If a user has 3 songs in common with me, every song suggestable should get 3 pts.
@@ -1934,8 +1961,6 @@ namespace KServer
             r = GetUsersSongsInCommon(userSongsAndCount, mobileID, db, out userCountInCommon);
             if (r.error)
                 return r;
-
-            String mes = string.Empty;
             
             // Stores each user, how similar to them we are, what songs they have sung, and how often they have sung those songs.
             List<UserAndSongs> userAndSongs = new List<UserAndSongs>();
@@ -1943,21 +1968,11 @@ namespace KServer
             // Get songs that the in common users have sung at this venue.
             foreach (KeyValuePair<int, int> other in userCountInCommon)
             {
-                mes = "User: " + other.Key + " Count: " + other.Value + "\r\n";
-
                 List<KeyValuePair<string[], int>> OSAC;
 
                 r = db.MobileGetOtherDistictSongHistory(other.Key, 0, 2*count, out OSAC);
                 if (r.error)
                     return r;
-
-
-                mes = string.Empty;
-                foreach (KeyValuePair<string[], int> s in OSAC)
-                {
-                    mes += "Song: " + s.Key[0] + " - " + s.Key[1] + " Count: " + s.Value + "\r\n";
-                }
-
 
                 // Remove any songs from other user's history that we have already sang.
                 foreach (KeyValuePair<string[], int> excludeSong in userSongsAndCount)
@@ -1971,13 +1986,6 @@ namespace KServer
                         }
                     }
                 }
-
-                mes = string.Empty;
-                foreach (KeyValuePair<string[], int> s in OSAC)
-                {
-                    mes += "Song: " + s.Key[0] + " - " + s.Key[1] + " Count: " + s.Value + "\r\n";
-                }
-                Common.LogError("Remaining Songs", mes, null, 2);
 
                 userAndSongs.Add(new UserAndSongs(other.Key, other.Value, OSAC));             
             }
@@ -2023,7 +2031,12 @@ namespace KServer
             //}
             return r;
         }
-
+        /// <summary>
+        /// Select a random song from a list of weigted songs.
+        /// </summary>
+        /// <param name="rand">Randon number generator to use.</param>
+        /// <param name="all">The weighted list of songs.</param>
+        /// <returns>The index of the random song in the collection.</returns>
         private int selectRandomSong(Random rand, List<KeyValuePair<string[], int>> all)
         {
             int totalSongScore = 0;
@@ -2044,7 +2057,12 @@ namespace KServer
             Common.LogError("selectRandomSong logic fail", "Had to select first song", null, 2);
             return 0;
         }
-
+        /// <summary>
+        /// Returns a random user from a weigted collection of users.
+        /// </summary>
+        /// <param name="rand">The random number generator to use.</param>
+        /// <param name="all">The weighted collection of users.</param>
+        /// <returns>The index of the random user in the collection.</returns>
         private int selectRandWeightedUser(Random rand, List<UserAndSongs> all)
         {
             int totalUserScore = 0;
@@ -2064,7 +2082,6 @@ namespace KServer
             Common.LogError("SelectRandWeigtedUser logic fail", "Had to select first user", null, 2);
             return 0;
         }
-
         /// <summary>
         /// Returns a list of keyvaluepairs where the key is the userID of a user who has a song in common with us, and the value is the number of songs they have in common.
         /// </summary>
@@ -2100,7 +2117,6 @@ namespace KServer
             // List of users and the number of songs we have in common, sort them in order of people we have most in common with.
             songsInCommonList = songsInCommonDict.ToList();
             songsInCommonList.Sort((one, two) => { return one.Value.CompareTo(two.Value); });
-            string mes = string.Empty;
             return r;
         }
         /// <summary>
