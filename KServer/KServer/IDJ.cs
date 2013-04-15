@@ -335,6 +335,78 @@ namespace KServer
         [DataMember]
         public List<Song> songs { get; set; }
     }
+
+    public class ExpResponse
+    {
+        public bool error { get; set; }
+        public string message { get; set; }
+        public int result { get; set; }
+        public string stackTrace { get; set; }
+        public ExpResponse()
+        {
+            error = false;
+            message = string.Empty;
+            result = -1;
+            stackTrace = string.Empty;
+        }
+        public ExpResponse(bool error, string message)
+        {
+            this.error = error;
+            this.message = message;
+        }
+        public ExpResponse(bool error, string message, string stackTrace)
+        {
+            this.error = error;
+            this.message = message;
+            this.stackTrace = stackTrace;
+        }
+        public ExpResponse(bool error, string message, int result)
+        {
+            this.error = error;
+            this.message = message;
+            this.result = result;
+        }
+        public ExpResponse(bool error, string message, string stackTrace, int result)
+        {
+            this.error = error;
+            this.message = message;
+            this.stackTrace = stackTrace;
+            this.result = result;
+        }
+        public void setErMsg(bool error, string message)
+        {
+            this.error = error;
+            this.message = message;
+        }
+        public void setErMsgStk(bool error, string message, string stackTrace)
+        {
+            this.error = error;
+            this.message = message;
+            this.stackTrace = stackTrace;
+        }
+        public void setErMsgRes(bool error, string message, int result)
+        {
+            this.error = error;
+            this.message = message;
+            this.result = result;
+        }
+        public void setAll(bool error, string message, string stackTrace, int result)
+        {
+            this.error = error;
+            this.message = message;
+            this.stackTrace = stackTrace;
+            this.result = result;
+        }
+        public Response getResponse()
+        {
+            return new Response(this.error, this.message, this.result);
+        }
+        static public implicit operator Response(ExpResponse er)
+        {
+            return new Response(er.error, er.message, er.result);
+        }
+    }
+
     // Desribe a response passed between functions.
     [DataContract]
     public class Response
@@ -345,6 +417,24 @@ namespace KServer
             message = string.Empty;
             result = -1;
         }
+        public Response(bool error, string message, int result = -1)
+        {
+            this.error = error;
+            this.message = message;
+            this.result = result;
+        }
+        public void setErMsg(bool error, string message)
+        {
+            this.error = error;
+            this.message = message;
+        }
+        public void setErMsgRes(bool error, string message, int result)
+        {
+            this.error = error;
+            this.message = message;
+            this.result = result;
+        }
+
         [DataMember]
         public bool error { get; set; }
         [DataMember]

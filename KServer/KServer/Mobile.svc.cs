@@ -14,66 +14,6 @@ namespace KServer
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, ConcurrencyMode = ConcurrencyMode.Multiple, IncludeExceptionDetailInFaults = true, AddressFilterMode = AddressFilterMode.Any)]
     public class Mobile : IMobile
     {
-        #region Misc
-        /// <summary>
-        /// Simple test to see if a client can connect to the server.
-        /// </summary>
-        /// <param name="s">A strong to reverse.</param>
-        /// <returns>A response containing the reversed string and string length.</returns>
-        public Response test(string s)
-        {
-            Response r = new Response();
-            for (int i = s.Length - 1; i >= 0; i--)
-                r.message += s[i];
-            r.result = s.Length;
-            return r;
-        }
-        /// <summary>
-        /// A simple method to get the current server's time.
-        /// </summary>
-        /// <returns>The datetime.</returns>
-        public DateTime GetDateTime()
-        {
-            return DateTime.Now;
-        }
-        /// <summary>
-        /// A simple method to test pushing a notification to the android deviceID.
-        /// </summary>
-        /// <param name="deviceID">The deviceID to send to.</param>
-        /// <returns>Returns the message google's GCM servers send the server.</returns>
-        public string TestPushNotification(string deviceID)
-        {
-            Response r = Common.PushAndroidNotification(deviceID, "Hello there, did you know the time is " + DateTime.Now.ToShortTimeString() + "?");
-            Common.LogError("Google Server Reply for push notification", r.message, null, 2);
-            return "Googles servers told me: " + r.message;
-        }
-        /// <summary>
-        /// Test sending a push notification to a client.
-        /// </summary>
-        /// <param name="userKey">The userKey of the client.</param>
-        /// <param name="message">The message to push.</param>
-        /// <returns>The outcome of the operation.</returns>
-        public Response TestPushToMobile(long userKey, string message)
-        {
-            int mobileID = -1;
-            using (DatabaseConnectivity db = new DatabaseConnectivity())
-            {
-                // Try to establish a database connection
-                Response r = db.OpenConnection();
-                if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
-
-                // Convert the userKey to MobileID
-                r = MobileKeyToID(userKey, out mobileID, db);
-                if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
-
-                return Common.PushMessageToMobile(mobileID, "You sent me: \"" + message + "\"", db);
-            }
-
-        }
-        #endregion
-
         #region SignInOutEtc
 
         /// <summary>
@@ -88,33 +28,31 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Escape to allow the MobileTestClient to list all Mobile information
                 // WILL BE REMOVED FOR RELEASE!
                 if (username.Equals("list", StringComparison.OrdinalIgnoreCase))
                 {
-                    Response listResponse = db.MobileListMembers();
+                    ExpResponse listResponse = db.MobileListMembers();
                     if (listResponse.error)
-                        return (Response) Common.LogError(listResponse.message, Environment.StackTrace, listResponse, 0);
+                        return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                     return listResponse;
                 }
 
                 // Validate that username and password are not blank.
                 if (username.Length == 0 || password.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Username or password is blank.";
+                    r.setErMsg(true, Messages.ERR_CRED_BLANK);
                     return r;
                 }
 
                 // Validate that username and password are not too long.
                 if (username.Length > 20 || password.Length > 20)
                 {
-                    r.error = true;
-                    r.message = "Username or password is longer than 20 characters.";
+                    r.setErMsg(true, Messages.ERR_CRED_LONG);
                     return r;
                 }
 
@@ -125,19 +63,17 @@ namespace KServer
                 }
                 catch
                 {
-                    r.error = true;
-                    r.message = "Email address is not valid";
+                    r.setErMsg(true, Messages.ERR_BAD_EMAIL);
                     return r;
                 }
 
                 // Try to see if the username already exists. If it does, inform the client.
                 r = db.MobileValidateUsername(username);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (r.message.Trim() != string.Empty)
                 {
-                    r.error = true;
-                    r.message = "That username already exists.";
+                    r.setErMsg(true, Messages.ERR_CRED_TAKEN);
                     return r;
                 }
 
@@ -148,7 +84,7 @@ namespace KServer
                 // Information seems valid, sign up client and return successfulness.
                 r = db.MobileSignUp(username, hashSaltPassword, email, salt);
                 if(r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 return r;
             }
         }
@@ -165,15 +101,15 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (LogInResponse)Common.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
+                    return new LogInResponse(Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, 0));
 
                 // Get the salt from the database and salt/hash the password.
                 string salt;
                 r = db.MobileGetSalt(username, out salt);
                 if (r.error)
-                    return new LogInResponse(r);
+                    return new LogInResponse(Common.LogErrorRetNewMsg(r, Messages.ERR_CRED_WRONG, 0));
                 string saltHashPassword = Common.CreatePasswordHash(password, salt);
 
                 // See if the username/password combination is valid.
@@ -181,46 +117,47 @@ namespace KServer
                 // If it is not valid, r.message will be empty.
                 r = db.MobileValidateUsernamePassword(username, saltHashPassword);
                 if (r.error)
-                    return (LogInResponse)Common.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
+                    return new LogInResponse(Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, 0));
 
                 // If the username/password couldn't be found, inform user.
                 if (r.message.Trim() == string.Empty)
                 {
-                    r.error = true;
-                    r.message = "Username/Password is incorrect.";
+                    r.setErMsg(true, Messages.ERR_CRED_WRONG);
                     return new LogInResponse(r);
                 }
 
                 // Get the client ID stored in r.message.
                 if (!int.TryParse(r.message.Trim(), out MobileID))
                 {
-                    r.error = true;
-                    r.message = "Exception in MobileSignIn: Unable to parse MobileID from DB!";
-                    return (LogInResponse)Common.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
+                    r.setErMsgStk(true, "Unable to parse MobileID from DB", "MobileSignIn");
+                    return new LogInResponse(Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, 0));
                 }
 
                 // Make sure the client is not logged in. RIGHT NOW: JUST DON'T CHECK ANYTHING USEFUL TO ALLOW FOR LOGINS TO OCCUR WHEN LOGGED IN!
-                r = MobileCheckStatus(MobileID, "!4", db);
+                bool validStatus;
+                r = MobileCheckStatus(MobileID, "!4", db, out validStatus);
                 if (r.error)
+                    return new LogInResponse(Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, 0));
+                if(!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_ALREADY_IN);
                     return new LogInResponse(r);
+                }
 
                 r = db.MobileSignIn(MobileID, deviceID);
                 if (r.error)
-                    return (LogInResponse)Common.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
+                    return new LogInResponse(Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, 0));
 
                 // Attempt to change the MobileID into a userKey
                 long userKey;
                 r = MobileGenerateKey(MobileID, out userKey, db);
                 if (r.error)
-                    return (LogInResponse)Common.LogError(r.message, Environment.StackTrace, new LogInResponse(r), 0);
+                    return new LogInResponse(Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, 0));
 
                 // If there was no error, create a loginResponse with the successful information.
                 LogInResponse lr = new LogInResponse();
                 lr.result = r.result;
                 lr.userKey = userKey;
-                User u = new User();
-                u.userName = username;
-                u.userID = MobileID;
                 return lr;
             }
         }
@@ -235,34 +172,41 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_ALREADY_OUT);
                     return r;
+                }
 
                 // A sign out seems to be valid. Also clears any device id found.
                 r = db.MobileSignOut(mobileID);
                 if(r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Remove the key from the DB.
                 r = db.MobileSetKey(mobileID, null);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Clear the venue from the DB
                 r = db.MobileSetVenue(mobileID, null);
                 if(r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+
                 return r;
             }
         }
@@ -289,31 +233,41 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsgStk(true, "User: " + mobileID + " has invalid status", Environment.StackTrace);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                }
 
                 // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
-                    return (List<Song>)Common.LogError("MobileSongSeach venueID parse fail (bad venueID given?)", Environment.StackTrace, null, 0);
+                {
+                    r.setErMsgStk(true, "VenueID parse fail", Environment.StackTrace);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                }
 
                 // Complete the search.
                 r = db.MobileSearchSongs(title.Trim(), artist.Trim(), venueID, start, count);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 if (r.message.Trim() == string.Empty)
                     return songs;
@@ -325,7 +279,11 @@ namespace KServer
                     Song song = new Song();
                     int id;
                     if (!int.TryParse(songParts[0], out id))
-                        return (List<Song>)Common.LogError("Exception in MobileListSongsSQL: could not parse song id", Environment.StackTrace, null, 0);
+                    {
+                        r.setErMsgStk(true, "Could not parse song ID", Environment.StackTrace);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                    }
+
                     song.ID = id;
                     song.title = songParts[1];
                     song.artist = songParts[2];
@@ -355,30 +313,39 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsgStk(true, "User: " + mobileID + " has invalid status", Environment.StackTrace);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                }
 
                 // Check to make sure the venue exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
-                    return (List<Song>)Common.LogError("MobileSongBrose venueID parse fail (bad venueID given?)", Environment.StackTrace, null, 0);
+                {
+                    r.setErMsgStk(true, "VenueID parse fail", Environment.StackTrace);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                }
 
                 r = db.MobileBrowseSongs(firstLetter, isArtist, start, count, venueID);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 if (r.message.Trim() == string.Empty)
                     return songs;
@@ -391,7 +358,10 @@ namespace KServer
                     Song song = new Song();
                     int id;
                     if (!int.TryParse(songParts[0], out id))
-                        return (List<Song>)Common.LogError("Exception in MobileListSongsSQL: could not parse song id", Environment.StackTrace, null, 0);
+                    {
+                        r.setErMsgStk(true, "Could not parse song ID", Environment.StackTrace);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                    }
                     song.ID = id;
                     song.title = songParts[1];
                     song.artist = songParts[2];
@@ -418,39 +388,45 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
-                    return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsgStk(true, "User: " + mobileID + " has invalid status", Environment.StackTrace);
+                    return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
+                }
 
                 r = db.MobileGetSongHistory(mobileID, start, count, out songHistory);
                 if (r.error)
-                    return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
 
                 for (int i = 0; i < songHistory.Count; i++)
                 {
                     r = db.GetVenueName(songHistory[i].venue.venueID);
                     if (r.error)
-                        return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
                     songHistory[i].venue.venueName = r.message.Trim();
                     r = db.GetVenueAddress(songHistory[i].venue.venueID);
                     if (r.error)
-                        return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
                     songHistory[i].venue.venueAddress = r.message.Trim();
 
                     Song song;
                     r = Common.GetSongInformation(songHistory[i].song.ID, songHistory[i].venue.venueID, mobileID, out song, db, false);
                     if (r.error)
-                        return (List<SongHistory>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<SongHistory>>(r, null, Common.LogFile.Mobile);
                     songHistory[i].song = song;
                 }
 
@@ -472,56 +448,59 @@ namespace KServer
             int songExists;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
-                Response r = new Response();
+                ExpResponse r = new ExpResponse();
                 if (rating < -1 || rating > 5)
                 {
-                    r.error = true;
-                    r.message = "Rating must be between -1 and 5 (inclusive).";
+                    r.setErMsg(true, "Rating must be between -1 and 5 (inclusive).");
                     return r;
                 }
 
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
+                    return r;
+                }
 
                 // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
                 {
-                    r.error = true;
-                    r.message = "MobileGetPlayLists venueID parse fail (Bad venueID given?)";
-                    return r;
+                    r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
                 // Check to see if song exists.
                 r = db.SongExists(venueID, songID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
-                    r.error = true;
-                    r.message = "Could not find song";
-                    return r;
+                    r.setErMsgStk(true, "Could not find song", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
                 // Set the song rating.
                 r = db.MobileSetSongRating(mobileID, songID, rating);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 return r;
             }
         }
@@ -541,64 +520,65 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
+                    return r;
+                }
 
                 // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
                 {
-                    r.error = true;
-                    r.message = "MobileGetPlayLists venueID parse fail (Bad venueID given?)";
-                    return r;
+                    r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
                 // Check to see if song exists.
                 r = db.SongExists(venueID, songID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
-                    r.error = true;
-                    r.message = "Could not find song";
-                    return r;
+                    r.setErMsgStk(true, "Could not find song", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
                 // Set the song rating.
                 r = db.MobileGetSongRating(mobileID, songID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 if (r.message.Trim().Length == 0)
                 {
-                    r.message = "-1";
-                    r.result = -1;
+                    r.setErMsgRes(false, "-1", -1);
                     return r;
                 }
 
                 if (!int.TryParse(r.message.Trim(), out rating))
                 {
-                    r.error = true;
-                    r.message = "Could not parse rating";
-                    return r;
+                    r.setErMsgStk(true, "Could not parse song rating song", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
-                r.message = rating.ToString();
-                r.result = rating;
+                r.setErMsgRes(false, rating.ToString(), rating);
                 return r;
             }
         }
@@ -617,9 +597,9 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 // Validate venueID if the any venueID not given.
                 if (venueID != -1)
@@ -627,17 +607,20 @@ namespace KServer
                     // Make sure the venueID exists.
                     r = db.DJGetStatus(venueID);
                     if (r.error)
-                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                     int venueStatus;
                     if (!int.TryParse(r.message.Trim(), out venueStatus))
-                        return (List<Song>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                    {
+                        r.setErMsgStk(true, "Could not parse venueID", Environment.StackTrace);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                    }
                 }
 
 
                 r = db.GetMostPopularSongs(venueID, start, count, out songIDs, out counts);
                 if (r.error)
-                    return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                 foreach (Song s in songIDs)
                 {
@@ -666,46 +649,56 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "2", db);
+                r = VenueCheckStatus(venueID, "2", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_VENUE_NO_SESSION);
                     return r;
+                }
 
                 // Check to see if song exists.
                 r = db.SongExists(venueID, songID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
-                    r.error = true;
-                    r.message = "Could not find song";
+                    r.setErMsgStk(true, "Could not find song", Environment.StackTrace);
                     return r;
                 }
 
                 // Get the current song Requests
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 string requests = r.message;
                 string newRequests = string.Empty;
@@ -715,7 +708,7 @@ namespace KServer
                     requests = mobileID.ToString() + "~" + songID.ToString();
                     r = db.SetSongRequests(venueID, requests);
                     if (r.error)
-                        return r;
+                        return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                     //Common.PushMessageToMobile(mobileID, "queue", db);
                     Common.PushMessageToUsersOfDJ(venueID, "queue", db);
                     return r;
@@ -725,7 +718,7 @@ namespace KServer
                 List<queueSinger> queue;
                 r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Search to see if the user is already in this list of singers.
                 for (int i = 0; i < queue.Count; i++)
@@ -738,8 +731,7 @@ namespace KServer
                         {
                             if (queue[i].songs[j].ID == songID)
                             {
-                                r.error = true;
-                                r.message = "You are already in queue to sing that song";
+                                r.setErMsg(true, "You are already in queue to sing that song");
                                 return r;
                             }
 
@@ -751,9 +743,10 @@ namespace KServer
                         Common.MinimalListToDB(queue, out newRequests);
                         r = db.SetSongRequests(venueID, newRequests);
                         if(r.error)
-                            return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                            return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
-                        Common.PushMessageToUsersOfDJ(venueID, "queue", db);
+                        Common.PushMessageToMobile(mobileID, "queue", db);
+                        //Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
                         return r;
                     }
@@ -771,10 +764,12 @@ namespace KServer
                 qs.songs.Add(song);
 
                 queue.Add(qs);
-                Common.MinimalListToDB(queue, out newRequests);
+                r = Common.MinimalListToDB(queue, out newRequests);
+                if(r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 r = db.SetSongRequests(venueID, newRequests);
                 if(r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
@@ -794,49 +789,60 @@ namespace KServer
             int songExists;
             int mobileID;
             bool songChangeMade = false;
+            bool requireSendToAll = false;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "2", db);
+                r = VenueCheckStatus(venueID, "2", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_VENUE_NO_SESSION);
                     return r;
+                }
 
                 // Check to see if song exists.
                 r = db.SongExists(venueID, newSongID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
-                    r.error = true;
-                    r.message = "Could not find new song";
+                    r.setErMsg(true, "Could not find new song");
                     return r;
                 }
 
                 // Get the current song Requests
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 string requests = r.message;
                 string newRequests = string.Empty;
@@ -844,16 +850,16 @@ namespace KServer
                 // If there are no song requests.
                 if (requests.Trim().Length == 0)
                 {
-                    r.error = true;
-                    r.message = "There are no song requests.";
+                    r.setErMsg(true, "There are no song requests.");
                     return r;
+
                 }
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 List<queueSinger> queue;
                 r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Search to see if the user is already in this list of singers.
                 for (int i = 0; i < queue.Count; i++)
@@ -867,8 +873,7 @@ namespace KServer
                             // If we find the new song, we don't want to allow duplicates
                             if (queue[i].songs[j].ID == newSongID)
                             {
-                                r.error = true;
-                                r.message = "You are already singing the new song";
+                                r.setErMsg(true, "You are already singing the new song");
                                 return r;
                             }
                             // If we found the old song.
@@ -876,31 +881,36 @@ namespace KServer
                             {
                                 queue[i].songs[j].ID = newSongID;
                                 songChangeMade = true;
+                                if (j == 0)
+                                    requireSendToAll = true;
                             }
 
                         }
 
                         if (songChangeMade)
                         {
-                            Common.MinimalListToDB(queue, out newRequests);
+                            r = Common.MinimalListToDB(queue, out newRequests);
+                            if(r.error)
+                                return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                             r = db.SetSongRequests(venueID, newRequests);
                             if(r.error)
-                                return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                                return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
-                            Common.PushMessageToUsersOfDJ(venueID, "queue", db);
+                            if (requireSendToAll)
+                                Common.PushMessageToUsersOfDJ(venueID, "queue", db);
+                            else
+                                Common.PushMessageToMobile(mobileID, "queue", db);
 
                             return r;
                         }
                         // If we couldn't find the old song, inform user.
-                        r.error = true;
-                        r.message = "Could not find the old song";
+                        r.setErMsg(true, Messages.MSG_SONG_NOT_FOUND);
                         return r;
                     }
                 }
 
                 // If we couldn't find the user.
-                r.error = true;
-                r.message = "You have no song reqeusts.";
+                r.setErMsg(true, Messages.MSG_USER_NO_SONG_REQUESTS);
                 return r;
             }
         }
@@ -918,46 +928,56 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "2", db);
+                r = VenueCheckStatus(venueID, "2", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_VENUE_NO_SESSION);
                     return r;
+                }
 
                 // Check to see if song exists.
                 r = db.SongExists(venueID, songID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
-                    r.error = true;
-                    r.message = "Could not find song in venue library.";
+                    r.setErMsg(true, Messages.MSG_SONG_NOT_FOUND);
                     return r;
                 }
 
                 // Get the current song Requests
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 string requests = r.message;
                 string newRequests = string.Empty;
@@ -965,8 +985,7 @@ namespace KServer
                 // If there are no song requests.
                 if (requests.Trim().Length == 0)
                 {
-                    r.error = true;
-                    r.message = "There are no song requests.";
+                    r.setErMsg(true, Messages.MSG_NO_SONG_REQUESTS);
                     return r;
                 }
 
@@ -974,7 +993,7 @@ namespace KServer
                 List<queueSinger> queue;
                 r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Search to see if the user is already in this list of singers.
                 for (int i = 0; i < queue.Count; i++)
@@ -993,10 +1012,10 @@ namespace KServer
                                 queue[i].songs.Insert(0, s);
                                 r = Common.MinimalListToDB(queue, out newRequests);
                                 if(r.error)
-                                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                                 r = db.SetSongRequests(venueID, newRequests);
                                 if (r.error)
-                                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                                 Common.PushMessageToUsersOfDJ(venueID, "queue", db);
 
@@ -1007,8 +1026,7 @@ namespace KServer
                 }
 
                 // If we couldn't find the user.
-                r.error = true;
-                r.message = "Could not find that song in your queue.";
+                r.setErMsg(true, Messages.MSG_SONG_NOT_FOUND);
                 return r;
             }
         }
@@ -1025,43 +1043,53 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileIDx
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "2", db);
+                r = VenueCheckStatus(venueID, "2", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_VENUE_NO_SESSION);
                     return r;
+                }
 
                 // Get the current song Requests
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 string requests = r.message;
                 string newRequests = string.Empty;
 
                 if (requests.Trim().Length == 0)
                 {
-                    r.error = true;
-                    r.message = "There are no song requests to remove";
+                    r.setErMsg(true, Messages.MSG_NO_SONG_REQUESTS);
                     return r;
                 }
 
@@ -1069,7 +1097,7 @@ namespace KServer
                 List<queueSinger> queue;
                 r = Common.DBToMinimalList(requests, out queue);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Search to see if the user is already in this list of singers.
                 for (int i = 0; i < queue.Count; i++)
@@ -1088,23 +1116,24 @@ namespace KServer
                                 Common.MinimalListToDB(queue, out newRequests);
                                 r = db.SetSongRequests(venueID, newRequests);
                                 if(r.error)
-                                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
-                                Common.PushMessageToUsersOfDJ(venueID, "queue", db);
+                                if (j == 0)
+                                    Common.PushMessageToUsersOfDJ(venueID, "queue", db);
+                                else
+                                    Common.PushMessageToMobile(mobileID, "queue", db);
 
                                 return r;
                             }
 
                         }
                         // If we can't find the current song.
-                        r.error = true;
-                        r.message = "Could not find the song to remove";
+                        r.setErMsg(true, Messages.MSG_SONG_NOT_FOUND);
                         return r;
                     }
                 }
 
-                r.error = true;
-                r.message = "Could not find you in the queue";
+                r.setErMsg(true, Messages.MSG_USER_NOT_IN_QUEUE);
                 return r;
             }
         }
@@ -1121,34 +1150,45 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<queueSinger>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (List<queueSinger>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
-                    return (List<queueSinger>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsgStk(true, "Bad user status", Environment.StackTrace);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
+                }
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return (List<queueSinger>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "2", db);
+                r = VenueCheckStatus(venueID, "2", db, out validStatus);
                 if (r.error)
-                    return queue;
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsgStk(true, "Bad venue status", Environment.StackTrace);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
+                }
 
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return (List<queueSinger>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
 
                 string raw = r.message;
                 if (raw.Trim() == "")
@@ -1158,7 +1198,7 @@ namespace KServer
 
                 r = DBToNearlyFullList(raw, out queue, venueID, mobileID, db);
                 if (r.error)
-                    return (List<queueSinger>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
                 return queue;
             }
         }
@@ -1179,30 +1219,45 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Get the venue of this qr string.
                 r = db.GetVenueIDByQR(QR.Trim());
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Parse the venueID.
                 if (!int.TryParse(r.message.Trim(), out venueID))
                 {
-                    r.error = true;
-                    r.message = "Could not match QR code to a venue";
+                    r.setErMsg(true, Messages.ERR_QR_BAD);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                }
+
+                // Make sure the venue is accepting songs.
+                r = VenueCheckStatus(venueID, "2", db, out validStatus);
+                if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_VENUE_NO_SESSION);
                     return r;
                 }
 
@@ -1210,23 +1265,22 @@ namespace KServer
                 bool userBanned;
                 r = db.MobileIsBanned(venueID, mobileID, out userBanned);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 if (userBanned)
                 {
-                    r.error = true;
-                    r.message = "You have been banned from this Venue!";
+                    r.setErMsg(true, Messages.MSG_USER_BANNED);
                     return r;
                 }
 
                 // Set the venue of the client
                 r = db.MobileSetVenue(mobileID, venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 r = db.GetVenueName(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 r.result = venueID;
                 return r;
             }
@@ -1244,48 +1298,58 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
+                   
 
                 // Get the venueID
                 r = MobileGetVenue(mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
 
                 // Make sure the venue is accepting songs.
-                r = VenueCheckStatus(venueID, "2", db);
+                r = VenueCheckStatus(venueID, "2", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_VENUE_NO_SESSION);
                     return r;
+                }
 
                 r = db.GetSongRequests(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 string raw = r.message;
                 if (raw.Trim() == "")
                 {
-                    r.error = false;
-                    r.message = "Empty Queue";
-                    r.result = 0;
+                    r.setErMsgRes(false, "0", 0);
                     return r;
                 }
 
                 // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
                 r = DBToNearlyFullList(raw, out queue, venueID, mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 int time = 0;
                 for (int i = 0; i < queue.Count; i++)
@@ -1296,9 +1360,7 @@ namespace KServer
                         time += queue[i].songs[0].duration + Common.TIME_BETWEEN_REQUESTS;
                 }
 
-                r.error = false;
-                r.message = time.ToString().Trim();
-                r.result = time;
+                r.setErMsgRes(false, time.ToString(), time);
                 return r;
             }
         }
@@ -1316,11 +1378,10 @@ namespace KServer
         /// <returns>The outcome of the opearation.</returns>
         public Response MobileCreatePlaylist(string name, int venueID, long userKey)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             if (name.Length < 1 || name.Length > 20)
             {
-                r.error = true;
-                r.message = "Name must be between 1 and 20 characters.";
+                r.setErMsg(true, Messages.ERR_PLYLST_NAME_LONG);
                 return r;
             }
 
@@ -1332,34 +1393,38 @@ namespace KServer
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Make sure the venueID exists.
                 r = db.DJGetStatus(venueID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 if (!int.TryParse(r.message.Trim(), out venueStatus))
                 {
-                    r.error = true;
-                    r.message = "Could not validate venue";
-                    if (r.error)
-                        return r;
+                    r.setErMsg(true, Messages.ERR_BAD_SERVER_INPUT);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
                 r = db.MobileCreatePlaylist(name, venueID, mobileID, DateTime.Now);
                 if(r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 return r;
             }
         }
@@ -1375,28 +1440,33 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 r = db.MobileDeletePlaylist(playListID, mobileID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 if (r.result == 0)
                 {
-                    r.error = true;
-                    r.message = "No playlist matched that criteria";
+                    r.setErMsg(true, Messages.ERR_BAD_SERVER_INPUT);
                     return r;
                 }
                 return r;
@@ -1417,39 +1487,43 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Get the venue information from the playlist in DB.
                 r = db.MobileGetVenueFromPlaylist(playListID, mobileID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out venueID))
                 {
-                    r.error = true;
-                    r.message = "Could not figure out Venue from DB";
-                    return r;
+                    r.setErMsgStk(true, "Could not figure out Venue from DB", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 }
 
                 // Check to see if song exists.
                 r = db.SongExists(venueID, songID);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 if (!int.TryParse(r.message.Trim(), out songExists))
                 {
-                    r.error = true;
-                    r.message = "Could not find song in venue's library.";
+                    r.setErMsg(true, Messages.MSG_SONG_NOT_FOUND);
                     return r;
                 }
 
@@ -1461,15 +1535,14 @@ namespace KServer
                 List<Song> songs;
                 r = db.MobileGetSongsFromPlaylist(playListID, mobileID, out songs);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Check to see if the song already exists.
                 foreach (Song s in songs)
                 {
                     if (s.ID == song.ID)
                     {
-                        r.error = true;
-                        r.message = "You already have that song in this playlist";
+                        r.setErMsg(true, Messages.ERR_PLYLST_DUP_SONG);
                         return r;
                     }
                 }
@@ -1478,10 +1551,10 @@ namespace KServer
                 songs.Add(song);
                 r = db.MobileSetPlaylistSongs(playListID, mobileID, songs);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 return r;
             }
-        }
+        }       
         /// <summary>
         /// Remove a song from a playlist.
         /// </summary>
@@ -1495,25 +1568,31 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
                     return r;
+                }
 
                 // Get the current songs in the playlist.
                 List<Song> songs;
                 r = db.MobileGetSongsFromPlaylist(playListID, mobileID, out songs);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
 
                 // Find the song to remove and remove it.
@@ -1524,14 +1603,13 @@ namespace KServer
                         songs.RemoveAt(i);
                         r = db.MobileSetPlaylistSongs(playListID, mobileID, songs);
                         if (r.error)
-                            return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                            return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                         return r;
                     }
                 }
 
                 // If we didn't find the song to remove.
-                r.error = true;
-                r.message = "Could not find the song in the playlist";
+                r.setErMsg(true, Messages.MSG_SONG_NOT_FOUND);
                 return r;
             }
         }
@@ -1549,19 +1627,25 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
 
                 // Make sure the client isn't already logged out.
-                r = MobileCheckStatus(mobileID, "!0", db);
+                bool validStatus;
+                r = MobileCheckStatus(mobileID, "!0", db, out validStatus);
                 if (r.error)
-                    return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
+                if (!validStatus)
+                {
+                    r.setErMsg(true, Messages.ERR_STATUS_IS_NOT_IN);
+                    return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
+                }
 
                 // Validate venueID if the any venueID not given.
                 if (venueID != -1)
@@ -1569,15 +1653,18 @@ namespace KServer
                     // Make sure the venueID exists.
                     r = db.DJGetStatus(venueID);
                     if (r.error)
-                        return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
 
                     if (!int.TryParse(r.message.Trim(), out venueStatus))
-                        return (List<Playlist>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                    {
+                        r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                        return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
+                    }
                 }
 
                 r = db.MobileGetPlaylists(venueID, mobileID, out playLists);
                 if (r.error)
-                    return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
 
                 // Finish inserting information into the playlists.
                 foreach (Playlist p in playLists)
@@ -1585,12 +1672,12 @@ namespace KServer
                     // Insert venue information.
                     r = db.GetVenueName(p.venue.venueID);
                     if (r.error)
-                        return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
                     p.venue.venueName = r.message.Trim();
 
                     r = db.GetVenueAddress(p.venue.venueID);
                     if (r.error)
-                        return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
                     p.venue.venueAddress = r.message.Trim();
 
                     for (int i = 0; i < p.songs.Count; i++)
@@ -1598,7 +1685,7 @@ namespace KServer
                         Song fullSong;
                         r = Common.GetSongInformation(p.songs[i].ID, p.venue.venueID, mobileID, out fullSong, db);
                         if (r.error)
-                            return (List<Playlist>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                            return Common.LogErrorRetGen<List<Playlist>>(r, null, Common.LogFile.Mobile);
                         p.songs[i] = fullSong;
                     }
                 }
@@ -1616,14 +1703,14 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                 // Validate venueID if the any venueID not given.
                 if (venueID != -1)
@@ -1631,17 +1718,20 @@ namespace KServer
                     // Make sure the venueID exists.
                     r = db.DJGetStatus(venueID);
                     if (r.error)
-                        return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                     if (!int.TryParse(r.message.Trim(), out venueStatus))
-                        return (List<MobileAchievement>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                    {
+                        r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                        return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
+                    }
                 }
 
                 List<Achievement> achievements;
 
                 r = db.MobileGetAchievements(mobileID, venueID, out achievements, start, count);
                 if (r.error)
-                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                 List<MobileAchievement> mobileAchievements = new List<MobileAchievement>();
                 foreach (Achievement a in achievements)
@@ -1665,14 +1755,14 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                 // Convert the userKey to MobileID
                 r = MobileKeyToID(userKey, out mobileID, db);
                 if (r.error)
-                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                 // Validate venueID if the any venueID not given.
                 if (venueID != -1)
@@ -1680,17 +1770,20 @@ namespace KServer
                     // Make sure the venueID exists.
                     r = db.DJGetStatus(venueID);
                     if (r.error)
-                        return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                     if (!int.TryParse(r.message.Trim(), out venueStatus))
-                        return (List<MobileAchievement>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                    {
+                        r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                        return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
+                    }
                 }
 
                 List<Achievement> unearnedAchievements;
 
                 r = db.MobileGetUnearnedVisibleAchievements(mobileID, venueID, out unearnedAchievements, start, count);
                 if (r.error)
-                    return (List<MobileAchievement>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                    return Common.LogErrorRetGen<List<MobileAchievement>>(r, null, Common.LogFile.Mobile);
 
                 List<MobileAchievement> mobileUnearnedAchievements = new List<MobileAchievement>();
                 foreach (Achievement a in unearnedAchievements)
@@ -1727,14 +1820,14 @@ namespace KServer
                     List<Song> finalSuggestions = new List<Song>();
                     #region SongSuggestionBoilerPlate
                     // Try to establish a database connection
-                    Response r = db.OpenConnection();
+                    ExpResponse r = db.OpenConnection();
                     if (r.error)
-                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                     // Convert the userKey to MobileID
                     r = MobileKeyToID(userKey, out mobileID, db);
                     if (r.error)
-                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                     // Validate venueID if the any venueID not given.
                     if (venueID != -1)
@@ -1742,11 +1835,14 @@ namespace KServer
                         // Make sure the venueID exists.
                         r = db.DJGetStatus(venueID);
                         if (r.error)
-                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                         int venueStatus;
                         if (!int.TryParse(r.message.Trim(), out venueStatus))
-                            return (List<Song>)Common.LogError("MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace, null, 0);
+                        {
+                            r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+                        }
                     }
 
                     #endregion
@@ -1755,13 +1851,13 @@ namespace KServer
                     List<KeyValuePair<string[], int>> songsAndCount; // Song Title/Artist and how many times it shows up.
                     r = db.MobileGetDistictSongHistory(mobileID, 0, 10, out songsAndCount);
                     if (r.error)
-                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                     // Get song suggestions based on what other people sang.
                     List<Song> suggestCollab;
                     r = SuggestCollabFilter(songsAndCount, mobileID, venueID, count1, out suggestCollab, db);
                     if(r.error)
-                        return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                     // Add these songs to fill up to half of the final suggestions.
                     for (int i = 0; i < suggestCollab.Count; i++)
@@ -1769,7 +1865,7 @@ namespace KServer
                         Song s = suggestCollab[i];
                         r = Common.LoadSongRating(ref s, mobileID, db);
                         if (r.error)
-                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
                         finalSuggestions.Add(s);
                     }
 
@@ -1780,7 +1876,7 @@ namespace KServer
                         // Suggest songs not sung by the user, but which have an artist the user has sung.
                         r = SuggestSongsNotSungByMostSungArtists(count - finalSuggestions.Count, mobileID, venueID, out suggestByArtist, db);
                         if (r.error)
-                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                         // Add the artist suggestions to fill out the suggetsions.
                         foreach (Song s in suggestByArtist)
@@ -1788,7 +1884,7 @@ namespace KServer
                             Song song;
                             r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
                             if (r.error)
-                                return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
                             finalSuggestions.Add(song);
                         }
                     }
@@ -1800,14 +1896,14 @@ namespace KServer
                         List<int> popCounts;
                         r = db.GetMostPopularSongs(venueID, 0, count - finalSuggestions.Count, out popSongs, out popCounts);
                         if (r.error)
-                            return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
                         foreach (Song s in popSongs)
                         {
                             Song song;
                             r = Common.GetSongInformation(s.ID, venueID, mobileID, out song, db, false);
                             if (r.error)
-                                return (List<Song>)Common.LogError(r.message, Environment.StackTrace, null, 0);
+                                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
                             finalSuggestions.Add(song);
                         }
                     }
@@ -1817,18 +1913,19 @@ namespace KServer
             }
             catch (Exception e)
             {
-                return (List<Song>)Common.LogError("Exception in Suggest Song", e.ToString(), new List<Song>(), 2);
+                ExpResponse r = new ExpResponse(true, "Exception in Suggest Song:", e.StackTrace);
+                return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
             }
         }
 
         #region PrivateMethods
 
-        private Response SuggestCollabFilter(List<KeyValuePair<string[], int>> userSongsAndCount, int mobileID, int venueID, int count, out List<Song> suggestCollab, DatabaseConnectivity db)
+        private ExpResponse SuggestCollabFilter(List<KeyValuePair<string[], int>> userSongsAndCount, int mobileID, int venueID, int count, out List<Song> suggestCollab, DatabaseConnectivity db)
         {
             // Assign potential songs a value. If a user has 3 songs in common with me, every song suggestable should get 3 pts.
             // If 3 users have songs in common with me, and they each have a song in commong with themselves, that song gets 3 pts since it's from 3 users.
             // Later on rank by points.
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             suggestCollab = new List<Song>();
 
             // Go through user history, get all the users who sang songs that I sang.
@@ -1847,7 +1944,6 @@ namespace KServer
             foreach (KeyValuePair<int, int> other in userCountInCommon)
             {
                 mes = "User: " + other.Key + " Count: " + other.Value + "\r\n";
-                Common.LogError("NEW USER", mes, null, 2);
 
                 List<KeyValuePair<string[], int>> OSAC;
 
@@ -1861,7 +1957,6 @@ namespace KServer
                 {
                     mes += "Song: " + s.Key[0] + " - " + s.Key[1] + " Count: " + s.Value + "\r\n";
                 }
-                Common.LogError("Raw Songs", mes, null, 2);
 
 
                 // Remove any songs from other user's history that we have already sang.
@@ -1978,10 +2073,10 @@ namespace KServer
         /// <param name="db"></param>
         /// <param name="songsInCommonList"></param>
         /// <returns></returns>
-        private Response GetUsersSongsInCommon(List<KeyValuePair<string[], int>> songsAndCount, int mobileID, DatabaseConnectivity db, out List<KeyValuePair<int, int>> songsInCommonList)
+        private ExpResponse GetUsersSongsInCommon(List<KeyValuePair<string[], int>> songsAndCount, int mobileID, DatabaseConnectivity db, out List<KeyValuePair<int, int>> songsInCommonList)
         {
             songsInCommonList = new List<KeyValuePair<int, int>>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             // For each user, see how many songs we have in common.
             IDictionary<int, int> songsInCommonDict = new Dictionary<int, int>(); // UserID, count
 
@@ -2019,11 +2114,11 @@ namespace KServer
         /// <param name="songs"></param>
         /// <param name="db"></param>
         /// <returns></returns>
-        private Response SuggestSongsNotSungByMostSungArtists(int maxSuggestions, int mobileID, int DJID, out List<Song> songs, DatabaseConnectivity db)
+        private ExpResponse SuggestSongsNotSungByMostSungArtists(int maxSuggestions, int mobileID, int DJID, out List<Song> songs, DatabaseConnectivity db)
         {
             List<SongAndCount> sAc;
             songs = new List<Song>();
-            Response r;
+            ExpResponse r;
 
             // Get up to 10 unique artists this user has sung, ordered by the most sung first.
             r = db.MobileGetUniqueArtistsSung(mobileID, 0, 10, out sAc);
@@ -2085,11 +2180,12 @@ namespace KServer
         /// <param name="desiredStatus">The desired status "2" or "!3" etc.</param>
         /// <param name="db">The database connectivity.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db)
+        private ExpResponse VenueCheckStatus(int venueID, string desiredStatus, DatabaseConnectivity db, out bool validStatus)
         {
-            Response r;
+            ExpResponse r;
             int DJStatus, desired;
             bool notStatus = false;
+            validStatus = false;
             // Get the status of the DJ.
             r = db.DJGetStatus(venueID);
             if (r.error)
@@ -2098,8 +2194,7 @@ namespace KServer
             // Attempt to parse that status of the DJ.
             if (!int.TryParse(r.message.Trim(), out DJStatus))
             {
-                r.error = true;
-                r.message = "Exception in VenueCheckStatus: Unable to parse status from DB!";
+                r.setErMsgStk(true, "Exception in VenueCheckStatus: Unable to parse status from DB!", Environment.StackTrace);
                 return r;
             }
 
@@ -2111,8 +2206,7 @@ namespace KServer
 
             if (!int.TryParse(desiredStatus, out desired))
             {
-                r.error = true;
-                r.message = "Exception in VenueCheckStatus: Cannot parse desired Status";
+                r.setErMsgStk(true, "Exception in VenueCheckStatus: Cannot parse desired Status", Environment.StackTrace);
                 return r;
             }
 
@@ -2120,29 +2214,16 @@ namespace KServer
             {
                 if (DJStatus != desired)
                 {
-                    r.error = true;
-                    if (desired == 0)
-                        r.message = "Venue is online.";
-                    else if (desired == 1)
-                        r.message = "Venue is not online.";
-                    else
-                        r.message = "Venue does not have a session running";
                     return r;
                 }
             }
             else if (DJStatus == desired)
             {
-                r.error = true;
-                if (desired == 0)
-                    r.message = "Venue is not online.";
-                else if (desired == 1)
-                    r.message = "Venue is online.";
-                else
-                    r.message = "Venue has a session running.";
                 return r;
             }
 
             r.result = DJStatus;
+            validStatus = true;
             return r;
         }
         /// <summary>
@@ -2154,10 +2235,10 @@ namespace KServer
         /// <param name="mobileID">The ID of the client.</param>
         /// <param name="db">The databse conenctivity to use.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, int mobileID, DatabaseConnectivity db)
+        private ExpResponse DBToNearlyFullList(string raw, out List<queueSinger> queue, int DJID, int mobileID, DatabaseConnectivity db)
         {
             queue = new List<queueSinger>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             int count = 0;
 
             string[] clientRequests = raw.Split('`');
@@ -2166,8 +2247,7 @@ namespace KServer
                 string[] parts = clientRequests[i].Split('~');
                 if (parts.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Error in DBtoList 1";
+                    r.setErMsgStk(true, "Error in DBToNearlyFullList", Environment.StackTrace);
                     return r;
                 }
 
@@ -2185,8 +2265,7 @@ namespace KServer
                     return r;
                 if (r.message.Trim().Length == 0)
                 {
-                    r.error = true;
-                    r.message = "DB Username lookup exception in DJGetQueue!";
+                   r.setErMsgStk(true, "DB Username lookup exception in DJGetQueue!", Environment.StackTrace);
                     return r;
                 }
 
@@ -2214,9 +2293,10 @@ namespace KServer
         /// <param name="desiredStatus">The desired status of the client.</param>
         /// <param name="db">The database conenctivity to use.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db)
+        private ExpResponse MobileCheckStatus(int mobileID, string desiredStatus, DatabaseConnectivity db, out bool validStatus)
         {
-            Response r;
+            ExpResponse r;
+            validStatus = false;
             int MobileStatus, desired;
             bool notStatus = false;
             // Get the status of the DJ.
@@ -2227,8 +2307,7 @@ namespace KServer
             // Attempt to parse that status of the DJ.
             if (!int.TryParse(r.message.Trim(), out MobileStatus))
             {
-                r.error = true;
-                r.message = "Exception in MobileCheckStatus: Unable to parse status from DB!";
+                r.setErMsgStk(true, "Exception in MobileCheckStatus: Unable to parse status from DB!", Environment.StackTrace);
                 return r;
             }
 
@@ -2240,8 +2319,7 @@ namespace KServer
 
             if (!int.TryParse(desiredStatus, out desired))
             {
-                r.error = true;
-                r.message = "Exception in MobileCheckStatus: Cannot parse desired Status";
+                r.setErMsgStk(true, "Cannot parse desired status", Environment.StackTrace);
                 return r;
             }
 
@@ -2249,29 +2327,16 @@ namespace KServer
             {
                 if (MobileStatus != desired)
                 {
-                    r.error = true;
-                    if (desired == 0)
-                        r.message = "You are not signed out.";
-                    else if (desired == 1)
-                        r.message = "You are not signed in.";
-                    else
-                        r.message = "You are in the wrong state, do you have a venue selected?";
                     return r;
                 }
             }
             else if (MobileStatus == desired)
             {
-                r.error = true;
-                if (desired == 0)
-                    r.message = "You are signed out and cannot do that.";
-                else if (desired == 1)
-                    r.message = "You are signed in and cannot do that.";
-                else
-                    r.message = "You are in the wrong state, do you have a venue selected?";
                 return r;
             }
 
             r.result = MobileStatus;
+            validStatus = true;
             return r;
         }
         /// <summary>
@@ -2280,22 +2345,20 @@ namespace KServer
         /// <param name="MobileKey">The mobileKey.</param>
         /// <param name="MobileID">Out parameter mobileID.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response MobileKeyToID(long MobileKey, out int MobileID, DatabaseConnectivity db)
+        private ExpResponse MobileKeyToID(long MobileKey, out int MobileID, DatabaseConnectivity db)
         {
             MobileID = -1;
-            Response r = db.MobileGetIDFromKey(MobileKey);
+            ExpResponse r = db.MobileGetIDFromKey(MobileKey);
             if (r.error)
                 return r;
             if (r.message.Trim().Length == 0)
             {
-                r.error = true;
-                r.message = "MobileKey is not valid.";
+                r.setErMsgStk(true, "Invalid MobileKey: " + MobileKey, Environment.StackTrace);
                 return r;
             }
             if (!int.TryParse(r.message.Trim(), out MobileID))
             {
-                r.error = true;
-                r.message = "Exception in MobileKeyToID: MobileKey Parse Fail";
+                r.setErMsgStk(true, "Exception in MobileKeyToID: Failed to parse ID from 'key' in DB: '" + r.message.Trim() + "'", Environment.StackTrace);
                 return r;
             }
             return r;
@@ -2306,10 +2369,10 @@ namespace KServer
         /// <param name="MobileID">The mobileID.</param>
         /// <param name="MobileKey">Out parameter of the mobile key.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response MobileGenerateKey(int MobileID, out long MobileKey, DatabaseConnectivity db)
+        private ExpResponse MobileGenerateKey(int MobileID, out long MobileKey, DatabaseConnectivity db)
         {
             MobileKey = -1;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             System.Security.Cryptography.SHA1 sha = new System.Security.Cryptography.SHA1CryptoServiceProvider();
             Random rand = new Random();
             byte[] randomBytes = new byte[64];
@@ -2338,18 +2401,16 @@ namespace KServer
         /// <param name="mobileID">The mobile ID of the client.</param>
         /// <param name="db">The databse conenctivity to use.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response MobileGetVenue(int mobileID, DatabaseConnectivity db)
+        private ExpResponse MobileGetVenue(int mobileID, DatabaseConnectivity db)
         {
             int venueID = -1;
-            Response r = new Response();
-            r = db.MobileGetVenue(mobileID);
+            ExpResponse r = db.MobileGetVenue(mobileID);
             if (r.error)
                 return r;
 
             if (!int.TryParse(r.message.Trim(), out venueID))
             {
-                r.error = true;
-                r.message = "Could not parse venueID from DB";
+                r.setErMsgStk(true, "Could not parse venueID from DB", Environment.StackTrace);
                 return r;
             }
 

@@ -24,6 +24,13 @@ namespace KServer
         internal static readonly string SENDER_ID = "599874388677";
         internal static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
 
+        public enum LogFile
+        {
+            Mobile,
+            DJ,
+            Debug
+        }
+
         internal static int GetBitFromBool(bool boolean)
         {
             if (boolean)
@@ -74,7 +81,7 @@ namespace KServer
         /// <param name="queue">The queue to work off of.</param>
         /// <param name="raw">Out parameter is set to a compressed representation of the queue.</param>
         /// <returns>Returns a response indicating no error.</returns>
-        internal static Response MinimalListToDB(List<queueSinger> queue, out string raw)
+        internal static ExpResponse MinimalListToDB(List<queueSinger> queue, out string raw)
         {
             raw = string.Empty;
             foreach (queueSinger qs in queue)
@@ -88,7 +95,7 @@ namespace KServer
             }
             if (raw.Length > 0)
                 raw = raw.Substring(0, raw.Length - 1);
-            return new Response();
+            return new ExpResponse();
         }
 
         /// <summary>
@@ -98,10 +105,10 @@ namespace KServer
         /// <param name="raw">The database representation of the queue.</param>
         /// <param name="queue">Out object represenation of the queue.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal static Response DBToMinimalList(string raw, out List<queueSinger> queue)
+        internal static ExpResponse DBToMinimalList(string raw, out List<queueSinger> queue)
         {
             int count = 0;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
 
             queue = new List<queueSinger>();
             string[] clientRequests = raw.Split('`');
@@ -110,8 +117,7 @@ namespace KServer
                 string[] parts = clientRequests[i].Split('~');
                 if (parts.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Error in DBtoList 1";
+                    r.setErMsgStk(true, "Error in DBToMinimalList, parts.length == 0.", Environment.StackTrace);
                     return r;
                 }
 
@@ -209,25 +215,23 @@ namespace KServer
         /// <param name="db">The conenctivity to the database.</param>
         /// <param name="includePath">Whether or not to include the pathOnDisk in the song.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal static Response GetSongInformation(int songID, int venueID, int mobileID, out Song song, DatabaseConnectivity db, bool includePath = false)
+        internal static ExpResponse GetSongInformation(int songID, int venueID, int mobileID, out Song song, DatabaseConnectivity db, bool includePath = false)
         {
             song = new Song();
-            Response r = db.SongInformation(venueID, songID);
+            ExpResponse r = db.SongInformation(venueID, songID);
             if (r.error)
                 return r;
 
             if (r.message.Trim().Length == 0)
             {
-                r.error = true;
-                r.message = "Could not find song.";
+                r.setErMsgStk(true, "Could not find song", Environment.StackTrace);
                 return r;
             }
 
             string[] songParts = splitByDel(r.message);
             if (songParts.Length < 4)
             {
-                r.error = true;
-                r.message = "Song did not have 4 parts";
+                r.setErMsgStk(true, "Song lacked 4 parts", Environment.StackTrace);
                 return r;
             }
 
@@ -240,8 +244,7 @@ namespace KServer
             int duration;
             if (!int.TryParse(songParts[3], out duration))
             {
-                r.error = true;
-                r.message = "Could not parse the duration";
+                r.setErMsgStk(true, "Could not parse duration", Environment.StackTrace);
                 return r;
             }
             song.duration = duration;
@@ -259,10 +262,10 @@ namespace KServer
         /// <param name="mobileID">The ID of the mobile user.</param>
         /// <param name="db">Connectivity of the database.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal static Response LoadSongRating(ref Song song, int mobileID, DatabaseConnectivity db)
+        internal static ExpResponse LoadSongRating(ref Song song, int mobileID, DatabaseConnectivity db)
         {
             int rating;
-            Response r = db.MobileGetSongRating(mobileID, song.ID);
+            ExpResponse r = db.MobileGetSongRating(mobileID, song.ID);
             if (r.error)
                 return r;
 
@@ -274,9 +277,7 @@ namespace KServer
 
             if (!int.TryParse(r.message.Trim(), out rating))
             {
-                LogError("Load song rating fail, the message is: '" + r.message.Trim() + "'", "", null, 2);
-                r.error = true;
-                r.message = "Could not parse rating";
+                r.setErMsgStk(true, "Could not parse song rating", Environment.StackTrace);
                 return r;
             }
             song.rating = rating;
@@ -319,6 +320,8 @@ namespace KServer
         internal static Response PushMessageToMobile(int mobileID, string message, DatabaseConnectivity db)
         {
             Response r = new Response();
+            if (mobileID < 1)
+                return r;
 
             string deviceID;
             r = db.MobileGetDeviceID(mobileID, out deviceID);
@@ -385,6 +388,57 @@ namespace KServer
             return r;
         }
 
+        internal static Response LogErrorRetNewMsg(ExpResponse r, string clientMsgToRet, LogFile logFile)
+        {
+            switch (logFile)
+            {
+                case LogFile.Mobile:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\mobile_log.txt");
+                    break;
+                case LogFile.DJ:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
+                    break;
+                case LogFile.Debug:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\debug.txt");
+                    break;
+            }
+            return new Response(true, clientMsgToRet);
+        }
+
+        internal static T LogErrorRetGen<T>(ExpResponse r, T passThrough, LogFile logFile)
+        {
+            switch (logFile)
+            {
+                case LogFile.Mobile:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\mobile_log.txt");
+                    break;
+                case LogFile.DJ:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
+                    break;
+                case LogFile.Debug:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\debug.txt");
+                    break;
+            }
+            return passThrough;
+        }
+
+        internal static ExpResponse LogErrorPassThru(ExpResponse r, LogFile logFile)
+        {
+            switch (logFile)
+            {
+                case LogFile.Mobile:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\mobile_log.txt");
+                    break;
+                case LogFile.DJ:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
+                    break;
+                case LogFile.Debug:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\debug.txt");
+                    break;
+            }
+            return r;
+        }
+
         /// <summary>
         /// Log an error message.
         /// </summary>
@@ -422,6 +476,17 @@ namespace KServer
             w.WriteLine(DateTime.Now.ToString());
             w.WriteLine(messagePart1);
             w.WriteLine(messagePart2);
+            w.WriteLine("--------------------------------------------------");
+            w.WriteLine();
+            w.Close();
+        }
+
+        private static void writeExpRspToFile(ExpResponse r, string file)
+        {
+            StreamWriter w = File.AppendText(file);
+            w.WriteLine(DateTime.Now.ToString() + "\t Result: " + r.result);
+            w.WriteLine(r.message);
+            w.WriteLine(r.stackTrace);
             w.WriteLine("--------------------------------------------------");
             w.WriteLine();
             w.Close();

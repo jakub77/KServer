@@ -47,18 +47,17 @@ namespace KServer
         /// Call this before calling data retrieving funcitons.
         /// </summary>
         /// <returns>The result of the operation.</returns>
-        internal Response OpenConnection()
+        internal ExpResponse OpenConnection()
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 con.Open();
-                return r;
+                return new ExpResponse();
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Error opening SQL connection" + e.Message;
+                r.setErMsgStk(true, "Error opening SQL connection:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -68,9 +67,9 @@ namespace KServer
         /// automatically call this method.
         /// </summary>
         /// <returns></returns>
-        internal Response CloseConnection()
+        internal ExpResponse CloseConnection()
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 con.Close();
@@ -78,8 +77,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Error opening SQL connection" + e.Message;
+                r.setErMsgStk(true, "Error opening SQL connection:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -96,9 +94,9 @@ namespace KServer
         /// </summary>
         /// <param name="cmd">The command.</param>
         /// <returns>The outcome of the operation. Resposne.Result will contain the number of affected rows.</returns>
-        private Response DBNonQuery(SqlCommand cmd)
+        private ExpResponse DBNonQuery(SqlCommand cmd)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             r.result = 0;
 
             try
@@ -109,8 +107,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DBNonQuery\n " + e.Message + e.StackTrace;
+                r.setErMsgStk(true, "Exception in DBNonQuery:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -119,9 +116,9 @@ namespace KServer
         /// </summary>
         /// <param name="cmd">The command.</param>
         /// <returns>The first fow of the result as an integer is stored in r.result.</returns>
-        private Response DBScalar(SqlCommand cmd)
+        private ExpResponse DBScalar(SqlCommand cmd)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 cmd.Connection = con;
@@ -131,8 +128,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DBScalar\n " + e.Message + e.StackTrace;
+                r.setErMsgStk(true, "Exception in DBScalar:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -142,9 +138,9 @@ namespace KServer
         /// <param name="cmd">The command.</param>
         /// <param name="columns">The columns of results requested.</param>
         /// <returns>The outcome of the operation.</returns>
-        private Response DBQuery(SqlCommand cmd, string[] columns)
+        private ExpResponse DBQuery(SqlCommand cmd, string[] columns)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             r.result = 0;
             try
             {
@@ -165,8 +161,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DBQuery: " + e.Message;
+                r.setErMsgStk(true, "Exception in DBQuery:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -182,7 +177,7 @@ namespace KServer
         /// <param name="username">The DJ's username.</param>
         /// <param name="password">The DJ's password</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJValidateUsernamePassword(string username, string password)
+        internal ExpResponse DJValidateUsernamePassword(string username, string password)
         {
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where Username = @username and Password = @password;");
             cmd.Parameters.AddWithValue("@username", username.Trim());
@@ -195,7 +190,7 @@ namespace KServer
         /// </summary>
         /// <param name="username">The DJ's username.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJValidateUsername(string username)
+        internal ExpResponse DJValidateUsername(string username)
         {
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where Username = @username;");
             cmd.Parameters.AddWithValue("@username", username);
@@ -206,7 +201,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJValidateDJID(int DJID)
+        internal ExpResponse DJValidateDJID(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select Status from DJUsers where ID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
@@ -218,7 +213,7 @@ namespace KServer
         /// <param name="DJID">The DJ's ID.</param>
         /// <param name="DJKey">The DJ's key, expected to be a long or null.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJSetKey(int DJID, object DJKey)
+        internal ExpResponse DJSetKey(int DJID, object DJKey)
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set KeyHash = @DJKey where ID = @DJID;");
             if (DJKey == null)
@@ -233,7 +228,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJKey">The DJKey of the DJ.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJGetIDFromKey(long DJKey)
+        internal ExpResponse DJGetIDFromKey(long DJKey)
         {
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where KeyHash = @DJKey;");
             cmd.Parameters.AddWithValue("@DJKey", DJKey);
@@ -244,7 +239,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJGetStatus(int DJID)
+        internal ExpResponse DJGetStatus(int DJID)
         {
             return DJValidateDJID(DJID);
         }
@@ -254,9 +249,9 @@ namespace KServer
         /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="salt">The new salt.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJSetSalt(int DJID, string salt)
+        internal ExpResponse DJSetSalt(int DJID, string salt)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("Update DJUsers set Salt = @salt where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@salt", salt);
             cmd.Parameters.AddWithValue("@ID", DJID);
@@ -267,8 +262,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJSetPassword: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJSetSalt:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -276,10 +270,10 @@ namespace KServer
         /// Get all the DJs from the database.
         /// </summary>
         /// <returns>The outcome of the operation with message describing the DJs.</returns>
-        internal Response DJListMembers()
+        internal ExpResponse DJListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from DJUsers;");
-            Response r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            ExpResponse r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
             r.message = r.message.Replace(Common.DELIMINATOR, ",");
             return r;
         }
@@ -292,7 +286,7 @@ namespace KServer
         /// <param name="venueName">The DJ's venue name.</param>
         /// <param name="venueAddress">The DJ's venue address.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJSignUp(string username, string password, string email, string venueName, string venueAddress, string salt)
+        internal ExpResponse DJSignUp(string username, string password, string email, string venueName, string venueAddress, string salt)
         {
             SqlCommand cmd = new SqlCommand("insert into DJUsers (Username, Password, Status, QR, Email, VenueName, VenueAddress, Salt)");
             cmd.CommandText += "Values (@username, @password, @status, @QR, @email, @venueName, @venueAddress, @Salt);";
@@ -312,9 +306,9 @@ namespace KServer
         /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="password">The new hashed and salted password.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJSetPassword(int DJID, string password)
+        internal ExpResponse DJSetPassword(int DJID, string password)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("Update DJUsers set Password = @password where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@password", password);
             cmd.Parameters.AddWithValue("@ID", DJID);
@@ -325,8 +319,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJSetPassword: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJSetPassword:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -336,9 +329,9 @@ namespace KServer
         /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="email"></param>
         /// <returns>The otucome of the operation.</returns>
-        internal Response DJSetEmail(int DJID, string email)
+        internal ExpResponse DJSetEmail(int DJID, string email)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("Update DJUsers set Email = @email where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@email", email);
             cmd.Parameters.AddWithValue("@ID", DJID);
@@ -349,8 +342,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJSetEmail: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJSetEmail:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -360,10 +352,10 @@ namespace KServer
         /// <param name="username">The DJ's username</param>
         /// <param name="salt">Out parameter for the salt.</param>
         /// <returns>The outcome of the oepration.</returns>
-        internal Response DJGetSalt(string username, out string salt)
+        internal ExpResponse DJGetSalt(string username, out string salt)
         {
             salt = string.Empty;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select Salt from DJUsers where Username = @username;", con);
             cmd.Parameters.AddWithValue("@username", username);
 
@@ -386,8 +378,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJGetSalt: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJGetSalt:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -397,7 +388,7 @@ namespace KServer
         /// <param name="DJID">The DJ's ID.</param>
         /// <param name="status">The status.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJSetStatus(int DJID, int status)
+        internal ExpResponse DJSetStatus(int DJID, int status)
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set Status = @status where ID = @DJID;");
             cmd.Parameters.AddWithValue("@status", status);
@@ -410,10 +401,10 @@ namespace KServer
         /// <param name="email">The email address.</param>
         /// <param name="usernames">Out usernames.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJGetUsernamesByEmail(string email, out List<string> usernames)
+        internal ExpResponse DJGetUsernamesByEmail(string email, out List<string> usernames)
         {
             usernames = new List<string>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select Username from DJUsers where Email = @email ;", con);
             cmd.Parameters.AddWithValue("@email", email);
 
@@ -430,8 +421,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJGetUsernamesByEmail: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJGetUsernamesByEmail:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -443,9 +433,9 @@ namespace KServer
         /// <param name="email">DJ's email</param>
         /// <param name="DJID">Out DJID</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJValidateUsernameEmail(string username, string email, out int DJID)
+        internal ExpResponse DJValidateUsernameEmail(string username, string email, out int DJID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where Email = @email and Username = @username ;", con);
             cmd.Parameters.AddWithValue("@email", email);
             cmd.Parameters.AddWithValue("@username", username);
@@ -466,9 +456,8 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJValidateUsernameEmail: " + e.Message;
                 DJID = -1;
+                r.setErMsgStk(true, "Exception in DJValidateUsernameEmail:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -478,9 +467,9 @@ namespace KServer
         /// <param name="DJID">The DJ's ID</param>
         /// <param name="value">The unique key that will represent this password reset.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJSetPasswordReset(int DJID, string value)
+        internal ExpResponse DJSetPasswordReset(int DJID, string value)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from DJPasswordResets where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@ID", DJID);
             cmd.ExecuteNonQuery();
@@ -498,8 +487,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJSetPasswordReset: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJSetPasswordReset:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -510,9 +498,9 @@ namespace KServer
         /// <param name="value">The unique password reset key.</param>
         /// <param name="DJID">Out DJID</param>
         /// <returns>The outcome of the operaiton.</returns>
-        internal Response DJGetPasswordResetID(string value, out int DJID)
+        internal ExpResponse DJGetPasswordResetID(string value, out int DJID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select ID from DJPasswordResets where Value = @value;", con);
             cmd.Parameters.AddWithValue("@value", value);
 
@@ -533,9 +521,8 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJGetPasswordResetID: " + e.Message;
                 DJID = -1;
+                r.setErMsgStk(true, "Exception in DJGetPasswordResetID:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -546,9 +533,9 @@ namespace KServer
         /// <param name="DJID">The DJID</param>
         /// <param name="value">The unique password reset key</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJClearPasswordResetID(int DJID, string value)
+        internal ExpResponse DJClearPasswordResetID(int DJID, string value)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from DJPasswordResets where ID = @DJID or Value = @value;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@value", value);
@@ -560,8 +547,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJClearPasswordResetID: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJClearPasswordResetID:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -576,7 +562,7 @@ namespace KServer
         /// <param name="DJID">The ID of the DJ/Venue.</param>
         /// <param name="SongID">The ID of the song.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response SongExists(int DJID, int SongID)
+        internal ExpResponse SongExists(int DJID, int SongID)
         {
             SqlCommand cmd = new SqlCommand("select SongID from DJSongs where SongID = @songID and DJListID = @DJID;");
             cmd.Parameters.AddWithValue("@songID", SongID);
@@ -589,7 +575,7 @@ namespace KServer
         /// <param name="DJID">The ID of the DJ/Venue.</param>
         /// <param name="SongID">The ID of the song.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response SongInformation(int DJID, int SongID)
+        internal ExpResponse SongInformation(int DJID, int SongID)
         {
             SqlCommand cmd = new SqlCommand("select Title, Artist, PathOnDisk, Duration from DJSongs where SongID = @songID;");
             cmd.Parameters.AddWithValue("@songID", SongID);
@@ -606,13 +592,13 @@ namespace KServer
         /// <param name="songs">Out list of songs.</param>
         /// <param name="counts">Out count of how often the songs exist.</param>
         /// <returns></returns>
-        internal Response GetMostPopularSongs(int venueID, int start, int count, out List<Song> songs, out List<int> counts)
+        internal ExpResponse GetMostPopularSongs(int venueID, int start, int count, out List<Song> songs, out List<int> counts)
         {
             songs = new List<Song>();
             counts = new List<int>();
             //select SongID, count(SongID) from MobileSongHistory where venueID > '0' and DateSung > '2010' 
             //group by SongID order by count(SongID) desc offset 2 rows fetch next 3 rows only;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select SongID, count(SongID) from MobileSongHistory ", con);
             if (venueID != -1)
             {
@@ -640,8 +626,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJGetPasswordResetID: " + e.Message;
+                r.setErMsgStk(true, "Exception in GetMostPopularSongs:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -656,9 +641,9 @@ namespace KServer
         /// <param name="mobileID">The username to match with.</param>
         /// <param name="password">The new hashed and salted password.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetPassword(int mobileID, string password)
+        internal ExpResponse MobileSetPassword(int mobileID, string password)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("Update MobileUsers set Password = @password where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@password", password);
             cmd.Parameters.AddWithValue("@ID", mobileID);
@@ -669,8 +654,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJSetPassword: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileSetPassword:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -680,9 +664,9 @@ namespace KServer
         /// <param name="mobileID">The mobile ID.</param>
         /// <param name="email">The new email.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetEmail(int mobileID, string email)
+        internal ExpResponse MobileSetEmail(int mobileID, string email)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("Update MobileUsers set Email = @email where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@email", email);
             cmd.Parameters.AddWithValue("@ID", mobileID);
@@ -693,8 +677,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJSetEmail: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileSetEmail:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -704,9 +687,9 @@ namespace KServer
         /// <param name="mobileID">The mobile user's unique ID.</param>
         /// <param name="salt">The new salt.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetSalt(int mobileID, string salt)
+        internal ExpResponse MobileSetSalt(int mobileID, string salt)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("Update MobileUsers set Salt = @salt where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@salt", salt);
             cmd.Parameters.AddWithValue("@ID", mobileID);
@@ -717,8 +700,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJSetPassword: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileSetSalt:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -726,10 +708,10 @@ namespace KServer
         /// List all the MobileUsers.
         /// </summary>
         /// <returns>Outcome of the operation with message set to describe the mobile users.</returns>
-        internal Response MobileListMembers()
+        internal ExpResponse MobileListMembers()
         {
             SqlCommand cmd = new SqlCommand("select * from MobileUsers;");
-            Response r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
+            ExpResponse r = DBQuery(cmd, new string[4] { "ID", "Username", "Password", "Status" });
             r.message = r.message.Replace(Common.DELIMINATOR, ",");
             return r;
         }
@@ -738,7 +720,7 @@ namespace KServer
         /// </summary>
         /// <param name="username">The username.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileValidateUsername(string username)
+        internal ExpResponse MobileValidateUsername(string username)
         {
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Username = @username;");
             cmd.Parameters.AddWithValue("@username", username);
@@ -750,7 +732,7 @@ namespace KServer
         /// <param name="username">The username.</param>
         /// <param name="password">The Password.</param>
         /// <returns>The outcome of the opeation.</returns>
-        internal Response MobileValidateUsernamePassword(string username, string password)
+        internal ExpResponse MobileValidateUsernamePassword(string username, string password)
         {
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Username = @username and Password = @password;");
             cmd.Parameters.AddWithValue("@username", username.Trim());
@@ -762,7 +744,7 @@ namespace KServer
         /// </summary>
         /// <param name="MobileID">The mobileID of the user.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileIDtoUsername(int MobileID)
+        internal ExpResponse MobileIDtoUsername(int MobileID)
         {
             SqlCommand cmd = new SqlCommand("select Username from MobileUsers where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
@@ -773,7 +755,7 @@ namespace KServer
         /// </summary>
         /// <param name="MobileID">The mobileID of the user.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileValidateID(int MobileID)
+        internal ExpResponse MobileValidateID(int MobileID)
         {
             SqlCommand cmd = new SqlCommand("select Status from MobileUsers where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@mobileID", MobileID);
@@ -784,7 +766,7 @@ namespace KServer
         /// </summary>
         /// <param name="MobileID">The mobileID of the user.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetStatus(int MobileID)
+        internal ExpResponse MobileGetStatus(int MobileID)
         {
             return MobileValidateID(MobileID);
         }
@@ -795,7 +777,7 @@ namespace KServer
         /// <param name="password">The password.</param>
         /// <param name="email">The email of the user.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSignUp(string username, string password, string email, string salt)
+        internal ExpResponse MobileSignUp(string username, string password, string email, string salt)
         {
             SqlCommand cmd = new SqlCommand("insert into MobileUsers (Username, Password, Status, Email, DeviceID, Salt) Values (@username, @password, @status, @email, @deviceID, @salt);");
             cmd.Parameters.AddWithValue("@username", username.Trim());
@@ -812,10 +794,10 @@ namespace KServer
         /// <param name="username">The mobile username.</param>
         /// <param name="salt">Out parmater of the salt.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetSalt(string username, out string salt)
+        internal ExpResponse MobileGetSalt(string username, out string salt)
         {
             salt = string.Empty;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select Salt from MobileUsers where Username = @username;", con);
             cmd.Parameters.AddWithValue("@username", username);
 
@@ -838,8 +820,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetSalt: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetSalt:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -849,7 +830,7 @@ namespace KServer
         /// <param name="MobileID">The id of the mobile client.</param>
         /// <param name="status">The status to set.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetStatus(int MobileID, int status)
+        internal ExpResponse MobileSetStatus(int MobileID, int status)
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set Status = @status where ID = @mobileID;");
             cmd.Parameters.AddWithValue("@status", status);
@@ -861,9 +842,9 @@ namespace KServer
         /// </summary>
         /// <param name="mobileID">The mobile client ID.</param>
         /// <returns>The success of the operation.</returns>
-        internal Response MobileSignOut(int mobileID)
+        internal ExpResponse MobileSignOut(int mobileID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = '', Status = '0' where ID = @mobileID;", con);
@@ -873,8 +854,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileSignOut: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileSignOut:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -883,10 +863,10 @@ namespace KServer
         /// </summary>
         /// <param name="mobileID">The mobile client ID.</param>
         /// <param name="deviceID">The device id of the phone<./param>
-        /// <returns>Response indicating the success of the operation.</returns>
-        internal Response MobileSignIn(int mobileID, string deviceID)
+        /// <returns>ExpResponse indicating the success of the operation.</returns>
+        internal ExpResponse MobileSignIn(int mobileID, string deviceID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 SqlCommand cmd = new SqlCommand("update MobileUsers set DeviceID = @deviceID, Status = '1' where ID = @mobileID", con);
@@ -898,8 +878,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileSignIn: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileSignIn:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -908,11 +887,11 @@ namespace KServer
         /// </summary>
         /// <param name="mobileID">The mobile client id.</param>
         /// <param name="deviceID">Outputs the device id of the phone.</param>
-        /// <returns>Response indicating the success of the operation.</returns>
-        internal Response MobileGetDeviceID(int mobileID, out string deviceID)
+        /// <returns>ExpResponse indicating the success of the operation.</returns>
+        internal ExpResponse MobileGetDeviceID(int mobileID, out string deviceID)
         {
             deviceID = String.Empty;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 SqlCommand cmd = new SqlCommand("select DeviceID from MobileUsers where ID = @mobileID", con);
@@ -932,8 +911,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileSetDeviceID: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetDeviceID:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -943,7 +921,7 @@ namespace KServer
         /// <param name="MobileID">The mobile client's ID.</param>
         /// <param name="Venue">The venueID, either an int, or null if no venue.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetVenue(int MobileID, object Venue)
+        internal ExpResponse MobileSetVenue(int MobileID, object Venue)
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set Venue = @Venue where ID = @MobileID;");
             if (Venue == null)
@@ -958,7 +936,7 @@ namespace KServer
         /// </summary>
         /// <param name="MobileID">The mobile ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetVenue(int MobileID)
+        internal ExpResponse MobileGetVenue(int MobileID)
         {
             SqlCommand cmd = new SqlCommand("select Venue from MobileUsers where ID = @MobileID;");
             cmd.Parameters.AddWithValue("@MobileID", MobileID);
@@ -970,7 +948,7 @@ namespace KServer
         /// <param name="MobileID">The mobile ID.</param>
         /// <param name="MobileKey">The mobile Key.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetKey(int MobileID, object MobileKey)
+        internal ExpResponse MobileSetKey(int MobileID, object MobileKey)
         {
             SqlCommand cmd = new SqlCommand("update MobileUsers set KeyHash = @MobileKey where ID = @MobileID;");
             if (MobileKey == null)
@@ -985,7 +963,7 @@ namespace KServer
         /// </summary>
         /// <param name="MobileKey">The mobile key.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetIDFromKey(long MobileKey)
+        internal ExpResponse MobileGetIDFromKey(long MobileKey)
         {
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where KeyHash = @MobileKey;");
             cmd.Parameters.AddWithValue("@MobileKey", MobileKey);
@@ -997,10 +975,10 @@ namespace KServer
         /// <param name="email">The email address.</param>
         /// <param name="usernames">Out usernames.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetUsernamesByEmail(string email, out List<string> usernames)
+        internal ExpResponse MobileGetUsernamesByEmail(string email, out List<string> usernames)
         {
             usernames = new List<string>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select Username from MobileUsers where Email = @email ;", con);
             cmd.Parameters.AddWithValue("@email", email);
 
@@ -1017,8 +995,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetUsernamesByEmail: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetUsernamesByEmail:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1030,9 +1007,9 @@ namespace KServer
         /// <param name="email">The email</param>
         /// <param name="mobileID">Out mobileID</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileValidateUsernameEmail(string username, string email, out int mobileID)
+        internal ExpResponse MobileValidateUsernameEmail(string username, string email, out int mobileID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Email = @email and Username = @username ;", con);
             cmd.Parameters.AddWithValue("@email", email);
             cmd.Parameters.AddWithValue("@username", username);
@@ -1053,9 +1030,8 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileValidateUsernameEmail: " + e.Message;
                 mobileID = -1;
+                r.setErMsgStk(true, "Exception in MobileValidateUsernameEmail:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1065,9 +1041,9 @@ namespace KServer
         /// <param name="mobileID">The mobile client's ID</param>
         /// <param name="value">The unique key that will represent this password reset.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response MobileSetPasswordReset(int mobileID, string value)
+        internal ExpResponse MobileSetPasswordReset(int mobileID, string value)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from MobilePasswordResets where ID = @ID;", con);
             cmd.Parameters.AddWithValue("@ID", mobileID);
             cmd.ExecuteNonQuery();
@@ -1085,8 +1061,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileSetPasswordReset: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileSetPasswordReset:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1097,9 +1072,9 @@ namespace KServer
         /// <param name="value">The unique password reset key.</param>
         /// <param name="mobileID">Out mobileID</param>
         /// <returns>The outcome of the operaiton.</returns>
-        internal Response MobileGetPasswordResetID(string value, out int mobileID)
+        internal ExpResponse MobileGetPasswordResetID(string value, out int mobileID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select ID from MobilePasswordResets where Value = @value;", con);
             cmd.Parameters.AddWithValue("@value", value);
 
@@ -1120,9 +1095,8 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetPasswordResetID: " + e.Message;
                 mobileID = -1;
+                r.setErMsgStk(true, "Exception in MobileGetPasswordResetID:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1133,9 +1107,9 @@ namespace KServer
         /// <param name="mobileID">The mobileID</param>
         /// <param name="value">The unique password reset key</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileClearPasswordResetID(int mobileID, string value)
+        internal ExpResponse MobileClearPasswordResetID(int mobileID, string value)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from MobilePasswordResets where ID = @mobileID or Value = @value;", con);
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
             cmd.Parameters.AddWithValue("@value", value);
@@ -1147,8 +1121,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileClearPasswordResetID: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileClearPasswordResetID:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1161,7 +1134,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJCloseSongRequests(int DJID)
+        internal ExpResponse DJCloseSongRequests(int DJID)
         {
             SqlCommand cmd = new SqlCommand("delete from DJSongRequests where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
@@ -1172,11 +1145,11 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJOpenSongRequests(int DJID)
+        internal ExpResponse DJOpenSongRequests(int DJID)
         {
             SqlCommand cmd = new SqlCommand("delete from DJSongRequests where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
-            Response r = DBNonQuery(cmd);
+            ExpResponse r = DBNonQuery(cmd);
             if (r.error)
                 return r;
 
@@ -1189,7 +1162,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response GetSongRequests(int DJID)
+        internal ExpResponse GetSongRequests(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select List from DJSongRequests where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
@@ -1201,7 +1174,7 @@ namespace KServer
         /// <param name="DJID">The DJID.</param>
         /// <param name="requestString">The new song requests.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response SetSongRequests(int DJID, string requestString)
+        internal ExpResponse SetSongRequests(int DJID, string requestString)
         {
             SqlCommand cmd = new SqlCommand("update DJSongRequests set List = @list where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@list", requestString);
@@ -1218,7 +1191,7 @@ namespace KServer
         /// <param name="name">The temporary user's name.</param>
         /// <param name="DJID">The DJID of the DJ the user belongs to.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJAddTempUser(string name, int DJID)
+        internal ExpResponse DJAddTempUser(string name, int DJID)
         {
             SqlCommand cmd = new SqlCommand("insert into TempUsers (Name, Venue) Values (@name, @venue);");
             cmd.Parameters.AddWithValue("@name", name.Trim());
@@ -1231,7 +1204,7 @@ namespace KServer
         /// <param name="name">The temporary user's name.</param>
         /// <param name="DJID">The DJID of the DJ the user belongs to.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJValidateTempUserName(string name, int DJID)
+        internal ExpResponse DJValidateTempUserName(string name, int DJID)
         {
             SqlCommand cmd = new SqlCommand("select ID from TempUsers where Name = @name and Venue = @venue;");
             cmd.Parameters.AddWithValue("@name", name);
@@ -1244,7 +1217,7 @@ namespace KServer
         /// <param name="tempID">The temporary userID.</param>
         /// <param name="DJID">The DJID of the DJ the user belongs to.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJGetTempUserName(int tempID, int DJID)
+        internal ExpResponse DJGetTempUserName(int tempID, int DJID)
         {
             SqlCommand cmd = new SqlCommand("select Name from TempUsers where ID = @tempID and Venue = @venue;");
             cmd.Parameters.AddWithValue("@tempID", tempID);
@@ -1257,7 +1230,7 @@ namespace KServer
         /// <param name="tempID">The temporary userID.</param>
         /// <param name="DJID">The DJID of the DJ the user belongs to.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJRemoveTempUser(int tempID, int DJID)
+        internal ExpResponse DJRemoveTempUser(int tempID, int DJID)
         {
             SqlCommand cmd = new SqlCommand("Delete from TempUsers where ID = @tempID and Venue = @venue;");
             cmd.Parameters.AddWithValue("@tempID", tempID);
@@ -1269,7 +1242,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJID of the DJ the user belongs to.</param>
         /// <returns>The outcome of the operation</returns>
-        internal Response DJRemoveAllTempUsers(int DJID)
+        internal ExpResponse DJRemoveAllTempUsers(int DJID)
         {
             SqlCommand cmd = new SqlCommand("Delete from TempUsers where Venue = @venue;");
             cmd.Parameters.AddWithValue("@venue", DJID);
@@ -1285,10 +1258,10 @@ namespace KServer
         /// <param name="venueID">The id of the venue/DJ.</param>
         /// <param name="clients">Out list of client IDs.</param>
         /// <returns>The otucome of the operation.</returns>
-        internal Response DJGetAssociatedClients(int venueID, out List<int> clients)
+        internal ExpResponse DJGetAssociatedClients(int venueID, out List<int> clients)
         {
             clients = new List<int>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select ID from MobileUsers where Venue = @venueID;", con);
             cmd.Parameters.AddWithValue("@venueID", venueID);
 
@@ -1305,8 +1278,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJGetAssociatedClients: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJGetAssociatedClients:" + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1316,7 +1288,7 @@ namespace KServer
         /// <param name="QR">The QR code.</param>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJSetQR(string QR, int DJID)
+        internal ExpResponse DJSetQR(string QR, int DJID)
         {
             SqlCommand cmd = new SqlCommand("update DJUsers set QR = @QR where ID = @DJID;");
             cmd.Parameters.AddWithValue("@QR", QR);
@@ -1328,7 +1300,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJGetQR(int DJID)
+        internal ExpResponse DJGetQR(int DJID)
         {
             SqlCommand cmd = new SqlCommand("select QR from DJUsers where ID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);
@@ -1339,7 +1311,7 @@ namespace KServer
         /// </summary>
         /// <param name="QR">The QR code.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response GetVenueIDByQR(string QR)
+        internal ExpResponse GetVenueIDByQR(string QR)
         {
             SqlCommand cmd = new SqlCommand("select ID from DJUsers where QR = @QR;");
             cmd.Parameters.AddWithValue("@QR", QR);
@@ -1350,7 +1322,7 @@ namespace KServer
         /// </summary>
         /// <param name="venueID">The venueID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response GetVenueName(int venueID)
+        internal ExpResponse GetVenueName(int venueID)
         {
             SqlCommand cmd = new SqlCommand("select VenueName from DJUsers where ID = @ID;");
             cmd.Parameters.AddWithValue("@ID", venueID);
@@ -1361,7 +1333,7 @@ namespace KServer
         /// </summary>
         /// <param name="venueID">The venueID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response GetVenueAddress(int venueID)
+        internal ExpResponse GetVenueAddress(int venueID)
         {
             SqlCommand cmd = new SqlCommand("select VenueAddress from DJUsers where ID = @ID;");
             cmd.Parameters.AddWithValue("@ID", venueID);
@@ -1371,10 +1343,10 @@ namespace KServer
 
         #region BannedUsers
 
-        internal Response DJRemoveUserFromVenueIfAtVenue(int DJID, int mobileID)
+        internal ExpResponse DJRemoveUserFromVenueIfAtVenue(int DJID, int mobileID)
         {
             //update MobileUsers set Venue = '4' where Venue = '0' and ID = '1';
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("update MobileUsers set Venue = @null where Venue = @DJID and ID = @mobileID;", con);
             cmd.Parameters.AddWithValue("@null", DBNull.Value);
             cmd.Parameters.AddWithValue("@DJID", DJID);
@@ -1388,20 +1360,18 @@ namespace KServer
             }
             catch (SqlException e)
             {
-                r.error = true;
-                r.message = "Exception in DJRemoveUserFromVenueIfAtVenue ID: " + e.Number + " " + e.Message;
+                r.setErMsgStk(true, "Exception in DJRemoveUserFromVenueIfAtVenue ID: " + e.Number + " " + e.Message, e.StackTrace);
                 return r;
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJRemoveUserFromVenueIfAtVenue: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJRemoveUserFromVenueIfAtVenue: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response DJBanUser(int DJID, int mobileID)
+        internal ExpResponse DJBanUser(int DJID, int mobileID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("insert into DJBannedUsers (DJID, mobileID) values (@DJID, @mobileID);", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
@@ -1413,23 +1383,21 @@ namespace KServer
             }
             catch (SqlException e)
             {
-                r.result = e.Number;
                 if (e.Number == 2601)
-                    r.message = "That User is already banned.";
+                    r.setAll(true, "That user is already banned", e.StackTrace, e.Number);
                 else
-                    r.message = e.Message;
+                    r.setErMsgStk(true, e.Message, e.StackTrace);
                 return r;
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJBanUser: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJBanUser: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response DJUnbanUser(int DJID, int mobileID)
+        internal ExpResponse DJUnbanUser(int DJID, int mobileID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from DJBannedUsers where DJID = @DJID and MobileID = @mobileID;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
@@ -1441,14 +1409,13 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJUnbanUser: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJUnbanUser: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response MobileIsBanned(int DJID, int mobileID, out bool userBanned)
+        internal ExpResponse MobileIsBanned(int DJID, int mobileID, out bool userBanned)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select MobileID from DJBannedUsers where DJID = @DJID and MobileID = @mobileID;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
@@ -1468,16 +1435,15 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJGetBannedUsers: " + e.Message;
                 userBanned = true;
+                r.setErMsgStk(true, "Exception in MobileIsBanned: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response DJGetBannedUsers(int DJID, out List<User> bannedUsers)
+        internal ExpResponse DJGetBannedUsers(int DJID, out List<User> bannedUsers)
         {
             bannedUsers = new List<User>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select MobileID from DJBannedUsers where DJID = @DJID;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
 
@@ -1496,8 +1462,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJGetBannedUsers: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJGetBannedUsers: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1512,10 +1477,10 @@ namespace KServer
         /// </summary>
         /// <param name="songs">List of songs to add to library</param>
         /// <param name="DJID">DJ unique identifier</param>
-        /// <returns>Response encoding the sucess of the operation</returns>
-        internal Response DJAddSongsUpdatingDuplicates(List<Song> songs, int DJID)
+        /// <returns>ExpResponse encoding the sucess of the operation</returns>
+        internal ExpResponse DJAddSongsUpdatingDuplicates(List<Song> songs, int DJID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             r.result = 0;
             try
             {
@@ -1546,8 +1511,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in AddSongs: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJAddSongsUpdatingDuplicates: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1557,11 +1521,11 @@ namespace KServer
         /// <param name="songs">The songs to add.</param>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJRemoveSongs(List<Song> songs, int DJID)
+        internal ExpResponse DJRemoveSongs(List<Song> songs, int DJID)
         {
             int songsNotFound = 0;
             int songsRemoved = 0;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             foreach (Song s in songs)
             {
                 SqlCommand cmd = new SqlCommand("delete from DJSongs where DJListID = @DJID and Title = @title and Artist = @artist and PathOnDisk = @pathOnDisk;");
@@ -1590,9 +1554,9 @@ namespace KServer
         /// <param name="DJID">The DJ's ID.</param>
         /// <param name="songs">Out parameter that will store all the songs.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response DJListSongs(int DJID, out List<Song> songs)
+        internal ExpResponse DJListSongs(int DJID, out List<Song> songs)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             songs = new List<Song>();
             SqlCommand cmd = new SqlCommand("select * from DJSongs where DJListID = @DJID;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
@@ -1616,8 +1580,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJListSongs: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJListSongs: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1635,7 +1598,7 @@ namespace KServer
         /// <param name="start">The index of the first result.</param>
         /// <param name="count">The number of results to return.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSearchSongs(string title, string artist, int DJID, int start, int count)
+        internal ExpResponse MobileSearchSongs(string title, string artist, int DJID, int start, int count)
         {
             title = title.Trim();
             artist = artist.Trim();
@@ -1672,7 +1635,7 @@ namespace KServer
         /// <param name="count">The number of results to return.</param>
         /// <param name="DJID">The ID of the DJ's whose library is being serached.</param>
         /// <returns>The outcome of the opearation.</returns>
-        internal Response MobileBrowseSongs(string firstLetter, bool isArtist, int start, int count, int DJID)
+        internal ExpResponse MobileBrowseSongs(string firstLetter, bool isArtist, int start, int count, int DJID)
         {
             int length = firstLetter.Length;
 
@@ -1734,7 +1697,7 @@ namespace KServer
         /// <param name="userID">The mobile client's ID.</param>
         /// <param name="time">The time the playlist was created.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileCreatePlaylist(string name, int venueID, int userID, DateTime time)
+        internal ExpResponse MobileCreatePlaylist(string name, int venueID, int userID, DateTime time)
         {
             SqlCommand cmd = new SqlCommand("insert into PlayLists (VenueID, MobileID, Name, Songs, DateCreated) Values (@venueID, @userID, @name, '', @time); select SCOPE_IDENTITY();");
             cmd.Parameters.AddWithValue("@venueID", venueID);
@@ -1749,7 +1712,7 @@ namespace KServer
         /// <param name="playListID">The playlist ID.</param>
         /// <param name="userID">The mobile client's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileDeletePlaylist(int playListID, int userID)
+        internal ExpResponse MobileDeletePlaylist(int playListID, int userID)
         {
             SqlCommand cmd = new SqlCommand("delete from PlayLists where ID = @playListID and MobileID = @userID;");
             cmd.Parameters.AddWithValue("@playListID", playListID);
@@ -1762,7 +1725,7 @@ namespace KServer
         /// <param name="playListID">The playlist ID.</param>
         /// <param name="userID">The mobile client's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetVenueFromPlaylist(int playListID, int userID)
+        internal ExpResponse MobileGetVenueFromPlaylist(int playListID, int userID)
         {
             SqlCommand cmd = new SqlCommand("select VenueID from PlayLists where ID = @playListID and MobileID = @userID;");
             cmd.Parameters.AddWithValue("@playListID", playListID);
@@ -1775,9 +1738,9 @@ namespace KServer
         /// <param name="playListID">The playlist ID.</param>
         /// <param name="userID">The mobile client's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetSongsFromPlaylist(int playListID, int userID, out List<Song> songs)
+        internal ExpResponse MobileGetSongsFromPlaylist(int playListID, int userID, out List<Song> songs)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             songs = new List<Song>();
             SqlCommand cmd = new SqlCommand("select SongID from PlayListSongs where PlayListID = @playListID;", con);
             cmd.Parameters.AddWithValue("@playListID", playListID);
@@ -1797,8 +1760,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetSongsFromPlaylist: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetSongsFromPlaylist: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1809,9 +1771,9 @@ namespace KServer
         /// <param name="userID">The mobile client's ID.</param>
         /// <param name="songString">The songs in string form.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetPlaylistSongs(int playListID, int userID, List<Song> songs)
+        internal ExpResponse MobileSetPlaylistSongs(int playListID, int userID, List<Song> songs)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 SqlCommand cmd = new SqlCommand("delete from PlayListSongs where PlayListID = @playListID;", con);
@@ -1831,8 +1793,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileSignOut: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileSetPlaylistSongs: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1843,9 +1804,9 @@ namespace KServer
         /// <param name="venueID">The venueID, if set to -1, all venues are included.</param>
         /// <param name="userID">The mobile client's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetPlaylists(int venueID, int userID, out List<Playlist> playlists)
+        internal ExpResponse MobileGetPlaylists(int venueID, int userID, out List<Playlist> playlists)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             playlists = new List<Playlist>();
             SqlCommand cmd = new SqlCommand("select ID, Name, DateCreated, VenueID from PlayLists where MobileID = @userID", con);
             cmd.Parameters.AddWithValue("@userID", userID);
@@ -1885,8 +1846,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetSongsFromPlaylist: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetPlaylists: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1900,10 +1860,10 @@ namespace KServer
         /// <param name="count">The number of results.</param>
         /// <param name="history">Out stores the song history.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileGetSongHistory(int userID, int start, int count, out List<SongHistory> history)
+        internal ExpResponse MobileGetSongHistory(int userID, int start, int count, out List<SongHistory> history)
         {
             history = new List<SongHistory>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select VenueID, SongID, DateSung from MobileSongHistory where MobileID = @userID order by DateSung desc offset @start rows fetch next @count rows only;", con);
             cmd.Parameters.AddWithValue("@userID", userID);
             cmd.Parameters.AddWithValue("@start", start);
@@ -1928,15 +1888,14 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetSongHistory: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetSongHistory: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response MobileGetDistictSongHistory(int userID, int start, int count, out List<KeyValuePair<string[], int>> songsAndCount)
+        internal ExpResponse MobileGetDistictSongHistory(int userID, int start, int count, out List<KeyValuePair<string[], int>> songsAndCount)
         {
             songsAndCount = new List<KeyValuePair<string[], int>>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select Title, Artist, count(Title) from DJSongs inner join MobileSongHistory on MobileSongHistory.SongID = DJSongs.SongID where MobileID = @userID group by Title,Artist order by count(Title) desc offset @start rows fetch next @count rows only;", con);
             cmd.Parameters.AddWithValue("@userID", userID);
             cmd.Parameters.AddWithValue("@start", start);
@@ -1955,15 +1914,14 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetDistictSongHistory: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetDistictSongHistory: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response MobileGetOtherDistictSongHistory(int userID, int start, int count, out List<KeyValuePair<string[], int>> songsAndCount)
+        internal ExpResponse MobileGetOtherDistictSongHistory(int userID, int start, int count, out List<KeyValuePair<string[], int>> songsAndCount)
         {
             songsAndCount = new List<KeyValuePair<string[], int>>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
 
             SqlCommand cmd = new SqlCommand("select Title, Artist, count(Title) from DJSongs inner join MobileSongHistory on MobileSongHistory.SongID = DJSongs.SongID where MobileID = @userID group by Title,Artist order by count(Title), NEWID() desc offset @start rows fetch next @count rows only;", con);
             cmd.Parameters.AddWithValue("@userID", userID);
@@ -1983,8 +1941,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetOtherDistictSongHistory: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetOtherDistictSongHistory: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -1996,7 +1953,7 @@ namespace KServer
         /// <param name="songID">The songID.</param>
         /// <param name="dateSung">The date of singing.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileAddSongHistory(int mobileID, int venueID, int songID, DateTime dateSung)
+        internal ExpResponse MobileAddSongHistory(int mobileID, int venueID, int songID, DateTime dateSung)
         {
             SqlCommand cmd = new SqlCommand("insert into MobileSongHistory (VenueID, MobileID, SongID, DateSung) values (@venueID, @mobileID, @songID, @dateSung);");
             cmd.Parameters.AddWithValue("@venueID", venueID);
@@ -2006,10 +1963,10 @@ namespace KServer
             return DBNonQuery(cmd);
         }
 
-        internal Response MobileGetUniqueArtistsSung(int userID, int start, int count, out List<SongAndCount> sAc)
+        internal ExpResponse MobileGetUniqueArtistsSung(int userID, int start, int count, out List<SongAndCount> sAc)
         {
             sAc = new List<SongAndCount>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select Artist, Count(Artist) from DJSongs inner join MobileSongHistory on MobileSongHistory.SongID = DJSongs.SongID ", con);
             cmd.CommandText += "where MobileSongHistory.MobileID = @userID group by Artist order by Count(Artist) desc offset @start rows fetch next @count rows only;";
             cmd.Parameters.AddWithValue("@userID", userID);
@@ -2033,15 +1990,14 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetUniqueArtistsSung: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetUniqueArtistsSung: " + e.Message, e.StackTrace);
                 return r;
             }
         }
 
-        internal Response MobileGetRandomSongsFromExactArtistNeverSung(string artist, int DJID, int count, int mobileID, out List<int> songIDs)
+        internal ExpResponse MobileGetRandomSongsFromExactArtistNeverSung(string artist, int DJID, int count, int mobileID, out List<int> songIDs)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             songIDs = new List<int>();
             using (SqlCommand cmd = new SqlCommand("select top(@count) SongID from DJSongs where SongID not in(select SongID from MobileSongHistory where MobileID = @mobileID) and Artist like @artist and DJListID = @DJID order by NEWID();", con))
             {
@@ -2064,17 +2020,16 @@ namespace KServer
                 }
                 catch (Exception e)
                 {
-                    r.error = true;
-                    r.message = "Exception in MobileGetRandomSongsFromExactArtistNeverSung: " + e.Message;
+                    r.setErMsgStk(true, "Exception in MobileGetRandomSongsFromExactArtistNeverSung: " + e.Message, e.StackTrace);
                     return r;
                 }
             }
         }
 
-        internal Response MobileGetOthersWhoSangSong(int userID, string title, string artist, int count, out SangSong ss)
+        internal ExpResponse MobileGetOthersWhoSangSong(int userID, string title, string artist, int count, out SangSong ss)
         {
             ss = new SangSong();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             //SqlCommand cmd = new SqlCommand("select MobileID, count(MobileID) from MobileSongHistory where MobileID != @userID and SongID = @songID group by MobileID order by count(MobileID) desc offset 0 rows fetch next @count rows only;", con);
             SqlCommand cmd = new SqlCommand(@"select MobileID, count(MobileID) from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID
             where MobileID != @userID and DJSongs.Title like @title and DJSongs.Artist like @artist
@@ -2101,16 +2056,15 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetOthersWhoSangSong: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetOthersWhoSangSong: " + e.Message, e.StackTrace);
                 return r;
             }
         }
 
-        internal Response MobileGetSongFromTitleArtist(string title, string artist, int DJID, out Song song)
+        internal ExpResponse MobileGetSongFromTitleArtist(string title, string artist, int DJID, out Song song)
         {
             song = null;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select SongID, Duration from DJSongs where DJListID = @DJID and Title like @title and Artist like @artist;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@title", title);
@@ -2133,8 +2087,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetSongFromTitleArtist: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetSongFromTitleArtist: " + e.Message, e.StackTrace);
                 return r;
             }
 
@@ -2152,9 +2105,9 @@ namespace KServer
         /// <param name="songID">The songID.</param>
         /// <param name="rating">The rating.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response MobileSetSongRating(int mobileID, int songID, int rating)
+        internal ExpResponse MobileSetSongRating(int mobileID, int songID, int rating)
         {
-            Response r;
+            ExpResponse r;
             SqlCommand cmd = new SqlCommand("select ID from MobileSongRatings where MobileID = @mobileID and SongID = @songID;");
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
             cmd.Parameters.AddWithValue("@songID", songID);
@@ -2186,7 +2139,7 @@ namespace KServer
         /// <param name="mobileID">The mobileID of the client.</param>
         /// <param name="songID">The songID.</param>
         /// <returns>The outcome of the oepration.</returns>
-        internal Response MobileGetSongRating(int mobileID, int songID)
+        internal ExpResponse MobileGetSongRating(int mobileID, int songID)
         {
             SqlCommand cmd = new SqlCommand("select Rating from MobileSongRatings where MobileID = @mobileID and SongID = @songID;");
             cmd.Parameters.AddWithValue("@mobileID", mobileID);
@@ -2203,9 +2156,9 @@ namespace KServer
         /// <param name="name">The name of the setting.</param>
         /// <param name="value">The value of the setting.</param>
         /// <returns>The outcome of the opeartion.</returns>
-        internal Response SetSetting(string name, string value)
+        internal ExpResponse SetSetting(string name, string value)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from Settings where Name = @name ;", con);
             cmd.Parameters.AddWithValue("@name", name);
             SqlCommand cmd2 = new SqlCommand("insert into Settings (Name, Value) values (@name, @value);", con);
@@ -2220,8 +2173,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetSalt: " + e.Message;
+                r.setErMsgStk(true, "Exception in SetSetting: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -2231,10 +2183,10 @@ namespace KServer
         /// <param name="name">The name of the setting.</param>
         /// <param name="value">Out value of the setting.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal Response GetSetting(string name, out string value)
+        internal ExpResponse GetSetting(string name, out string value)
         {
             value = string.Empty;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select value from Settings where Name = @name ;", con);
             cmd.Parameters.AddWithValue("@name", name);
 
@@ -2257,8 +2209,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetSalt: " + e.Message;
+                r.setErMsgStk(true, "Exception in GetSetting: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -2266,14 +2217,14 @@ namespace KServer
 
         #region Achievements
 
-        internal Response DJAddAchievement(int DJID, Achievement achievement)
+        internal ExpResponse DJAddAchievement(int DJID, Achievement achievement)
         {
             MemoryStream streamAchievement = new MemoryStream();
             DataContractSerializer achievementSerializer = new DataContractSerializer(typeof(Achievement));
             achievementSerializer.WriteObject(streamAchievement, achievement);
             byte[] serializedAchievementBytes = streamAchievement.ToArray();
 
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("insert into Achievements (DJID, Object, Name, ObjectSize, Visible) values (@DJID, @achievement, @name, @objectSize, @visible); SELECT SCOPE_IDENTITY();", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             cmd.Parameters.AddWithValue("@achievement", serializedAchievementBytes);
@@ -2288,23 +2239,21 @@ namespace KServer
             }
             catch (SqlException e)
             {
-                r.result = e.Number;
                 if (e.Number == 2601)
-                    r.message = "An achievement with that name already exists, please choose a new name.";
+                    r.setAll(true, "An achievement with that name already exists, please choose a new name.", e.StackTrace, e.Number);
                 else
-                    r.message = e.Message;
+                    r.setErMsgStk(true, "Exception in DJAddAchievement: " + e.Message, e.StackTrace);
                 return r;
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DBDJAddAchievement: " + e.ToString();
+                r.setErMsgStk(true, "Exception in DJAddAchievement: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response DJModifyAchievement(int DJID, Achievement achievement)
+        internal ExpResponse DJModifyAchievement(int DJID, Achievement achievement)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             try
             {
                 MemoryStream streamAchievement = new MemoryStream();
@@ -2326,20 +2275,18 @@ namespace KServer
             }
             catch (SqlException e)
             {
-                r.result = e.Number;
-                r.message = "SQLException in DBDJModifyAchievement number: " + e.Number + " " + e.Message;
+                r.setAll(true, "SQLException in DBDJModifyAchievement number: " + e.Number + " " + e.Message, e.StackTrace, e.Number);
                 return r;
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DBDJAddAchievement: " + e.ToString();
+                r.setErMsgStk(true, "Exception in DJModifyAchievement: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response DJDeleteAchievement(int DJID, int achievementID)
+        internal ExpResponse DJDeleteAchievement(int DJID, int achievementID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from Achievements where DJID = @DJID", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
             if (achievementID != -1)
@@ -2356,14 +2303,13 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJDeleteAchievement: " + e.ToString();
+                r.setErMsgStk(true, "Exception in DJDeleteAchievement: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response DJViewAchievements(int DJID, out List<Achievement> achievements)
+        internal ExpResponse DJViewAchievements(int DJID, out List<Achievement> achievements)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             achievements = new List<Achievement>();
             SqlCommand cmd = new SqlCommand("select ObjectSize, Object, ID from Achievements where DJID = @DJID order by Name;", con);
             cmd.Parameters.AddWithValue("@DJID", DJID);
@@ -2388,15 +2334,14 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DJViewAchievements: " + e.Message;
+                r.setErMsgStk(true, "Exception in DJViewAchievements: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response EvaluateAchievementStatements(int DJID, List<SqlCommand> cmds, out List<List<int>> userIDs)
+        internal ExpResponse EvaluateAchievementStatements(int DJID, List<SqlCommand> cmds, out List<List<int>> userIDs)
         {
             userIDs = new List<List<int>>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
 
             try
             {
@@ -2415,16 +2360,15 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in EvaluateAchievementStatements: " + e.ToString();
+                r.setErMsgStk(true, "Exception in EvaluateAchievementStatements: " + e.Message, e.StackTrace);
                 return r;
             }
 
 
         }
-        internal Response DeleteEarnedAchievementsByID(int achievementID)
+        internal ExpResponse DeleteEarnedAchievementsByID(int achievementID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("delete from AwardedAchievements where AchievementID = @achievementID;", con);
             cmd.Parameters.AddWithValue("@achievementID", achievementID);
             try
@@ -2434,14 +2378,13 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DeleteAchievementsByID: " + e.ToString();
+                r.setErMsgStk(true, "Exception in DeleteEarnedAchievementsByID: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response AwardAchievement(int mobileID, int achievementID)
+        internal ExpResponse AwardAchievement(int mobileID, int achievementID)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             string cmdText = @"Merge AwardedAchievements as target
                                 using (values(@mobileID, @achievementID))
                                   as source(MobileID, AchievementID)
@@ -2461,17 +2404,16 @@ namespace KServer
                 }
                 catch (Exception e)
                 {
-                    r.error = true;
-                    r.message = "Exception in AwardAchievement: " + e.ToString();
+                    r.setErMsgStk(true, "Exception in AwardAchievement: " + e.Message, e.StackTrace);
                     return r;
                 }
             }
         }
-        internal Response MobileGetAchievements(int mobileID, int venueID, out List<Achievement> achievements, int start, int count)
+        internal ExpResponse MobileGetAchievements(int mobileID, int venueID, out List<Achievement> achievements, int start, int count)
         {
             //select ObjectSize, Object, Achievements.ID from Achievements inner join AwardedAchievements on AwardedAchievements.AchievementID = Achievements.ID
             // where AwardedAchievements.MobileID = '1' and Achievements.DJID = '4';
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             achievements = new List<Achievement>();
             SqlCommand cmd = new SqlCommand("select ObjectSize, Object, Achievements.ID from Achievements inner join AwardedAchievements on AwardedAchievements.AchievementID = Achievements.ID ", con);
             cmd.CommandText += "where AwardedAchievements.MobileID = @mobileID";
@@ -2507,16 +2449,15 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in DBMobileGetAchievements: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetAchievements: " + e.Message, e.StackTrace);
                 return r;
             }
         }
-        internal Response MobileGetUnearnedVisibleAchievements(int mobileID, int venueID, out List<Achievement> achievements, int start, int count)
+        internal ExpResponse MobileGetUnearnedVisibleAchievements(int mobileID, int venueID, out List<Achievement> achievements, int start, int count)
         {
             // select ObjectSize, Object, Achievements.ID from Achievements 
             // where Achievements.ID not in(select AchievementID from AwardedAchievements where MobileID = '3') and DJID = '4';
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             achievements = new List<Achievement>();
             SqlCommand cmd = new SqlCommand("select ObjectSize, Object, Achievements.ID from Achievements ", con);
             cmd.CommandText += "where Achievements.ID not in(select AchievementID from AwardedAchievements where MobileID = @mobileID) and Visible = '1'";
@@ -2552,8 +2493,7 @@ namespace KServer
             }
             catch (Exception e)
             {
-                r.error = true;
-                r.message = "Exception in MobileGetUnearnedAchievements: " + e.Message;
+                r.setErMsgStk(true, "Exception in MobileGetUnearnedVisibleAchievements: " + e.Message, e.StackTrace);
                 return r;
             }
         }
@@ -2563,11 +2503,11 @@ namespace KServer
 
 
 
-        internal Response GetRandomSongsForArtist(string artist, int DJID, int count, out List<int> songIDs)
+        internal ExpResponse GetRandomSongsForArtist(string artist, int DJID, int count, out List<int> songIDs)
         {
                             //select top(5) * from DJSongs where Artist = 'Beatles' and DJListID = '4' order by NEWID();
 
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             songIDs = new List<int>();
             using (SqlCommand cmd = new SqlCommand("select top (@count) SongID from DJSongs where Artist like @artist and DJListID = @DJID order by NEWID();", con))
             {
@@ -2594,8 +2534,7 @@ namespace KServer
                 }
                 catch (Exception e)
                 {
-                    r.error = true;
-                    r.message = "Exception in DBMobileGetAchievements: " + e.Message;
+                    r.setErMsgStk(true, "Exception in GetRandomSongsForArtist: " + e.Message, e.StackTrace);
                     return r;
                 }
             }

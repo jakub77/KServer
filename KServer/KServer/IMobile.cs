@@ -17,22 +17,6 @@ namespace KServer
     public interface IMobile
     {
         [OperationContract]
-        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/test/?string={s}")]
-        Response test(string s);
-
-        [OperationContract]
-        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/GetDateTime/")]
-        DateTime GetDateTime();
-
-        [OperationContract]
-        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/TestPushNotification/?DeviceId={deviceID}")]
-        string TestPushNotification(string deviceID);
-
-        [OperationContract]
-        [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/TestPushToMobile/?message={message}&userKey={userKey}")]
-        Response TestPushToMobile(long userKey, string message);
-
-        [OperationContract]
         [WebGet(ResponseFormat = WebMessageFormat.Json, UriTemplate = "/MobileSignUp/?username={username}&password={password}&email={email}")]
         Response MobileSignUp(string username, string password, string email);
 

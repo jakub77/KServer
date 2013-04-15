@@ -19,7 +19,6 @@ using System.Data.SqlClient;
 // Notes:
 // improve error message.
 // make database browse ignore non alphanumberic characters until it finds alphanumeric.
-// Only send queue message when user changes their first song since mobile user doesn't see other songs. Still send queue message to the user that changed the other stuff though.
 
 namespace KServer
 {
@@ -563,10 +562,7 @@ namespace KServer
                 }
 
                 int nextUserID = queue[0].user.userID;
-                if (nextUserID > 0)
-                {
-                    r = Common.PushMessageToMobile(nextUserID, "turn", db);
-                }
+                Common.PushMessageToMobile(nextUserID, "turn", db);
 
                 queue[0].songs.RemoveAt(0);
                 if (queue[0].songs.Count == 0)
@@ -589,12 +585,11 @@ namespace KServer
                     queue.Add(temp);
                 }
 
-                
+
                 if (queue.Count > 0)
                 {
                     nextUserID = queue[0].user.userID;
-                    if(nextUserID > 0)
-                        r = Common.PushMessageToMobile(nextUserID, "next", db);
+                    Common.PushMessageToMobile(nextUserID, "next", db);
                 }
 
                 raw = string.Empty;
@@ -841,7 +836,8 @@ namespace KServer
                         if (r.error)
                             return r;
 
-                        Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+                        Common.PushMessageToMobile(clientID, "queue", db);
+                        //Common.PushMessageToUsersOfDJ(DJID, "queue", db);
 
                         r.message = clientID.ToString();
                         r.result = clientID;
@@ -952,10 +948,13 @@ namespace KServer
                                 r = db.SetSongRequests(DJID, newRequests);
                                 if (r.error)
                                     return r;
-                                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+                                if (j > 0)
+                                    Common.PushMessageToMobile(sr.user.userID, "queue", db);
+                                else
+                                    Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+
                                 return r;
                             }
-
                         }
                         // If we can't find the current song.
                         r.error = true;
@@ -982,6 +981,7 @@ namespace KServer
             int DJID = -1;
             int songID = -1;
             bool songChangeMade = false;
+            bool requireSendToAll = false;
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
@@ -1073,6 +1073,8 @@ namespace KServer
                             {
                                 queue[i].songs[j].ID = newSR.songID;
                                 songChangeMade = true;
+                                if (j == 0)
+                                    requireSendToAll = true;
                             }
 
                         }
@@ -1084,7 +1086,10 @@ namespace KServer
                             r = db.SetSongRequests(DJID, newRequests);
                             if (r.error)
                                 return r;
-                            Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+                            if (requireSendToAll)
+                                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+                            else
+                                Common.PushMessageToMobile(oldSR.user.userID, "queue", db);
                             return r;
                         }
 
@@ -1178,7 +1183,11 @@ namespace KServer
                                 r = db.SetSongRequests(DJID, newRequests);
                                 if (r.error)
                                     return r;
-                                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+                                if (j == 0 || newIndex == 0)
+                                    Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+                                else
+                                    Common.PushMessageToMobile(sr.user.userID, "queue", db);
+
                                 return r;
                             }
 
@@ -1394,7 +1403,11 @@ namespace KServer
                 else if (DJID == 4)
                     newRequests = "1~55474~56758`2~59321~42050`3~43357~47751";
 
-                return db.SetSongRequests(DJID, newRequests);
+                r = db.SetSongRequests(DJID, newRequests);
+                if (r.error)
+                    return r;
+                Common.PushMessageToUsersOfDJ(DJID, "queue", db);
+                return r;
             }
         }
 
@@ -1439,6 +1452,8 @@ namespace KServer
                     return r;
 
                 DJRemoveUser(userToBan.userID, DJKey);
+
+                Common.PushMessageToMobile(userToBan.userID, "banned", db);
 
                 return r;
             }

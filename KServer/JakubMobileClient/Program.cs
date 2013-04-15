@@ -475,6 +475,11 @@ namespace JakubMobileClient
                         Stream data = client.OpenRead(baseAddress + "/MobileViewQueue/?userKey=" + userKey);
                         StreamReader reader = new StreamReader(data);
                         string s = reader.ReadToEnd();
+                        if (s.Length == 0)
+                        {
+                            Console.WriteLine("An error occured");
+                            continue;   
+                        }
                         List<queueSinger> queue = strToJSON<List<queueSinger>>(s);
                         if (displayJSON)
                             Console.WriteLine("JSON: " + s);

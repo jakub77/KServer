@@ -82,6 +82,11 @@
     <Compile Include="DatabaseConnectivity.cs" />
     <Compile Include="IMobile.cs" />
     <Compile Include="IWebsite.cs" />
+    <Compile Include="Messages.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Messages.resx</DependentUpon>
+    </Compile>
     <Compile Include="Mobile.svc.cs">
       <DependentUpon>Mobile.svc</DependentUpon>
     </Compile>
@@ -103,6 +108,12 @@
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Messages.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Messages.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
