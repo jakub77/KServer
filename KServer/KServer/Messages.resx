@@ -162,6 +162,9 @@
   <data name="MSG_NO_SONG_REQUESTS" xml:space="preserve">
     <value>There are no song requests.</value>
   </data>
+  <data name="MSG_NO_VENUE_ASSOCIATED" xml:space="preserve">
+    <value>You have not joined a venue, or the venue has shut down.</value>
+  </data>
   <data name="MSG_SONG_NOT_FOUND" xml:space="preserve">
     <value>Could not find a given song.</value>
   </data>

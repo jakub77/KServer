@@ -799,6 +799,11 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
+                if (venueID == -1)
+                {
+                    r.setErMsg(true, Messages.MSG_NO_VENUE_ASSOCIATED);
+                    return r;
+                }
 
                 // Make sure the venue is accepting songs.
                 r = VenueCheckStatus(venueID, "2", db, out validStatus);
@@ -943,6 +948,11 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
+                if (venueID == -1)
+                {
+                    r.setErMsg(true, Messages.MSG_NO_VENUE_ASSOCIATED);
+                    return r;
+                }
 
                 // Make sure the venue is accepting songs.
                 r = VenueCheckStatus(venueID, "2", db, out validStatus);
@@ -1078,6 +1088,11 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
+                if (venueID == -1)
+                {
+                    r.setErMsg(true, Messages.MSG_NO_VENUE_ASSOCIATED);
+                    return r;
+                }
 
                 // Make sure the venue is accepting songs.
                 r = VenueCheckStatus(venueID, "2", db, out validStatus);
@@ -1193,6 +1208,11 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
+                if (venueID == -1)
+                {
+                    r.setErMsg(true, Messages.MSG_NO_VENUE_ASSOCIATED);
+                    return r;
+                }
 
                 // Make sure the venue is accepting songs.
                 r = VenueCheckStatus(venueID, "2", db, out validStatus);
@@ -1300,6 +1320,11 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
                 venueID = r.result;
+                if (venueID == -1)
+                {
+                    r.setErMsg(true, Messages.MSG_NO_VENUE_ASSOCIATED);
+                    Common.LogErrorRetGen<List<queueSinger>>(r, null, Common.LogFile.Mobile);
+                }
 
                 // Make sure the venue is accepting songs.
                 r = VenueCheckStatus(venueID, "2", db, out validStatus);
@@ -1455,6 +1480,11 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
                 venueID = r.result;
+                if (venueID == -1)
+                {
+                    r.setErMsg(true, Messages.MSG_NO_VENUE_ASSOCIATED);
+                    return r;
+                }
 
                 // Make sure the venue is accepting songs.
                 r = VenueCheckStatus(venueID, "2", db, out validStatus);
@@ -2447,7 +2477,7 @@ namespace KServer
             if (r.error)
                 return r;
 
-            if (!int.TryParse(r.message.Trim(), out venueID))
+            if (r.message.Trim().Length > 0 && (!int.TryParse(r.message.Trim(), out venueID)))
             {
                 r.setErMsgStk(true, "Could not parse venueID from DB", Environment.StackTrace);
                 return r;

@@ -518,8 +518,10 @@ namespace KServer
         {
             StreamWriter w = File.AppendText(file);
             w.WriteLine(DateTime.Now.ToString());
-            w.WriteLine(messagePart1);
-            w.WriteLine(messagePart2);
+            if (messagePart1.Length > 0)
+                w.WriteLine(messagePart1);
+            if (messagePart2.Length > 0)
+                w.WriteLine(messagePart2);
             w.WriteLine("--------------------------------------------------");
             w.WriteLine();
             w.Close();
@@ -534,8 +536,10 @@ namespace KServer
         {
             StreamWriter w = File.AppendText(file);
             w.WriteLine(DateTime.Now.ToString() + "\t Result: " + r.result);
-            w.WriteLine(r.message);
-            w.WriteLine(r.stackTrace);
+            if (r.message.Length > 0)
+                w.WriteLine(r.message);
+            if (r.stackTrace.Length > 0)
+                w.WriteLine(r.stackTrace);
             w.WriteLine("--------------------------------------------------");
             w.WriteLine();
             w.Close();

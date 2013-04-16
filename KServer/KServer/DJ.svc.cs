@@ -16,7 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Data.SqlClient;
 
-// Notes:
+// Notes: When session ends/log out by dj, clear user venue column
 
 namespace KServer
 {
