@@ -17,12 +17,6 @@ using System.IO;
 using System.Data.SqlClient;
 
 // Notes:
-// improve error message.
-// make database browse ignore non alphanumberic characters until it finds alphanumeric.
-// DJAddIgDup query is broken.
-// Replace count of zero with just returning or such.
-// No bieber songs achievement. select returning nothing would indicate success, not otherwise. count <= 0 artist = just bieber
-// When adding an achievement, evaluate it right away.
 
 namespace KServer
 {
@@ -1671,10 +1665,21 @@ namespace KServer
                     }
                 }
 
+                string sqlText;
+                List<SqlCommand> cmds;
+                r = AchievementParser.CreateAchievementSQL(achievement, DJID, out sqlText, out cmds);
+                if (r.error)
+                    return r;
 
                 r = db.DJAddAchievement(DJID, achievement);
                 if (r.error)
                     return r;
+
+                achievement.ID = r.result;
+                r = EvaluateAchievement(DJID, achievement, db);
+                if (r.error)
+                    return r;
+
                 return r;
             }
         }
@@ -1702,17 +1707,23 @@ namespace KServer
                     }
                 }
 
+                string sqlText;
+                List<SqlCommand> cmds;
+                r = AchievementParser.CreateAchievementSQL(achievement, DJID, out sqlText, out cmds);
+                if (r.error)
+                    return r;
+
                 r = db.DJModifyAchievement(DJID, achievement);
                 if (r.error)
                     return r;
 
+                int ID = r.result;
+                achievement.ID = ID;
                 r = EvaluateAchievement(DJID, achievement, db);
                 if (r.error)
                     return r;
-                //r = RunAchievements(DJID, db);
-                //if (r.error)
-                //    return r;
 
+                r.result = ID;
                 return r;
             }
         }
@@ -1742,6 +1753,10 @@ namespace KServer
                     r.message = "The achievement didn't exist? nothing deleted";
                     return r;
                 }
+
+                r = RunAchievements(DJID, db);
+                if (r.error)
+                    return r;
                 return r;
             }
         }

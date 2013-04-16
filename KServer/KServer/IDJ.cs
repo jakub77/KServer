@@ -97,6 +97,8 @@ namespace KServer
 
     #region DataTypes
 
+    #region SongSuggestionsDataTypes
+
     public class SangSong
     {
         public string title { get; set; }
@@ -132,6 +134,8 @@ namespace KServer
         public int tmp { get; set; }
         public int tmp2 { get; set; }
     }
+
+    #endregion
 
     [DataContract]
     public class AchievementSelect

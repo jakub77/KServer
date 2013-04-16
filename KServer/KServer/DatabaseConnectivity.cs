@@ -594,11 +594,13 @@ namespace KServer
         /// <returns></returns>
         internal ExpResponse GetMostPopularSongs(int venueID, int start, int count, out List<Song> songs, out List<int> counts)
         {
+            ExpResponse r = new ExpResponse();
             songs = new List<Song>();
             counts = new List<int>();
+            if (count == 0)
+                return r;
             //select SongID, count(SongID) from MobileSongHistory where venueID > '0' and DateSung > '2010' 
             //group by SongID order by count(SongID) desc offset 2 rows fetch next 3 rows only;
-            ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("select SongID, count(SongID) from MobileSongHistory ", con);
             if (venueID != -1)
             {
@@ -1599,6 +1601,8 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         internal ExpResponse MobileSearchSongs(string title, string artist, int DJID, int start, int count)
         {
+            if (count == 0)
+                return new ExpResponse();
             title = title.Trim();
             artist = artist.Trim();
             SqlCommand cmd = new SqlCommand("select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by");
@@ -1636,6 +1640,8 @@ namespace KServer
         /// <returns>The outcome of the opearation.</returns>
         internal ExpResponse MobileBrowseSongs(string firstLetter, bool isArtist, int start, int count, int DJID)
         {
+            if (count == 0)
+                return new ExpResponse();
             int length = firstLetter.Length;
 
             // select A.* from DJSongs A inner join (select ROW_NUMBER() over(order by SongID) as 'RN', * 
@@ -1863,6 +1869,8 @@ namespace KServer
         {
             history = new List<SongHistory>();
             ExpResponse r = new ExpResponse();
+            if (count == 0)
+                return r;
             SqlCommand cmd = new SqlCommand("select VenueID, SongID, DateSung from MobileSongHistory where MobileID = @userID order by DateSung desc offset @start rows fetch next @count rows only;", con);
             cmd.Parameters.AddWithValue("@userID", userID);
             cmd.Parameters.AddWithValue("@start", start);
@@ -1895,6 +1903,9 @@ namespace KServer
         {
             songsAndCount = new List<KeyValuePair<string[], int>>();
             ExpResponse r = new ExpResponse();
+
+            if (count == 0)
+                return r;
             SqlCommand cmd = new SqlCommand("select Title, Artist, count(Title) from DJSongs inner join MobileSongHistory on MobileSongHistory.SongID = DJSongs.SongID where MobileID = @userID group by Title,Artist order by count(Title) desc offset @start rows fetch next @count rows only;", con);
             cmd.Parameters.AddWithValue("@userID", userID);
             cmd.Parameters.AddWithValue("@start", start);
@@ -1921,6 +1932,8 @@ namespace KServer
         {
             songsAndCount = new List<KeyValuePair<string[], int>>();
             ExpResponse r = new ExpResponse();
+            if (count == 0)
+                return r;
 
             SqlCommand cmd = new SqlCommand("select Title, Artist, count(Title) from DJSongs inner join MobileSongHistory on MobileSongHistory.SongID = DJSongs.SongID where MobileID = @userID group by Title,Artist order by count(Title), NEWID() desc offset @start rows fetch next @count rows only;", con);
             cmd.Parameters.AddWithValue("@userID", userID);
@@ -1966,6 +1979,9 @@ namespace KServer
         {
             sAc = new List<SongAndCount>();
             ExpResponse r = new ExpResponse();
+
+            if (count == 0)
+                return r;
             SqlCommand cmd = new SqlCommand("select Artist, Count(Artist) from DJSongs inner join MobileSongHistory on MobileSongHistory.SongID = DJSongs.SongID ", con);
             cmd.CommandText += "where MobileSongHistory.MobileID = @userID group by Artist order by Count(Artist) desc offset @start rows fetch next @count rows only;";
             cmd.Parameters.AddWithValue("@userID", userID);
@@ -1998,6 +2014,8 @@ namespace KServer
         {
             ExpResponse r = new ExpResponse();
             songIDs = new List<int>();
+            if (count == 0)
+                return r;
             using (SqlCommand cmd = new SqlCommand("select top(@count) SongID from DJSongs where SongID not in(select SongID from MobileSongHistory where MobileID = @mobileID) and Artist like @artist and DJListID = @DJID order by NEWID();", con))
             {
                 cmd.Parameters.AddWithValue("@count", count);
@@ -2029,6 +2047,9 @@ namespace KServer
         {
             ss = new SangSong();
             ExpResponse r = new ExpResponse();
+
+            if (count == 0)
+                return r;
             //SqlCommand cmd = new SqlCommand("select MobileID, count(MobileID) from MobileSongHistory where MobileID != @userID and SongID = @songID group by MobileID order by count(MobileID) desc offset 0 rows fetch next @count rows only;", con);
             SqlCommand cmd = new SqlCommand(@"select MobileID, count(MobileID) from MobileSongHistory inner join DJSongs on MobileSongHistory.SongID = DJSongs.SongID
             where MobileID != @userID and DJSongs.Title like @title and DJSongs.Artist like @artist
@@ -2269,7 +2290,7 @@ namespace KServer
                 cmd.Parameters.AddWithValue("@achievementID", achievement.ID);
                 cmd.Parameters.AddWithValue("@DJID", DJID);
 
-                r.result = cmd.ExecuteNonQuery();
+                r.result = int.Parse(cmd.ExecuteScalar().ToString());
                 return r;
             }
             catch (SqlException e)
@@ -2507,6 +2528,8 @@ namespace KServer
 
             ExpResponse r = new ExpResponse();
             songIDs = new List<int>();
+            if (count == 0)
+                return r;
             using (SqlCommand cmd = new SqlCommand("select top (@count) SongID from DJSongs where Artist like @artist and DJListID = @DJID order by NEWID();", con))
             {
                 cmd.Parameters.AddWithValue("@count", count);
