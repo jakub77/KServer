@@ -46,8 +46,8 @@ namespace DJTestClient
                 {
                     try
                     {
-                        Console.WriteLine(DateTime.MinValue.ToLongDateString());
-                        Console.WriteLine(DateTime.MaxValue.ToLongDateString());
+                        Random r = new Random();
+                        Console.WriteLine(r.Next(1, 1));
 
                     }
                     catch (Exception e)

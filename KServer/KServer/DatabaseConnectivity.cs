@@ -1136,7 +1136,7 @@ namespace KServer
         /// </summary>
         /// <param name="DJID">The DJ's ID.</param>
         /// <returns>The outcome of the operation.</returns>
-        internal ExpResponse DJCloseSongRequests(int DJID)
+        internal ExpResponse DJDeleteSongRequests(int DJID)
         {
             SqlCommand cmd = new SqlCommand("delete from DJSongRequests where ListDJID = @DJID;");
             cmd.Parameters.AddWithValue("@DJID", DJID);

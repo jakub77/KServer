@@ -254,13 +254,18 @@ namespace KServer
                     return r;
 
                 // Close out the song requests for this DJ.
-                r = db.DJCloseSongRequests(DJID);
+                r = db.DJDeleteSongRequests(DJID);
                 if (r.error)
                     return r;
 
                 r = db.DJRemoveAllTempUsers(DJID);
                 if (r.error)
                     return r;
+
+                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
+                if (r.error)
+                    return r;
+
                 return r;
             }
         }
@@ -296,7 +301,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Get the QR Code belonging the the DJ. Returned in Response.message.
         /// </summary>
@@ -329,7 +333,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Starts a DJ session up. Mobile users can now make song requests, The DJ can now control the queue.
         /// </summary>
@@ -364,7 +367,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Close a DJ's session. The DJ must have a session running for this to work.
         /// </summary>
@@ -396,7 +398,18 @@ namespace KServer
                     return r;
 
                 // Delete the song request field.
-                r = db.DJCloseSongRequests(DJID);
+                r = db.DJDeleteSongRequests(DJID);
+                if (r.error)
+                    return r;
+
+                r = db.DJRemoveAllTempUsers(DJID);
+                if (r.error)
+                    return r;
+
+                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
+                if (r.error)
+                    return r;
+
                 return r;
             }
         }
@@ -1451,7 +1464,7 @@ namespace KServer
 
                 DJRemoveUser(userToBan.userID, DJKey);
 
-                Common.PushMessageToMobile(userToBan.userID, "banned", db);
+                Common.PushMessageToMobile(userToBan.userID, "exit", db);
 
                 return r;
             }

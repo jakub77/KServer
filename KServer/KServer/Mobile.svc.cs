@@ -671,20 +671,17 @@ namespace KServer
                     if (r.error)
                         return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
-                    // Validate venueID if the any venueID not given.
-                    if (venueID != -1)
-                    {
-                        // Make sure the venueID exists.
-                        r = db.DJGetStatus(venueID);
-                        if (r.error)
-                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
 
-                        int venueStatus;
-                        if (!int.TryParse(r.message.Trim(), out venueStatus))
-                        {
-                            r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
-                            return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
-                        }
+                    // Make sure the venueID exists.
+                    r = db.DJGetStatus(venueID);
+                    if (r.error)
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
+
+                    int venueStatus;
+                    if (!int.TryParse(r.message.Trim(), out venueStatus))
+                    {
+                        r.setErMsgStk(true, "MobileGetPlayLists venueID parse fail (Bad venueID given?)", Environment.StackTrace);
+                        return Common.LogErrorRetGen<List<Song>>(r, null, Common.LogFile.Mobile);
                     }
 
                     #endregion
@@ -1987,15 +1984,22 @@ namespace KServer
                     }
                 }
 
-                userAndSongs.Add(new UserAndSongs(other.Key, other.Value, OSAC));             
+                if (OSAC.Count > 0)
+                    userAndSongs.Add(new UserAndSongs(other.Key, other.Value, OSAC));
             }
 
 
             Random rand = new Random(DateTime.Now.Millisecond);
             while (userAndSongs.Count > 0)
             {
-                int userIndex = selectRandWeightedUser(rand, userAndSongs);
-                int songIndex = selectRandomSong(rand, userAndSongs[userIndex].songs);
+                int userIndex, songIndex;
+                r = selectRandWeightedUser(rand, userAndSongs, out userIndex);
+                if (r.error)
+                    return r;
+                r = selectRandomSong(rand, userAndSongs[userIndex].songs, out songIndex);
+                if (r.error)
+                    return r;
+
                 string title = userAndSongs[userIndex].songs[songIndex].Key[0];
                 string artist = userAndSongs[userIndex].songs[songIndex].Key[1];
                 userAndSongs[userIndex].songs.RemoveAt(songIndex);
@@ -2037,25 +2041,34 @@ namespace KServer
         /// <param name="rand">Randon number generator to use.</param>
         /// <param name="all">The weighted list of songs.</param>
         /// <returns>The index of the random song in the collection.</returns>
-        private int selectRandomSong(Random rand, List<KeyValuePair<string[], int>> all)
+        private ExpResponse selectRandomSong(Random rand, List<KeyValuePair<string[], int>> all, out int index)
         {
-            int totalSongScore = 0;
-            foreach (KeyValuePair<string[], int> s in all)
-                totalSongScore += s.Value;
-
-            int sum = 0;
-            int rn = rand.Next(1, totalSongScore);
-            int count = 0;
-            foreach (KeyValuePair<string[], int> s in all)
+            ExpResponse r = new ExpResponse();
+            index = 0;
+            try
             {
-                sum += s.Value;
-                if (rn <= sum)
-                    return count;
-                count++;
-            }
+                int totalSongScore = 0;
+                foreach (KeyValuePair<string[], int> s in all)
+                    totalSongScore += s.Value;
 
-            Common.LogError("selectRandomSong logic fail", "Had to select first song", null, 2);
-            return 0;
+                int sum = 0;
+                // Exception on below line, totalSongScore must be zero for hugo account on rick.
+                int rn = rand.Next(1, totalSongScore);
+                foreach (KeyValuePair<string[], int> s in all)
+                {
+                    sum += s.Value;
+                    if (rn <= sum)
+                        return r;
+                    index++;
+                }
+                r.setErMsgStk(true, "Had to select first song", Environment.StackTrace);
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.setErMsgStk(true, e.Message, e.StackTrace);
+                return r;
+            }
         }
         /// <summary>
         /// Returns a random user from a weigted collection of users.
@@ -2063,24 +2076,34 @@ namespace KServer
         /// <param name="rand">The random number generator to use.</param>
         /// <param name="all">The weighted collection of users.</param>
         /// <returns>The index of the random user in the collection.</returns>
-        private int selectRandWeightedUser(Random rand, List<UserAndSongs> all)
+        private ExpResponse selectRandWeightedUser(Random rand, List<UserAndSongs> all, out int index)
         {
-            int totalUserScore = 0;
-            foreach (UserAndSongs uas in all)
-                totalUserScore += uas.commonScore;
-
-            int sum = 0;
-            int rn = rand.Next(1, totalUserScore);
-            int count = 0;
-            foreach (UserAndSongs uas in all)
+            ExpResponse r = new ExpResponse();
+            index = 0;
+            try
             {
-                sum += uas.commonScore;
-                if (rn <= sum)
-                    return count;
-                count++;
+                int totalUserScore = 0;
+                foreach (UserAndSongs uas in all)
+                    totalUserScore += uas.commonScore;
+
+                int sum = 0;
+                int rn = rand.Next(1, totalUserScore);
+
+                foreach (UserAndSongs uas in all)
+                {
+                    sum += uas.commonScore;
+                    if (rn <= sum)
+                        return r;
+                    index++;
+                }
+                r.setErMsgStk(true, "Had to select first user", Environment.StackTrace);
+                return r;
             }
-            Common.LogError("SelectRandWeigtedUser logic fail", "Had to select first user", null, 2);
-            return 0;
+            catch (Exception e)
+            {
+                r.setErMsgStk(true, e.Message, e.StackTrace);
+                return r;
+            }
         }
         /// <summary>
         /// Returns a list of keyvaluepairs where the key is the userID of a user who has a song in common with us, and the value is the number of songs they have in common.
