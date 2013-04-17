@@ -245,6 +245,8 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
+
                 // Remove the key from the DB.
                 r = db.DJSetKey(DJID, null);
                 if (r.error)
@@ -262,8 +264,6 @@ namespace KServer
                 r = db.DJRemoveUsersFromVenue(DJID);
                 if (r.error)
                     return r;
-
-                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
 
                 return r;
             }
@@ -395,6 +395,8 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
+
                 // Delete the song request field.
                 r = db.DJDeleteSongRequests(DJID);
                 if (r.error)
@@ -407,8 +409,6 @@ namespace KServer
                 r = db.DJRemoveUsersFromVenue(DJID);
                 if (r.error)
                     return r;
-
-                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
 
                 return r;
             }
@@ -1400,7 +1400,7 @@ namespace KServer
 
                 string newRequests = string.Empty;
                 if (DJID == 5)
-                    newRequests = "1~32066~31846`3~23565~23504`2003~37516~36965`2~41440~41193";
+                    newRequests = "1~32066~44022`3~23565~23504`2003~32155~32158`2~41440~41438";
                 else if (DJID == 4)
                     newRequests = "1~55474~56758`2~59321~42050`3~43357~47751";
 

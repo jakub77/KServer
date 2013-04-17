@@ -192,6 +192,10 @@ namespace KServer
                     return r;
                 }
 
+                r = MobileTryRemoveAllSongRequests(mobileID, db);
+                if(r.error)
+                    Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
+
                 // A sign out seems to be valid. Also clears any device id found.
                 r = db.MobileSignOut(mobileID);
                 if(r.error)
@@ -2502,6 +2506,71 @@ namespace KServer
             }
 
             r.result = venueID;
+            return r;
+        }
+        /// <summary>
+        /// Try to remove a users song requests from the venue. If they dont' have any, nothing happens.
+        /// </summary>
+        /// <param name="mobileID">The user's ID.</param>
+        /// <param name="venueID">The venue ID</param>
+        /// <param name="db">Database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
+        private ExpResponse MobileTryRemoveAllSongRequests(int mobileID, DatabaseConnectivity db)
+        {
+            ExpResponse r = new ExpResponse();
+            int venueID;
+            // Get the venueID
+            r = MobileGetVenue(mobileID, db);
+            if (r.error)
+                return r;
+            venueID = r.result;
+            if (venueID == -1)
+                return r;
+
+            bool validStatus;
+            // Make sure the venue is accepting songs.
+            r = VenueCheckStatus(venueID, "2", db, out validStatus);
+            if (r.error)
+                return r;
+            if (!validStatus)
+                return r;
+
+            // Get the current song Requests
+            r = db.GetSongRequests(venueID);
+            if (r.error)
+                return r;
+
+            string requests = r.message;
+            string newRequests = string.Empty;
+
+            if (requests.Trim().Length == 0)
+                return r;
+
+            // Since there is a list of requests, call to parse the raw string data into an list of queuesingers.
+            List<queueSinger> queue;
+            r = Common.DBToMinimalList(requests, out queue);
+            if (r.error)
+                return r;
+
+            // Search to see if the user is already in this list of singers.
+            for (int i = 0; i < queue.Count; i++)
+            {
+                // If the user is found.
+                if (queue[i].user.userID == mobileID)
+                {
+                    queue.RemoveAt(i);
+
+                    Common.MinimalListToDB(queue, out newRequests);
+                    r = db.SetSongRequests(venueID, newRequests);
+                    if (r.error)
+                        return r;
+
+                    Common.PushMessageToUsersOfDJ(venueID, "queue", db);
+
+                    return r;
+
+                }
+            }
             return r;
         }
         #endregion
