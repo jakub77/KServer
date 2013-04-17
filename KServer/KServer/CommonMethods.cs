@@ -14,16 +14,38 @@ using System.Security.Cryptography;
 
 namespace KServer
 {
+    /// <summary>
+    /// Collection of methods useful to the mobile, dj, and web services.
+    /// </summary>
     public static class Common
     {
         // The guesstimated time between singers.
-        internal static readonly int TIME_BETWEEN_REQUESTS = 30;
+        internal static readonly int TIME_BETWEEN_REQUESTS;
         // A unique and constant deliminator to use when needed.
-        internal static readonly string DELIMINATOR = "#~Q";
+        internal static readonly string DELIMINATOR;
         // ID numbers used for Google Cloud Messaging.
-        internal static readonly string SENDER_ID = "599874388677";
-        internal static readonly string APPLICATION_ID = "AIzaSyCGoaZFOiMsz0Hxo5_52y1EU0aNUimeYbw";
+        internal static readonly string SENDER_ID;
+        internal static readonly string APPLICATION_ID;
 
+        /// <summary>
+        /// Initialize the settings used in common to the values in Settings.resx.
+        /// For settings that will break the program if invalid, default values.
+        /// are set if the settings file is invalid.
+        /// </summary>
+        static Common()
+        {
+            int tbr = 0;
+            int.TryParse(Settings.TIME_BETWEEN_REQUESTS, out tbr);
+            TIME_BETWEEN_REQUESTS = tbr;
+            
+            if (Settings.DELIMINATOR.Length > 0)
+                DELIMINATOR = Settings.DELIMINATOR;
+            else
+                DELIMINATOR = "#~Q";
+
+            SENDER_ID = Settings.GCM_SENDER_ID;
+            APPLICATION_ID = Settings.GCM_APPLICATION_ID;
+        }
         /// <summary>
         /// Which log file to write to.
         /// </summary>
@@ -35,14 +57,18 @@ namespace KServer
             Web,
             Messages
         }
-
+        /// <summary>
+        /// Returns a 0 or a 1 from a booleans.
+        /// Returns 0 if false, 1 if true.
+        /// </summary>
+        /// <param name="boolean">The boolean.</param>
+        /// <returns>The resulting int.</returns>
         internal static int GetBitFromBool(bool boolean)
         {
             if (boolean)
                 return 1;
             return 0;
         }
-
         /// <summary>
         /// Creates a random string to use as a salt for password hashing.
         /// </summary>
@@ -55,7 +81,6 @@ namespace KServer
             rng.GetBytes(buf);
             return Convert.ToBase64String(buf);
         }
-
         /// <summary>
         /// Creates a hash of the password plus the salt and returns it as a string.
         /// </summary>
@@ -69,7 +94,6 @@ namespace KServer
             byte[] postHash = algorithm.ComputeHash(System.Text.Encoding.UTF8.GetBytes(preHash));
             return Convert.ToBase64String(postHash);
         }
-
         /// <summary>
         /// Splits a string up by the global DELIMINATOR.
         /// </summary>
@@ -79,7 +103,6 @@ namespace KServer
         {
             return s.Split(new string[] { DELIMINATOR }, StringSplitOptions.None);
         }
-
         /// <summary>
         /// Changes the object representation of a queue to a representation that is stored in the database.
         /// </summary>
@@ -102,7 +125,6 @@ namespace KServer
                 raw = raw.Substring(0, raw.Length - 1);
             return new ExpResponse();
         }
-
         /// <summary>
         /// Takes the database representation of the queue and expands it into a queue that is minimally
         /// filled with data. The queue is only filled to contain user IDs and song IDs. 
@@ -144,7 +166,6 @@ namespace KServer
             }
             return r;
         }
-
         /// <summary>
         /// Takes the database representaiton of the queue and expands it into a queue that is fully
         /// filled except for song ratings.
@@ -206,7 +227,6 @@ namespace KServer
             }
             return r;
         }
-
         /// <summary>
         /// Gets the song information of a song from the database. If mobileID is -1, song rating is not included.
         /// If includePath is set to true, the pathondisk is set, otherwise it is not set.
@@ -257,7 +277,6 @@ namespace KServer
 
             return LoadSongRating(ref song, mobileID, db);
         }
-
         /// <summary>
         /// Loads the song rating into the referenced song.
         /// </summary>
@@ -288,7 +307,6 @@ namespace KServer
             r.result = rating;
             return r;
         }
-
         /// <summary>
         /// Push a message to all eligable users in the queue. Temp users and users without registered deviceIDs will not recieve this message.
         /// </summary>
@@ -311,7 +329,6 @@ namespace KServer
             }
             return r;
         }
-
         /// <summary>
         /// Pushes a notification to the mobile device of a client.
         /// </summary>
@@ -344,7 +361,6 @@ namespace KServer
             r.setErMsgStk(false, "Message sent without error to: " + mobileID + " response was: " + r.message, message);
             return Common.LogErrorRetGen<ExpResponse>(r, new ExpResponse(), LogFile.Messages);
         }
-
         /// <summary>
         /// Pushes a notification to an android device.
         /// </summary>
@@ -391,7 +407,6 @@ namespace KServer
                 r.setErMsg(false, sResponseFromServer);
             return r;
         }
-
         /// <summary>
         /// Log an ExpResponse to a file and return a new Response with the given message and error set to true.
         /// </summary>
@@ -421,7 +436,6 @@ namespace KServer
             }
             return new Response(true, clientMsgToRet);
         }
-
         /// <summary>
         /// Log an ExpResponse to a file and pass the given object through.
         /// </summary>
@@ -452,7 +466,6 @@ namespace KServer
             }
             return passThrough;
         }
-
         /// <summary>
         /// Logs and expresponse and passes the object back.
         /// </summary>
@@ -481,7 +494,6 @@ namespace KServer
             }
             return r;
         }
-
         /// <summary>
         /// DEPRECIATED - Logs an error message and passes an object through.
         /// </summary>
@@ -507,7 +519,6 @@ namespace KServer
             }
             return passThru;
         }
-
         /// <summary>
         /// Writes a message to a file
         /// </summary>
@@ -526,7 +537,6 @@ namespace KServer
             w.WriteLine();
             w.Close();
         }
-
         /// <summary>
         /// Appends an ExpResponse to a file.
         /// </summary>

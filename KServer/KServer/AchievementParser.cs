@@ -1,4 +1,9 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// Achievement parser is a class that parses an achievement, and if it is found to be validly formatter,
+// creates T-SQL that can be run against a database to determine who qualifies for the achievement.
+// See the achievement object definitions in IDJ.cs for a description of the parts of an achievement.
+
+using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
@@ -6,8 +11,16 @@ using System.Web;
 
 namespace KServer
 {
+    /// <summary>
+    /// Parse and create SQL for an achievement.
+    /// </summary>
     public static class AchievementParser
     {
+        /// <summary>
+        /// Returns a database valid column name for each possible clause keyword.
+        /// </summary>
+        /// <param name="a">A single select statement for an achievement.</param>
+        /// <returns>The column name.</returns>
         private static string ClauseKeywordToString(AchievementSelect a)
         {
             string keyword = string.Empty;
@@ -28,11 +41,14 @@ namespace KServer
             }
             return keyword;
         }
-
+        /// <summary>
+        /// Generates database valid operations for each possive select keyword value.
+        /// </summary>
+        /// <param name="a">A single statment for an achievement.</param>
+        /// <returns>The keyword or sql operaiton.</returns>
         private static string SelectKeywordToString(AchievementSelect a)
         {
             string keyword = string.Empty;
-
             switch (a.selectKeyword)
             {
                 case SelectKeyword.Max:
@@ -54,7 +70,14 @@ namespace KServer
             }
             return keyword;
         }
-
+        /// <summary>
+        /// Creates the sql for an achievement statement that involves selecting on a count. Returns an error of the achievement
+        /// statement cannot be parsed.
+        /// </summary>
+        /// <param name="a">The achievement statement.</param>
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="cmd">Out sql command to evaluate the statement.</param>
+        /// <returns>The outcome of the operation.</returns>
         private static Response CreateStatementCount(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
             Response r = new Response();
@@ -109,7 +132,14 @@ namespace KServer
             }
             return r;
         }
-
+        /// <summary>
+        /// Creates the sql for an achievement statement that involves selecting on min or max. Returns an error of the achievement
+        /// statement cannot be parsed.
+        /// </summary>
+        /// <param name="a">The achievement statement.</param>
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="cmd">Out sql command to evaluate the statement.</param>
+        /// <returns>The outcome of the operation.</returns>
         private static Response CreateStatementMinMax(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
             Response r = new Response();
@@ -138,7 +168,14 @@ namespace KServer
             cmd.Parameters.AddWithValue("@count", 1);
             return r;
         }
-
+        /// <summary>
+        /// Creates the sql for an achievement statement that involves selecting on oldest or newest. Returns an error of the achievement
+        /// statement cannot be parsed.
+        /// </summary>
+        /// <param name="a">The achievement statement.</param>
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="cmd">Out sql command to evaluate the statement.</param>
+        /// <returns>The outcome of the operation.</returns>
         private static Response CreateStatementOldestNewest(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
             Response r = new Response();
@@ -167,7 +204,14 @@ namespace KServer
             cmd.Parameters.AddWithValue("@count", 1);
             return r;
         }
-
+        /// <summary>
+        /// Method to handle creating the sql for an achievement statement. Calls other methods depending on the
+        /// specific achievement select keyword. Returns an erorr if the achievement was invalid, or cannot be parsed.
+        /// </summary>
+        /// <param name="a">The achievement statement.</param>
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="cmd">Out sql command to evaluate the statement.</param>
+        /// <returns>The outcome of the operation.</returns>
         private static Response CreateStatementGeneric(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
             switch (a.selectKeyword)
@@ -189,7 +233,11 @@ namespace KServer
                     return r;
             }
         }
-
+        /// <summary>
+        /// Takes a SqlCommand and returns it as a string with all the parameters set.
+        /// </summary>
+        /// <param name="cmd">The sql command.</param>
+        /// <returns>The SqlCommand as a string.</returns>
         private static string CreateDebugSQLText(SqlCommand cmd)
         {
             string query = cmd.CommandText;
@@ -197,7 +245,14 @@ namespace KServer
                 query = query.Replace(p.ParameterName, p.Value.ToString());
             return query;
         }
-
+        /// <summary>
+        /// Creates the sql for an achievement. The sql is stored as a list of sql operation to perform.
+        /// </summary>
+        /// <param name="a">The achievement.</param>
+        /// <param name="DJID">The DJ's ID.</param>
+        /// <param name="sql">Out string that represents the sum of all sql statement.</param>
+        /// <param name="sqlCommands">List of sql commands that must be run to determine who qualifies for the achievement.</param>
+        /// <returns></returns>
         public static Response CreateAchievementSQL(Achievement a, int DJID, out string sql, out List<SqlCommand> sqlCommands)
         {
             List<SqlCommand> commands = new List<SqlCommand>();

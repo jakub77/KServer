@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// This contains all the methods the website can call on the server.
+// This implemented the service contract defined in IWebsite.cs
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Mail;
@@ -11,9 +15,6 @@ namespace KServer
 {
     public class Website : IWebsite
     {
-        static readonly string mobiokeUsername = "mobioke@live.com";
-        static readonly string mobiokePassword = "TeamWarpZone";
-
         /// <summary>
         /// Sends the username associated with the email address listed to the email address.
         /// </summary>
@@ -61,7 +62,7 @@ namespace KServer
                     SmtpClient mailServer = new SmtpClient("smtp.live.com");
                     mailServer.Port = 25;
                     mailServer.UseDefaultCredentials = false;
-                    mailServer.Credentials = new System.Net.NetworkCredential(mobiokeUsername, mobiokePassword);
+                    mailServer.Credentials = new System.Net.NetworkCredential(Settings.EMAIL_ADR, Settings.EMAIL_PSWD);
                     mailServer.EnableSsl = true;
                     mailServer.Send(mail);
                     return r;
@@ -73,7 +74,6 @@ namespace KServer
                 }                             
             }
         }
-
         /// <summary>
         /// Starts the password reset process for users who forgot their passwords.
         /// </summary>
@@ -141,7 +141,7 @@ namespace KServer
                     SmtpClient mailServer = new SmtpClient("smtp.live.com");
                     mailServer.Port = 25;
                     mailServer.UseDefaultCredentials = false;
-                    mailServer.Credentials = new System.Net.NetworkCredential(mobiokeUsername, mobiokePassword);
+                    mailServer.Credentials = new System.Net.NetworkCredential(Settings.EMAIL_ADR, Settings.EMAIL_PSWD);
                     mailServer.EnableSsl = true;
                     mailServer.Send(mail);
                     return r;
@@ -153,7 +153,14 @@ namespace KServer
                 } 
             }
         }
-
+        /// <summary>
+        /// Retrieves the DJ or MobileID associated with a password reset key and then removes it from the DB.
+        /// ID will be set to -1 if it was invalid.
+        /// </summary>
+        /// <param name="key">The key to remove.</param>
+        /// <param name="isDJ">Whether this is for DJs or mobile users.</param>
+        /// <param name="ID">The userID associated with this user.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response UsePasswordResetKey(string key, bool isDJ, out int ID)
         {
             Response r = ValidatePasswordResetKey(key, isDJ, out ID);
@@ -174,7 +181,14 @@ namespace KServer
             }
             return r;
         }
-
+        /// <summary>
+        /// Validates a password reset key to be valid. If it is valid, ID is set to the ID it represents,
+        /// if it is not valid, ID is set to -1.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="isDJ">Whether this is for DJs or Mobile.</param>
+        /// <param name="ID">The ID for the key.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response ValidatePasswordResetKey(string key, bool isDJ, out int ID)
         {
             ExpResponse r = new ExpResponse();
@@ -202,7 +216,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// "Weblogin" to the system. Returns the user's ID upon success.
         /// </summary>
@@ -266,7 +279,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Change a user's password.
         /// </summary>
@@ -316,7 +328,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Change a user's email.
         /// </summary>
@@ -365,7 +376,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Registers a DJ for the Mobioke service.
         /// If an error occurs, the response will describe the error.
@@ -482,7 +492,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Sign a client up for the service. Will fail if username is already in user, or email is not formatted validly.
         /// </summary>
@@ -559,7 +568,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Enable or disable website registration to occur.
         /// </summary>
@@ -580,7 +588,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Check to see if website registration is allowed.
         /// </summary>
@@ -610,7 +617,13 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// Creates an email to send to the user that will contain the user's usernames and roles.
+        /// </summary>
+        /// <param name="toEmailAddress">Where to send to.</param>
+        /// <param name="usernames">List of usernames.</param>
+        /// <param name="roles">List of roles associated with the username.</param>
+        /// <returns>The outcome of the operation.</returns>
         private MailMessage GenerateUsernameEmail(string toEmailAddress, List<string> usernames, List<string> roles)
         {
             StringBuilder body = new StringBuilder();
@@ -639,7 +652,12 @@ namespace KServer
             mail.Body = body.ToString();
             return mail;
         }
-
+        /// <summary>
+        /// Creates an email to be setnt to the user that will contain a link to reset his or her password.
+        /// </summary>
+        /// <param name="toEmailAddress">Where to send to.</param>
+        /// <param name="url">The url link that allows for password resets.</param>
+        /// <returns>The outcome of the operation.</returns>
         private MailMessage GeneratePasswordResetEmail(string toEmailAddress, string url)
         {
             StringBuilder body = new StringBuilder();

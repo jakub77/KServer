@@ -1345,9 +1345,32 @@ namespace KServer
 
         #region BannedUsers
 
+        internal ExpResponse DJRemoveUsersFromVenue(int DJID)
+        {
+            ExpResponse r = new ExpResponse();
+            SqlCommand cmd = new SqlCommand("update MobileUsers set Venue = @null where Venue = @DJID;", con);
+            cmd.Parameters.AddWithValue("@null", DBNull.Value);
+            cmd.Parameters.AddWithValue("@DJID", DJID);
+
+            try
+            {
+                r.result = cmd.ExecuteNonQuery();
+                return r;
+            }
+            catch (SqlException e)
+            {
+                r.setErMsgStk(true, "Exception in DJRemoveUsersFromVenue ID: " + e.Number + " " + e.Message, e.StackTrace);
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.setErMsgStk(true, "Exception in DJRemoveUsersFromVenue: " + e.Message, e.StackTrace);
+                return r;
+            }
+        }
+
         internal ExpResponse DJRemoveUserFromVenueIfAtVenue(int DJID, int mobileID)
         {
-            //update MobileUsers set Venue = '4' where Venue = '0' and ID = '1';
             ExpResponse r = new ExpResponse();
             SqlCommand cmd = new SqlCommand("update MobileUsers set Venue = @null where Venue = @DJID and ID = @mobileID;", con);
             cmd.Parameters.AddWithValue("@null", DBNull.Value);

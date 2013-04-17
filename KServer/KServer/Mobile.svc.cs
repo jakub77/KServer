@@ -1857,6 +1857,15 @@ namespace KServer
 
         #region Achievements
 
+        /// <summary>
+        /// Get the achievements the mobile user has earned at the given venue. If given venue is -1,
+        /// all earned achievements are returned.
+        /// </summary>
+        /// <param name="venueID">The venueID to get achievements form.</param>
+        /// <param name="userKey">The mobile user's key</param>
+        /// <param name="start">The starting index of the returned achievements.</param>
+        /// <param name="count">The number of achievements to return.</param>
+        /// <returns></returns>
         public List<MobileAchievement> MobileGetAchievements(int venueID, long userKey, int start, int count)
         {
             int mobileID = -1;
@@ -1909,6 +1918,15 @@ namespace KServer
                 return mobileAchievements;
             }
         }
+        /// <summary>
+        /// Get the achievements the mobile user has NOT earned at the given venue that are marked as visible by the DJ.
+        /// If given venue is -1, all NOT earned achievements are returned.
+        /// </summary>
+        /// <param name="venueID">The venueID to get achievements form.</param>
+        /// <param name="userKey">The mobile user's key</param>
+        /// <param name="start">The starting index of the returned achievements.</param>
+        /// <param name="count">The number of achievements to return.</param>
+        /// <returns></returns>
         public List<MobileAchievement> MobileGetUnearnedAchievements(int venueID, long userKey, int start, int count)
         {
             int mobileID = -1;

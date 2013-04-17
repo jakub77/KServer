@@ -21,7 +21,6 @@ using System.Data.SqlClient;
 namespace KServer
 {
     [ServiceBehavior(InstanceContextMode = InstanceContextMode.PerSession, ConcurrencyMode = ConcurrencyMode.Multiple, IncludeExceptionDetailInFaults = true)]
-
     public class Service1 : IDJ
     {
         #region SignInOutEtc
@@ -142,7 +141,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Attempts to sign in the DJ using the given credentials.
         /// If an error occurs, the LogInResponse will have the error field as true, and the error will be in message.
@@ -217,7 +215,6 @@ namespace KServer
                 return lr;
             }
         }
-
         /// <summary>
         /// Attempt to sign out the DJ. 
         /// </summary>
@@ -262,14 +259,15 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
+                r = db.DJRemoveUsersFromVenue(DJID);
                 if (r.error)
                     return r;
+
+                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
 
                 return r;
             }
         }
-
         /// <summary>
         /// Discard the current QR code for the DJ and generate a new QR code.
         /// </summary>
@@ -406,9 +404,11 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
+                r = db.DJRemoveUsersFromVenue(DJID);
                 if (r.error)
                     return r;
+
+                Common.PushMessageToUsersOfDJ(DJID, "exit", db);
 
                 return r;
             }
@@ -450,7 +450,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Remove given songs from list of songs belonging to the given DJ.
         /// DJ must be logged in, without a session running to successfully call this method.
@@ -483,7 +482,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Get all the songs that belong to the given DJ.
         /// </summary>
@@ -628,7 +626,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Get the DJ's queue from the server.
         /// </summary>
@@ -675,7 +672,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Add a song request to the queue. Automatically figures out of the user is already in the queue or not.
         /// If the song request userID is > 0, matches based on registered user id.
@@ -884,7 +880,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Remove a song request from the queue. If the user has multiple song requests, only removes the specified one.
         /// </summary>
@@ -979,7 +974,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Changes a user's song request.
         /// </summary>
@@ -1117,7 +1111,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Move a song in a user's song requets new a new position in his/her song requests.
         /// Does not move singers, moves a singer's songs.
@@ -1215,7 +1208,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Remove a user from the queue. All of the user's song requests are removed.
         /// </summary>
@@ -1293,7 +1285,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Move the user to a new position in the queue (Zero based).
         /// </summary>
@@ -1370,7 +1361,6 @@ namespace KServer
                 return r;
             }
         }
-
         /// <summary>
         /// Create a test Queue for the Rick account. Does not work with any other account.
         /// </summary>
@@ -1421,10 +1411,16 @@ namespace KServer
                 return r;
             }
         }
-
         #endregion
 
         #region BanUsers
+        /// <summary>
+        /// Ban the user from the venue. The user is expelled from the queue and venue.
+        /// The user is unallowed to join the venue while banned.
+        /// </summary>
+        /// <param name="userToBan">The user to ban.</param>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJBanUser(User userToBan, long DJKey)
         {
             int DJID = -1;
@@ -1469,7 +1465,12 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// Unban the user from the venue. The user can now rejoin the venue.
+        /// </summary>
+        /// <param name="userToUnban">User to unban.</param>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJUnbanUser(User userToUnban, long DJKey)
         {
             int DJID = -1;
@@ -1517,7 +1518,12 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// List the banned users of this venue.
+        /// </summary>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <param name="users">Out list of banned users.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJGetBannedUsers(long DJKey, out List<User> users)
         {
             int DJID = -1;
@@ -1655,6 +1661,13 @@ namespace KServer
 
         #region Achievements
 
+        /// <summary>
+        /// Add an achievement to the list of DJ achievements stored in the server.
+        /// If the achievement is invalid, an error is returned.
+        /// </summary>
+        /// <param name="achievement">The achievement to add.</param>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJAddAchievement(Achievement achievement, long DJKey)
         {
             int DJID = -1;
@@ -1696,7 +1709,13 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// Modifies an existing achievement. The passed in achievement ID must match the ID
+        /// of the existing achievement to be modified.
+        /// </summary>
+        /// <param name="achievement">The achievement to modify.</param>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJModifyAchievement(Achievement achievement, long DJKey)
         {
             int DJID = -1;
@@ -1740,7 +1759,12 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// Deletes the achievement with the given ID.
+        /// </summary>
+        /// <param name="achievementID"></param>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJDeleteAchievement(int achievementID, long DJKey)
         {
             int DJID = -1;
@@ -1773,7 +1797,12 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// View all the achievements belonging to the DJ.
+        /// </summary>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <param name="achievements">Out list of achievements.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJViewAchievements(long DJKey, out List<Achievement> achievements)
         {
             int DJID = -1;
@@ -1796,7 +1825,11 @@ namespace KServer
                 return r;
             }
         }
-
+        /// <summary>
+        /// Method to force evaulate achievements, unlikely to be used.
+        /// </summary>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response DJEvaluateAchievements(long DJKey)
         {
             int DJID = -1;
@@ -1819,7 +1852,12 @@ namespace KServer
             }
 
         }
-
+        /// <summary>
+        /// Method to view the sql generated for an achievement. Unlikely to be used other than for debugign.
+        /// </summary>
+        /// <param name="DJKey">The DJKey for the venue.</param>
+        /// <param name="achievementID">The ID of the achievement.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response ViewAchievementSql(long DJKey, int achievementID)
         {
             int DJID = -1;
@@ -1859,9 +1897,18 @@ namespace KServer
                 return r;
             }
         }
-
         #endregion
 
+        /// <summary>
+        /// Debug method to insert batch song history into the database. Allows for somewhat realistic song histories to
+        /// be created easily. Will take in a list of bands, and find numberPerBand random songs per band and add them to
+        /// the song history of the user with the given mobileID.
+        /// </summary>
+        /// <param name="DJKey">The Venue's unique key.</param>
+        /// <param name="bands">A list of bands.</param>
+        /// <param name="numberPerBand">The number of songs to add per band.</param>
+        /// <param name="mobileID">The user to add these songs to.</param>
+        /// <returns>The outcome of the operation.</returns>
         public Response InsertFauxSongHistory(long DJKey, List<string> bands, int numberPerBand, int mobileID)
         {
             int DJID = -1;
@@ -1900,6 +1947,12 @@ namespace KServer
 
         #region PrivateMethods
 
+        /// <summary>
+        /// Run the evaulation of the given DJ's achievement.
+        /// </summary>
+        /// <param name="DJID">The ID of the DJ.</param>
+        /// <param name="db">Database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response RunAchievements(int DJID, DatabaseConnectivity db)
         {
             Response r;
@@ -1918,6 +1971,13 @@ namespace KServer
 
             return r;
         }
+        /// <summary>
+        /// Joins lists of a list of ints together based on a union or intersection.
+        /// </summary>
+        /// <param name="users">The list of list of ints.</param>
+        /// <param name="results">Out the resulting list after the operation.</param>
+        /// <param name="andLists">Whether to intersect(true), or union(false)</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response CombineLists(List<List<int>> users, out List<int> results, bool andLists)
         {
             Response r = new Response();
@@ -1931,19 +1991,6 @@ namespace KServer
                     return r;
                 }
 
-                //// DEBUG
-                //foreach (List<int> u in users)
-                //{
-                //    r.message += "Statement: ";
-                //    foreach (int i in u)
-                //    {
-                //        r.message += i + " ";
-                //    }
-                //    r.message += "\n";
-                //}
-                //// END DEBUG
-
-
                 results = users[0];
                 for (int i = 1; i < users.Count; i++)
                 {
@@ -1952,16 +1999,6 @@ namespace KServer
                     else
                         results = results.Union(users[i]).ToList();
                 }
-
-                //// DEBUG
-                //r.message += "Result: ";
-                //foreach (int i in results)
-                //{
-                //    r.message += i.ToString() + " ";
-                //}
-                //r.message += "\n";
-                //r.error = true;
-                //// END DEBUG
 
                 return r;
             }
@@ -1972,6 +2009,13 @@ namespace KServer
                 return r;
             }
         }
+        /// <summary>
+        /// Evaluate and award a single achievement to all users who qualify.
+        /// </summary>
+        /// <param name="DJID">The DJ's unique ID.</param>
+        /// <param name="a">The achievement to evaluate.</param>
+        /// <param name="db">Database conenctivity.</param>
+        /// <returns>The outcome of the operation.</returns>
         private Response EvaluateAchievement(int DJID, Achievement a, DatabaseConnectivity db)
         {
             string sqlText;
@@ -2015,7 +2059,6 @@ namespace KServer
 
             return r;
         }
-
         /// <summary>
         /// Check the status of the DJ. Returns whether the desired status was found.
         /// </summary>
@@ -2083,7 +2126,6 @@ namespace KServer
             r.result = DJStatus;
             return r;
         }
-
         /// <summary>
         /// Convert a DJKey to a DJID.
         /// </summary>
@@ -2110,7 +2152,6 @@ namespace KServer
             }
             return r;
         }
-
         /// <summary>
         /// Convert a DJID to a DJKey.
         /// </summary>
@@ -2143,7 +2184,6 @@ namespace KServer
                 return r;
             }
         }
-
         #endregion
     }
 }

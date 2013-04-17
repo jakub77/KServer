@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Jakub Szpunar - U of U Spring 2013 Senior Project - Team Warp Zone
+// This is the declaration of what methods the Website can call on the server.
+// Each operation contract is commented in Website.svc.cs.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.Serialization;
