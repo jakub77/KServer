@@ -17,6 +17,9 @@ using System.IO;
 using System.Data.SqlClient;
 
 // Notes: When session ends/log out by dj, clear user venue column
+// Add song history to rick venue.
+// Pick songs that will cause hugo song history to change.
+// When mobile logs in, evaulate achievements.
 
 namespace KServer
 {

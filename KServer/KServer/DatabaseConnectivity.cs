@@ -2556,7 +2556,7 @@ namespace KServer
             using (SqlCommand cmd = new SqlCommand("select top (@count) SongID from DJSongs where Artist like @artist and DJListID = @DJID order by NEWID();", con))
             {
                 cmd.Parameters.AddWithValue("@count", count);
-                cmd.Parameters.AddWithValue("@artist", artist.Trim() + "%");
+                cmd.Parameters.AddWithValue("@artist", artist.Trim());
                 cmd.Parameters.AddWithValue("@DJID", DJID);
 
                 try
