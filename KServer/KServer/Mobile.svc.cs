@@ -643,28 +643,21 @@ namespace KServer
         /// </summary>
         /// <param name="venueID">The venue to suggest songs at.</param>
         /// <param name="userKey">The user's key.</param>
-        /// <param name="start">The starting position of song suggestions.</param>
+        /// <param name="start">Ignored.</param>
         /// <param name="count">The number of song suggestions.</param>
         /// <returns>The outcome of the operation</returns>
         public List<Song> MobileGetSongSuggestions(int venueID, long userKey, int start, int count)
         {
             start = 0;
-            int count1 = count - count / 2;
+            int count1 = count - count / 4;
             try
             {
-                // Get all the songs I have sung.
-                // Find people who have sung the same songs.
-                // Get the songs these people have sung
-                // If these songs have the same band as some song I've sung, award 2x points
-                // If multiple people have sung the same song, points are cumalitive.
-                // If we aren't finding songs, look up artists I have sung in the DB, and get other songs by that artist.
-                // Insert a popular song into the mix for variablility.
-
                 int mobileID = -1;
                 using (DatabaseConnectivity db = new DatabaseConnectivity())
                 {
-                    List<Song> finalSuggestions = new List<Song>();
                     #region SongSuggestionBoilerPlate
+                    List<Song> finalSuggestions = new List<Song>();
+
                     // Try to establish a database connection
                     ExpResponse r = db.OpenConnection();
                     if (r.error)
@@ -1438,6 +1431,12 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
 
+                // Run the achievements on this venue, upon error, simply log the error.
+                r = Common.RunAchievements(venueID, db);
+                if(r.error)
+                    Common.LogErrorPassThru(r, Common.LogFile.Mobile);
+
+
                 r = db.GetVenueName(venueID);
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Mobile);
@@ -1984,7 +1983,7 @@ namespace KServer
         }
         #endregion
 
-        #region PrivateMethods
+        #region PrivateSongSuggestions
         /// <summary>
         /// Suggests songs based on collaborative filtering of the user's song history with other
         /// singers' song histories. Songs objects returned are pre-populated except for path on disk.
@@ -2010,7 +2009,12 @@ namespace KServer
             r = GetUsersSongsInCommon(userSongsAndCount, mobileID, db, out userCountInCommon);
             if (r.error)
                 return r;
-            
+
+            //string mes = "Users in common\r\n";
+            //foreach (KeyValuePair<int, int> k in userCountInCommon)
+            //    mes += k.Key + " " + k.Value + "\r\n";
+            //Common.LogSimpleError(Common.LogFile.Debug, mes);
+
             // Stores each user, how similar to them we are, what songs they have sung, and how often they have sung those songs.
             List<UserAndSongs> userAndSongs = new List<UserAndSongs>();
 
@@ -2038,9 +2042,124 @@ namespace KServer
 
                 if (OSAC.Count > 0)
                     userAndSongs.Add(new UserAndSongs(other.Key, other.Value, OSAC));
+
+                //mes = "User songs for " + other.Key + "\r\n";
+                //foreach (KeyValuePair<string[], int> k in OSAC)
+                //    mes += k.Key[0] + " " + k.Key[1] + " " + k.Value + "\r\n";
+                //Common.LogSimpleError(Common.LogFile.Debug, mes);
             }
 
+            if (Settings.SNG_SGGST_MTHD.Equals("round_robin", StringComparison.OrdinalIgnoreCase))
+            {
+                r = PermuteSuggetsionsRoundRobin(userAndSongs, venueID, count, ref suggestCollab, db);
+            }
+            else if (Settings.SNG_SGGST_MTHD.Equals("top", StringComparison.OrdinalIgnoreCase))
+            {
+                r = PermuteSuggestionsTop(userAndSongs, venueID, count, ref suggestCollab, db);
+            }
+            else if (Settings.SNG_SGGST_MTHD.Equals("random_weighted", StringComparison.OrdinalIgnoreCase))
+            {
+                r = PermuteSuggestionsRandom(userAndSongs, venueID, count, ref suggestCollab, db);
+            }
+            else
+            {
+                Common.LogSimpleError(Common.LogFile.Mobile, "Unknown method requested for song song suggestion recombination", "Using the deafult of random_weighted");
+                r = PermuteSuggestionsRandom(userAndSongs, venueID, count, ref suggestCollab, db);
+            }
 
+            if(r.error)
+                return r;
+            return r;
+        }
+        /// <summary>
+        /// A way to decide which of the possible song suggestions to use. This method gets top suggestion form a user and moves onto the next user until it comes back,
+        /// then it takes the second suggestion, moves on, and so forth.
+        /// </summary>
+        /// <param name="userAndSongs">The list of possible suggestions.</param>
+        /// <param name="venueID">The venueID to suggest for.</param>
+        /// <param name="count">The number of suggestions to return.</param>
+        /// <param name="suggestCollab">ref variable to store the suggestions in.</param>
+        /// <param name="db">Database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
+        private ExpResponse PermuteSuggetsionsRoundRobin(List<UserAndSongs> userAndSongs, int venueID, int count, ref List<Song> suggestCollab, DatabaseConnectivity db)
+        {
+            ExpResponse r = new ExpResponse();
+            int up = 0;
+            while (userAndSongs.Count > 0 && suggestCollab.Count < count)
+            {
+                // If we are past the last user, go back to the first user.
+                if (up == userAndSongs.Count)
+                    up = 0;
+                // If this user no longer has songs, remove them, and move onto the next user.
+                if (userAndSongs[up].songs.Count == 0)
+                {
+                    userAndSongs.RemoveAt(up);
+                    continue;
+                }
+
+                // Get the song from the DB.
+                Song song;
+                r = db.MobileGetSongFromTitleArtist(userAndSongs[up].songs[0].Key[0], userAndSongs[up].songs[0].Key[1], venueID, out song);
+                if (r.error)
+                    return r;
+                // Remove this song from the list of songs belonging to the user.
+                userAndSongs[up].songs.RemoveAt(0);
+                
+                // If the song was valid for this venue, add it to the list of songs.
+                if (song != null)
+                    suggestCollab.Add(song);
+                // If we have enough songs, return.
+                if (suggestCollab.Count >= count)
+                    return r;
+
+                // Incremement to the next user.
+                up++;
+            }
+            return r;
+        }
+        /// <summary>
+        /// A way to decide which of the possible song suggestions to use. This method simply takes the suggestions from the first user, then the suggestions from the second, 
+        /// and so forth until it gets enough suggestions.
+        /// </summary>
+        /// <param name="userAndSongs">The list of possible suggestions.</param>
+        /// <param name="venueID">The venueID to suggest for.</param>
+        /// <param name="count">The number of suggestions to return.</param>
+        /// <param name="suggestCollab">ref variable to store the suggestions in.</param>
+        /// <param name="db">Database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
+        private ExpResponse PermuteSuggestionsTop(List<UserAndSongs> userAndSongs, int venueID, int count, ref List<Song> suggestCollab, DatabaseConnectivity db)
+        {
+            ExpResponse r = new ExpResponse();
+            foreach (UserAndSongs uas in userAndSongs)
+            {
+                foreach (KeyValuePair<string[], int> s in uas.songs)
+                {
+                    Song song;
+                    r = db.MobileGetSongFromTitleArtist(s.Key[0], s.Key[1], venueID, out song);
+                    if (r.error)
+                        return r;
+                    if (song != null)
+                        suggestCollab.Add(song);
+                    if (suggestCollab.Count >= count)
+                        return r;
+                }
+            }
+            return r;
+        }
+        /// <summary>
+        /// A way to decide which of the possible song suggestions to use. This method choses songs to suggest based on a weigted random function.
+        /// Users who share the most songs are given a higher chance to lead to song suggestions. Songs that are repeated are given a higher
+        /// chance to be in the final list.
+        /// </summary>
+        /// <param name="userAndSongs">The list of possible suggestions.</param>
+        /// <param name="venueID">The venueID to suggest for.</param>
+        /// <param name="count">The number of suggestions to return.</param>
+        /// <param name="suggestCollab">ref variable to store the suggestions in.</param>
+        /// <param name="db">Database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
+        private ExpResponse PermuteSuggestionsRandom(List<UserAndSongs> userAndSongs, int venueID, int count, ref List<Song> suggestCollab, DatabaseConnectivity db)
+        {
+            ExpResponse r = new ExpResponse();
             Random rand = new Random(DateTime.Now.Millisecond);
             while (userAndSongs.Count > 0)
             {
@@ -2051,6 +2170,8 @@ namespace KServer
                 r = selectRandomSong(rand, userAndSongs[userIndex].songs, out songIndex);
                 if (r.error)
                     return r;
+
+                Common.LogSimpleError(Common.LogFile.Debug, "UserIndex: " + userIndex, "SongIndex: " + songIndex);
 
                 string title = userAndSongs[userIndex].songs[songIndex].Key[0];
                 string artist = userAndSongs[userIndex].songs[songIndex].Key[1];
@@ -2064,27 +2185,9 @@ namespace KServer
                     return r;
                 if (song != null)
                     suggestCollab.Add(song);
-                if (suggestCollab.Count >= count)
+                if (suggestCollab.Count == count)
                     return r;
             }
-            // Get count songs.
-
-
-            //// Now weighted randomly select users, then weighted randomly select songs out of there.
-            //foreach (UserAndSongs uas in userAndSongs)
-            //{
-            //    foreach (KeyValuePair<string[], int> s in uas.songs)
-            //    {
-            //        Song song;
-            //        r = db.MobileGetSongFromTitleArtist(s.Key[0], s.Key[1], venueID, out song);
-            //        if (r.error)
-            //            return r;
-            //        if (song != null)
-            //            suggestCollab.Add(song);
-            //        if (suggestCollab.Count >= count)
-            //            return r;
-            //    }
-            //}
             return r;
         }
         /// <summary>
@@ -2105,7 +2208,7 @@ namespace KServer
 
                 int sum = 0;
                 // Exception on below line, totalSongScore must be zero for hugo account on rick.
-                int rn = rand.Next(1, totalSongScore);
+                int rn = rand.Next(1, totalSongScore + 1);
                 foreach (KeyValuePair<string[], int> s in all)
                 {
                     sum += s.Value;
@@ -2138,14 +2241,25 @@ namespace KServer
                 foreach (UserAndSongs uas in all)
                     totalUserScore += uas.commonScore;
 
+                //string mes = "User count: " + all.Count + "\r\n";
+                //mes += "Total score: " + totalUserScore + "\r\n";
+
                 int sum = 0;
-                int rn = rand.Next(1, totalUserScore);
+                int rn = rand.Next(1, totalUserScore + 1);
+
+               // mes += "Random generated to be: " + rn + "\r\n";
 
                 foreach (UserAndSongs uas in all)
                 {
                     sum += uas.commonScore;
+                    //mes += "Iteration " + index + " sum:" + sum + "\r\n";
+
                     if (rn <= sum)
+                    {
+                        //mes += "RETURNING with a final rn: " + rn + "sum: " + sum + "\r\n";
+                        //Common.LogSimpleError(Common.LogFile.Debug, mes);
                         return r;
+                    }
                     index++;
                 }
                 r.setErMsgStk(true, "Had to select first user", Environment.StackTrace);
@@ -2264,6 +2378,9 @@ namespace KServer
 
             return r;
         }
+        #endregion
+
+        #region OtherPrivate
         /// <summary>
         /// Check to see if a status of a venue is equal to the desired status. 
         /// </summary>

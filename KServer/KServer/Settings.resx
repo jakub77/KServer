@@ -132,6 +132,9 @@
   <data name="GCM_SENDER_ID" xml:space="preserve">
     <value>599874388677</value>
   </data>
+  <data name="SNG_SGGST_MTHD" xml:space="preserve">
+    <value>random_weighted</value>
+  </data>
   <data name="TIME_BETWEEN_REQUESTS" xml:space="preserve">
     <value>30</value>
   </data>

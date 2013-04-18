@@ -11,6 +11,7 @@ using System.Net;
 using System.Text;
 using System.Web;
 using System.Security.Cryptography;
+using System.Data.SqlClient;
 
 namespace KServer
 {
@@ -19,6 +20,7 @@ namespace KServer
     /// </summary>
     public static class Common
     {
+        #region VarConstEnum
         // The guesstimated time between singers.
         internal static readonly int TIME_BETWEEN_REQUESTS;
         // A unique and constant deliminator to use when needed.
@@ -37,7 +39,7 @@ namespace KServer
             int tbr = 0;
             int.TryParse(Settings.TIME_BETWEEN_REQUESTS, out tbr);
             TIME_BETWEEN_REQUESTS = tbr;
-            
+
             if (Settings.DELIMINATOR.Length > 0)
                 DELIMINATOR = Settings.DELIMINATOR;
             else
@@ -57,6 +59,10 @@ namespace KServer
             Web,
             Messages
         }
+        #endregion
+
+        #region Misc
+
         /// <summary>
         /// Returns a 0 or a 1 from a booleans.
         /// Returns 0 if false, 1 if true.
@@ -103,6 +109,11 @@ namespace KServer
         {
             return s.Split(new string[] { DELIMINATOR }, StringSplitOptions.None);
         }
+
+        #endregion
+
+        #region SongRequestsandSongInfo
+
         /// <summary>
         /// Changes the object representation of a queue to a representation that is stored in the database.
         /// </summary>
@@ -307,6 +318,11 @@ namespace KServer
             r.result = rating;
             return r;
         }
+        #endregion
+
+        #region PushMessages
+
+
         /// <summary>
         /// Push a message to all eligable users in the queue. Temp users and users without registered deviceIDs will not recieve this message.
         /// </summary>
@@ -353,7 +369,7 @@ namespace KServer
             }
 
             r = PushAndroidNotification(deviceID, message);
-            if(r.error)
+            if (r.error)
             {
                 r.setErMsgStk(true, "Message had error sending to: " + mobileID + " response was: " + r.message, string.Empty);
                 return Common.LogErrorRetGen<ExpResponse>(r, new ExpResponse(), LogFile.Messages);
@@ -401,12 +417,17 @@ namespace KServer
             tReader.Close();
             dataStream.Close();
             tResponse.Close();
-            if(sResponseFromServer.ToLower().Contains("error"))
+            if (sResponseFromServer.ToLower().Contains("error"))
                 r.setErMsg(true, sResponseFromServer);
             else
                 r.setErMsg(false, sResponseFromServer);
             return r;
         }
+
+        #endregion
+
+        #region Logging
+
         /// <summary>
         /// Log an ExpResponse to a file and return a new Response with the given message and error set to true.
         /// </summary>
@@ -495,6 +516,35 @@ namespace KServer
             return r;
         }
         /// <summary>
+        /// Log a simple message to a logFile, does not return anything.
+        /// </summary>
+        /// <param name="logFile">The logfile to write to.</param>
+        /// <param name="mes1">The first message</param>
+        /// <param name="mes2">Optional second message</param>
+        internal static void LogSimpleError(LogFile logFile, String mes1, string mes2 = "")
+        {
+            ExpResponse r = new ExpResponse(false, mes1, mes2);
+            switch (logFile)
+            {
+                case LogFile.Mobile:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\mobile_log.txt");
+                    break;
+                case LogFile.DJ:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\dj_log.txt");
+                    break;
+                case LogFile.Debug:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\debug.txt");
+                    break;
+                case LogFile.Web:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\web.txt");
+                    break;
+                case LogFile.Messages:
+                    writeExpRspToFile(r, "C:\\inetpub\\ftproot\\log\\messages.txt");
+                    break;
+            }
+            return;
+        }
+        /// <summary>
         /// DEPRECIATED - Logs an error message and passes an object through.
         /// </summary>
         /// <param name="messagePart1">The message</param>
@@ -554,5 +604,119 @@ namespace KServer
             w.WriteLine();
             w.Close();
         }
+
+        #endregion
+
+        #region AchievementRunning
+        /// <summary>
+        /// Run the evaulation of the given DJ's achievement.
+        /// </summary>
+        /// <param name="VenueID">The ID of the DJ.</param>
+        /// <param name="db">Database connectivity.</param>
+        /// <returns>The outcome of the operation.</returns>
+        internal static ExpResponse RunAchievements(int VenueID, DatabaseConnectivity db)
+        {
+            ExpResponse r;
+            List<Achievement> achievements;
+            r = db.DJViewAchievements(VenueID, out achievements);
+            if (r.error)
+                return r;
+
+
+            foreach (Achievement a in achievements)
+            {
+                r = EvaluateAchievement(VenueID, a, db);
+                if (r.error)
+                    return r;
+            }
+
+            return r;
+        }
+        /// <summary>
+        /// Joins lists of a list of ints together based on a union or intersection.
+        /// </summary>
+        /// <param name="users">The list of list of ints.</param>
+        /// <param name="results">Out the resulting list after the operation.</param>
+        /// <param name="andLists">Whether to intersect(true), or union(false)</param>
+        /// <returns>The outcome of the operation.</returns>
+        private static ExpResponse CombineLists(List<List<int>> users, out List<int> results, bool andLists)
+        {
+            ExpResponse r = new ExpResponse();
+            results = new List<int>();
+            try
+            {
+                if (users.Count < 1)
+                {
+                    r.setErMsgStk(true, "Exception in AndLists, list size is < 1.", Environment.StackTrace);
+                    return r;
+                }
+
+                results = users[0];
+                for (int i = 1; i < users.Count; i++)
+                {
+                    if (andLists)
+                        results = results.Intersect(users[i]).ToList();
+                    else
+                        results = results.Union(users[i]).ToList();
+                }
+
+                return r;
+            }
+            catch (Exception e)
+            {
+                r.setErMsgStk(true, "Combine Lists error: " + e.ToString(), Environment.StackTrace);
+                return r;
+            }
+        }
+        /// <summary>
+        /// Evaluate and award a single achievement to all users who qualify.
+        /// </summary>
+        /// <param name="VenueID">The DJ's unique ID.</param>
+        /// <param name="a">The achievement to evaluate.</param>
+        /// <param name="db">Database conenctivity.</param>
+        /// <returns>The outcome of the operation.</returns>
+        internal static ExpResponse EvaluateAchievement(int VenueID, Achievement a, DatabaseConnectivity db)
+        {
+            string sqlText;
+            List<SqlCommand> cmds;
+            List<List<int>> results;
+            ExpResponse r = AchievementParser.CreateAchievementSQL(a, VenueID, out sqlText, out cmds);
+            if (r.error)
+                return r;
+
+            r = db.EvaluateAchievementStatements(VenueID, cmds, out results);
+            if (r.error)
+                return r;
+
+            if (results.Count == 0)
+            {
+                r.setErMsgStk(true, "EvaulateAchievement: List is of size zero, something went wrong", Environment.StackTrace);
+                return r;
+
+            }
+
+            List<int> qualifiedUsers;
+            r = CombineLists(results, out qualifiedUsers, a.statementsAnd);
+            if (r.error)
+                return r;
+
+            if (!a.isPermanant)
+            {
+                r = db.DeleteEarnedAchievementsByID(a.ID);
+                if (r.error)
+                    return r;
+            }
+
+            foreach (int userID in qualifiedUsers)
+            {
+                r = db.AwardAchievement(userID, a.ID);
+                if (r.error)
+                    return r;
+            }
+
+            return r;
+        }
+
+        #endregion
     }
 }

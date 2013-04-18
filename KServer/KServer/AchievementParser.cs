@@ -78,21 +78,19 @@ namespace KServer
         /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="cmd">Out sql command to evaluate the statement.</param>
         /// <returns>The outcome of the operation.</returns>
-        private static Response CreateStatementCount(AchievementSelect a, int DJID, out SqlCommand cmd)
+        private static ExpResponse CreateStatementCount(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             cmd = new SqlCommand();
             int value;
             if (!int.TryParse(a.selectValue, out value))
             {
-                r.error = true;
-                r.message = "Could not parse select value";
+                r.setErMsgStk(true, "Could not select value", Environment.StackTrace);
                 return r;
             }
             if (value < 0)
             {
-                r.error = true;
-                r.message = "Select value was less than 0, abort";
+                r.setErMsgStk(true, "Select value was less than 0, abort", Environment.StackTrace);
                 return r;
             }
             // In this case, statement must be all users that don't have a count > 0.
@@ -140,15 +138,14 @@ namespace KServer
         /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="cmd">Out sql command to evaluate the statement.</param>
         /// <returns>The outcome of the operation.</returns>
-        private static Response CreateStatementMinMax(AchievementSelect a, int DJID, out SqlCommand cmd)
+        private static ExpResponse CreateStatementMinMax(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             cmd = new SqlCommand();
             int offset;
             if(!int.TryParse(a.selectValue, out offset))
             {
-                r.error = true;
-                r.message="Could not parse offset";
+                r.setErMsgStk(true, "Could not parse offset", Environment.StackTrace);
                 return r;
             }
             offset--;
@@ -176,15 +173,14 @@ namespace KServer
         /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="cmd">Out sql command to evaluate the statement.</param>
         /// <returns>The outcome of the operation.</returns>
-        private static Response CreateStatementOldestNewest(AchievementSelect a, int DJID, out SqlCommand cmd)
+        private static ExpResponse CreateStatementOldestNewest(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             cmd = new SqlCommand();
             int offset;
             if (!int.TryParse(a.selectValue, out offset))
             {
-                r.error = true;
-                r.message = "Could not parse offset";
+                r.setErMsgStk(true, "Could not parse offset", Environment.StackTrace);
                 return r;
             }
             offset--;
@@ -212,7 +208,7 @@ namespace KServer
         /// <param name="DJID">The DJ's unique ID.</param>
         /// <param name="cmd">Out sql command to evaluate the statement.</param>
         /// <returns>The outcome of the operation.</returns>
-        private static Response CreateStatementGeneric(AchievementSelect a, int DJID, out SqlCommand cmd)
+        private static ExpResponse CreateStatementGeneric(AchievementSelect a, int DJID, out SqlCommand cmd)
         {
             switch (a.selectKeyword)
             {
@@ -226,9 +222,8 @@ namespace KServer
                 case SelectKeyword.CountLTE:
                     return CreateStatementCount(a, DJID, out cmd);
                 default:
-                    Response r = new Response();
-                    r.error = true;
-                    r.message = "Bad select keyword CreateStatementGeneric";
+                    ExpResponse r = new ExpResponse();
+                    r.setErMsgStk(true, "Bad select keyword CreateStatementGeneric", Environment.StackTrace);
                     cmd = new SqlCommand();
                     return r;
             }
@@ -253,10 +248,10 @@ namespace KServer
         /// <param name="sql">Out string that represents the sum of all sql statement.</param>
         /// <param name="sqlCommands">List of sql commands that must be run to determine who qualifies for the achievement.</param>
         /// <returns></returns>
-        public static Response CreateAchievementSQL(Achievement a, int DJID, out string sql, out List<SqlCommand> sqlCommands)
+        public static ExpResponse CreateAchievementSQL(Achievement a, int DJID, out string sql, out List<SqlCommand> sqlCommands)
         {
             List<SqlCommand> commands = new List<SqlCommand>();
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             SqlCommand cmd;
             sql = string.Empty;
             sqlCommands = new List<SqlCommand>();

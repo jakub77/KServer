@@ -16,10 +16,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Data.SqlClient;
 
-// Notes: When session ends/log out by dj, clear user venue column
-// Add song history to rick venue.
+// Notes:
 // Pick songs that will cause hugo song history to change.
-// When mobile logs in, evaulate achievements.
 
 namespace KServer
 {
@@ -621,7 +619,7 @@ namespace KServer
 
                 Common.PushMessageToUsersOfDJ(DJID, "queue", db);
 
-                r = RunAchievements(DJID, db);
+                r = Common.RunAchievements(DJID, db);
                 if (r.error)
                     return r;
 
@@ -1705,7 +1703,7 @@ namespace KServer
                     return r;
 
                 achievement.ID = r.result;
-                r = EvaluateAchievement(DJID, achievement, db);
+                r = Common.EvaluateAchievement(DJID, achievement, db);
                 if (r.error)
                     return r;
 
@@ -1754,7 +1752,7 @@ namespace KServer
 
                 int ID = r.result;
                 achievement.ID = ID;
-                r = EvaluateAchievement(DJID, achievement, db);
+                r = Common.EvaluateAchievement(DJID, achievement, db);
                 if (r.error)
                     return r;
 
@@ -1794,7 +1792,7 @@ namespace KServer
                     return r;
                 }
 
-                r = RunAchievements(DJID, db);
+                r = Common.RunAchievements(DJID, db);
                 if (r.error)
                     return r;
                 return r;
@@ -1848,7 +1846,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
-                r = RunAchievements(DJID, db);
+                r = Common.RunAchievements(DJID, db);
                 if (r.error)
                     return r;
                 return r;
@@ -1950,118 +1948,7 @@ namespace KServer
 
         #region PrivateMethods
 
-        /// <summary>
-        /// Run the evaulation of the given DJ's achievement.
-        /// </summary>
-        /// <param name="DJID">The ID of the DJ.</param>
-        /// <param name="db">Database connectivity.</param>
-        /// <returns>The outcome of the operation.</returns>
-        private Response RunAchievements(int DJID, DatabaseConnectivity db)
-        {
-            Response r;
-            List<Achievement> achievements;
-            r = db.DJViewAchievements(DJID, out achievements);
-            if (r.error)
-                return r;
 
-
-            foreach (Achievement a in achievements)
-            {
-                r = EvaluateAchievement(DJID, a, db);
-                if (r.error)
-                    return r;
-            }
-
-            return r;
-        }
-        /// <summary>
-        /// Joins lists of a list of ints together based on a union or intersection.
-        /// </summary>
-        /// <param name="users">The list of list of ints.</param>
-        /// <param name="results">Out the resulting list after the operation.</param>
-        /// <param name="andLists">Whether to intersect(true), or union(false)</param>
-        /// <returns>The outcome of the operation.</returns>
-        private Response CombineLists(List<List<int>> users, out List<int> results, bool andLists)
-        {
-            Response r = new Response();
-            results = new List<int>();
-            try
-            {
-                if (users.Count < 1)
-                {
-                    r.error = true;
-                    r.message = "Exception in AndLists, list size is < 1.";
-                    return r;
-                }
-
-                results = users[0];
-                for (int i = 1; i < users.Count; i++)
-                {
-                    if (andLists)
-                        results = results.Intersect(users[i]).ToList();
-                    else
-                        results = results.Union(users[i]).ToList();
-                }
-
-                return r;
-            }
-            catch (Exception e)
-            {
-                r.error = true;
-                r.message = "Combine Lists error: " + e.ToString();
-                return r;
-            }
-        }
-        /// <summary>
-        /// Evaluate and award a single achievement to all users who qualify.
-        /// </summary>
-        /// <param name="DJID">The DJ's unique ID.</param>
-        /// <param name="a">The achievement to evaluate.</param>
-        /// <param name="db">Database conenctivity.</param>
-        /// <returns>The outcome of the operation.</returns>
-        private Response EvaluateAchievement(int DJID, Achievement a, DatabaseConnectivity db)
-        {
-            string sqlText;
-            List<SqlCommand> cmds;
-            List<List<int>> results;
-            Response r = AchievementParser.CreateAchievementSQL(a, DJID, out sqlText, out cmds);
-            if (r.error)
-                return r;
-
-            r = db.EvaluateAchievementStatements(DJID, cmds, out results);
-            if (r.error)
-                return r;
-
-            if (results.Count == 0)
-            {
-                r.error = true;
-                r.message = "EvaulateAchievement: List is of size zero, something went wrong";
-                return r;
-
-            }
-
-            List<int> qualifiedUsers;
-            r = CombineLists(results, out qualifiedUsers, a.statementsAnd);
-            if (r.error)
-                return r;
-
-            if (!a.isPermanant)
-            {
-                r = db.DeleteEarnedAchievementsByID(a.ID);
-                if (r.error)
-                    return r;
-            }
-
-            foreach (int userID in qualifiedUsers)
-            {
-                r = db.AwardAchievement(userID, a.ID);
-                if (r.error)
-                    return r;
-            }
-
-
-            return r;
-        }
         /// <summary>
         /// Check the status of the DJ. Returns whether the desired status was found.
         /// </summary>
