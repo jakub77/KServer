@@ -1703,10 +1703,13 @@ namespace KServer
                     return r;
 
                 achievement.ID = r.result;
+
                 r = Common.EvaluateAchievement(DJID, achievement, db);
                 if (r.error)
                     return r;
 
+                r.message = achievement.ID.ToString();
+                r.result = achievement.ID;
                 return r;
             }
         }
@@ -1756,6 +1759,7 @@ namespace KServer
                 if (r.error)
                     return r;
 
+                r.message = ID.ToString();
                 r.result = ID;
                 return r;
             }
