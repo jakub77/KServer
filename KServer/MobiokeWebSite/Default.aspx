@@ -16,15 +16,15 @@
     <ol class="round">
         <li class="one">
             <h5>DJs</h5>
-            Contact us about receiving a test copy of our Mobioke DJ software to start up Karaoke sessions wherever you go!
+            DJ's use a custom client to run the show.
         </li>
         <li class="two">
             <h5>Singers</h5>
-            Fire up your android phones and contact us for a test copy of our Mobioke singer software to start singing at your favorite karaoke spots.
+            Singers run a mobile app form their android-powered phones.
         </li>
         <li class="three">
             <h5>Sing together</h5>
-            DJ's create karaoke sessions. With the click of a button singers can join in the fun and start searching for and singing their favorite hits.
+            DJ's start karaoke sessions and singers easily join in the fun, searching for and singing their favorite hits.
         </li>
     </ol>
 </asp:Content>
