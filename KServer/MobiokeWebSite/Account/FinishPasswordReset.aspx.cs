@@ -19,7 +19,6 @@ namespace MobiokeWebSite.Account
 
             if (Session["userResetID"] != null && Session["isDJ"] != null)
             {
-
                 return;
             }
 
@@ -32,7 +31,6 @@ namespace MobiokeWebSite.Account
 
             Response r;
             r = proxy.UsePasswordResetKey(key, isDJ, out userResetID);
-            //r = proxy.ValidatePasswordResetKey(key, isDJ, out userResetID);
             if (userResetID == -1)
             {
                 Response.Redirect("~/Error.aspx/?error=Invalid key.");

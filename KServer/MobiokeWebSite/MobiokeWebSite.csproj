@@ -252,27 +252,17 @@
     <Content Include="Service References\ServiceReference1\MobiokeWebSite.ServiceReference1.UsePasswordResetKeyResponse.datasource">
       <DependentUpon>Reference.svcmap</DependentUpon>
     </Content>
-    <None Include="Service References\ServiceReference1\Website.disco" />
     <None Include="Service References\ServiceReference1\configuration91.svcinfo" />
     <None Include="Service References\ServiceReference1\configuration.svcinfo" />
     <None Include="Service References\ServiceReference1\Reference.svcmap">
       <Generator>WCF Proxy Generator</Generator>
       <LastGenOutput>Reference.cs</LastGenOutput>
     </None>
+    <Content Include="Service References\ServiceReference1\Website1.disco" />
     <Content Include="Web.config" />
     <Content Include="Bundle.config">
       <SubType>Designer</SubType>
     </Content>
-    <None Include="Service References\ServiceReference1\Website.wsdl" />
-    <None Include="Service References\ServiceReference1\Website.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Service References\ServiceReference1\Website1.xsd">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="Service References\ServiceReference1\Website2.xsd">
-      <SubType>Designer</SubType>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Account\DJRegister.aspx.cs">
@@ -392,6 +382,16 @@
     <Content Include="Site.Master" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Service References\ServiceReference1\Website1.wsdl" />
+    <None Include="Service References\ServiceReference1\Website3.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\ServiceReference1\Website31.xsd">
+      <SubType>Designer</SubType>
+    </None>
+    <None Include="Service References\ServiceReference1\Website32.xsd">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>

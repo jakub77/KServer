@@ -42,10 +42,7 @@ namespace MobiokeWebSite.Account
             Response r = proxy.Login((string)Session["username"], oldPassword, (string)Session["role"], out ID);
             if (r.error)
             {
-                if (r.message.Contains("Username/Password is incorrect."))
-                    PasswordResultLabel.Text = "Old password is incorrect.";
-                else
-                    PasswordResultLabel.Text = "A Server error occured, please try again later.";
+                PasswordResultLabel.Text = r.message;
                 return;
             }
 

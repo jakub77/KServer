@@ -135,6 +135,9 @@
   <data name="ERR_CRED_WRONG" xml:space="preserve">
     <value>Username or password is incorrect.</value>
   </data>
+  <data name="ERR_EMAIL_SERVER" xml:space="preserve">
+    <value>The Mobioke email server encountered an error, please try again later.</value>
+  </data>
   <data name="ERR_PLYLST_DUP_SONG" xml:space="preserve">
     <value>That song already exists in this playlist.</value>
   </data>
@@ -158,6 +161,15 @@
   </data>
   <data name="ERR_VENUE_NO_SESSION" xml:space="preserve">
     <value>The Venue is not running a Mobioke session.</value>
+  </data>
+  <data name="ERR_VEN_INFO_LONG" xml:space="preserve">
+    <value>Venue information is too long, &lt;= 20 chars for name, &lt;= 100 chars for address.</value>
+  </data>
+  <data name="ERR_VEN_INFO_MISSING" xml:space="preserve">
+    <value>Venue information is missing.</value>
+  </data>
+  <data name="MSG_EMAIL_NOT_FOUND" xml:space="preserve">
+    <value>That email address could not be found.</value>
   </data>
   <data name="MSG_NO_SONG_REQUESTS" xml:space="preserve">
     <value>There are no song requests.</value>

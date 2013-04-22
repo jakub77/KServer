@@ -19,14 +19,14 @@
     <ServiceContractMappings />
   </ClientOptions>
   <MetadataSources>
-    <MetadataSource Address="http://sunny.eng.utah.edu:1718/Website.svc" Protocol="http" SourceId="1" />
+    <MetadataSource Address="http://sunny.eng.utah.edu:1717/Website.svc" Protocol="http" SourceId="1" />
   </MetadataSources>
   <Metadata>
-    <MetadataFile FileName="Website.xsd" MetadataType="Schema" ID="e2e38767-05ac-43b1-bcd3-e692f2f257ec" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/Website.svc?xsd=xsd1" />
-    <MetadataFile FileName="Website.disco" MetadataType="Disco" ID="e7f75c0e-dc21-45b3-93f1-08c53f053d6b" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/Website.svc?disco" />
-    <MetadataFile FileName="Website1.xsd" MetadataType="Schema" ID="160b5031-973d-4dc9-b118-d2cdc54bd074" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/Website.svc?xsd=xsd2" />
-    <MetadataFile FileName="Website2.xsd" MetadataType="Schema" ID="c689f41f-b6f7-412f-98bb-3fc9af3cf48a" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/Website.svc?xsd=xsd0" />
-    <MetadataFile FileName="Website.wsdl" MetadataType="Wsdl" ID="b65bf5e7-d091-4efb-aff0-f28102812ff1" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1718/Website.svc?wsdl" />
+    <MetadataFile FileName="Website1.wsdl" MetadataType="Wsdl" ID="bdf9e43b-b329-4143-a988-8491e36f4912" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1717/Website.svc?wsdl" />
+    <MetadataFile FileName="Website1.disco" MetadataType="Disco" ID="7ce48bee-ec90-45d4-8d7a-e1f26056650a" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1717/Website.svc?disco" />
+    <MetadataFile FileName="Website3.xsd" MetadataType="Schema" ID="0c087b04-bc28-4604-9790-2a062ef0c0e8" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1717/Website.svc?xsd=xsd2" />
+    <MetadataFile FileName="Website31.xsd" MetadataType="Schema" ID="947686eb-90cc-42a1-9507-d53c06a3fed6" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1717/Website.svc?xsd=xsd1" />
+    <MetadataFile FileName="Website32.xsd" MetadataType="Schema" ID="49984d0f-6384-4837-a365-c9a1c268b71b" SourceId="1" SourceUrl="http://sunny.eng.utah.edu:1717/Website.svc?xsd=xsd0" />
   </Metadata>
   <Extensions>
     <ExtensionFile FileName="configuration91.svcinfo" Name="configuration91.svcinfo" />

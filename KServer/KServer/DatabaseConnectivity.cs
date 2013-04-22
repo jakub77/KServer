@@ -370,8 +370,7 @@ namespace KServer
                     }
                     else
                     {
-                        r.error = true;
-                        r.message = "Error in DJGetSalt: Username could not be found";
+                        r.setErMsgStk(true, "Error in DJGetSalt: Username could not be found", Environment.StackTrace);
                         return r;
                     }
                 }
@@ -814,8 +813,7 @@ namespace KServer
                     }
                     else
                     {
-                        r.error = true;
-                        r.message = "Error in MobileGetSalt: Username could not be found";
+                        r.setErMsgStk(true, "Error in MobileGetSalt: Username could not be found", Environment.StackTrace);
                         return r;
                     }
                 }

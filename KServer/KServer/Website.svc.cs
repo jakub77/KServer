@@ -42,6 +42,12 @@ namespace KServer
                 if (r.error)
                     return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
+                if (DJUsernames.Count == 0 && mobileUsernames.Count == 0)
+                {
+                    r.setErMsg(true, Messages.MSG_EMAIL_NOT_FOUND);
+                    return r;
+                }
+
                 List<string> usernames = new List<string>();
                 List<string> roles = new List<string>();
 
@@ -70,7 +76,7 @@ namespace KServer
                 catch (Exception e)
                 {
                     r.setErMsgStk(true, e.Message, e.StackTrace);
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_EMAIL_SERVER, Common.LogFile.Web);
                 }                             
             }
         }
@@ -102,7 +108,7 @@ namespace KServer
 
                 if(ID == -1)
                 {
-                    r.setErMsg(true, Messages.ERR_BAD_EMAIL);
+                    r.setErMsg(true, Messages.MSG_EMAIL_NOT_FOUND);
                     return r;
                 }
 
@@ -149,7 +155,7 @@ namespace KServer
                 catch (Exception e)
                 {
                     r.setErMsgStk(true, e.Message, e.StackTrace);
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_EMAIL_SERVER, Common.LogFile.Web);
                 } 
             }
         }
@@ -163,20 +169,24 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response UsePasswordResetKey(string key, bool isDJ, out int ID)
         {
-            Response r = ValidatePasswordResetKey(key, isDJ, out ID);
+            Response r1 = ValidatePasswordResetKey(key, isDJ, out ID);
+            if (r1.error)
+                return r1;
+
+            ExpResponse r = new ExpResponse();
             if (ID != -1)
             {
                 using (DatabaseConnectivity db = new DatabaseConnectivity())
                 {
                     r = db.OpenConnection();
                     if (r.error)
-                        return r;
+                        return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                     if (isDJ)
                         r = db.DJClearPasswordResetID(ID, key);
                     else
                         r = db.MobileClearPasswordResetID(ID, key);
                     if (r.error)
-                        return r;
+                        return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 }
             }
             return r;
@@ -198,19 +208,19 @@ namespace KServer
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 if(isDJ)
                 {
                     r = db.DJGetPasswordResetID(key, out ID);
                     if (r.error)
-                        return r;
+                        return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 }
                 else
                 {
                     r = db.MobileGetPasswordResetID(key, out ID);
                     if (r.error)
-                        return r;
+                        return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 }
 
                 return r;
@@ -227,12 +237,11 @@ namespace KServer
         public Response Login(string username, string password, string role, out int ID)
         {
             ID = 0;
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             if (!role.Equals("DJ") && !role.Equals("Mobile"))
             {
-                r.error = true;
-                r.message = "Bad role";
-                return r;
+                r.setErMsgStk(true, "Bad Role Given", Environment.StackTrace);
+                return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
             }
 
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -240,7 +249,7 @@ namespace KServer
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 // Get the salt from the database and salt/hash the password.
                 string salt;
@@ -249,7 +258,7 @@ namespace KServer
                 else
                     r = db.MobileGetSalt(username, out salt);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_CRED_WRONG, Common.LogFile.Web);
                 string saltHashPassword = Common.CreatePasswordHash(password, salt);
 
                 // Check validity of username/password.
@@ -258,22 +267,20 @@ namespace KServer
                 else
                     r = db.MobileValidateUsernamePassword(username, saltHashPassword);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 // If the username/password couldn't be found, inform user.
                 if (r.message.Trim() == string.Empty)
                 {
-                    r.error = true;
-                    r.message = "Username/Password is incorrect.";
+                    r.setErMsg(true, Messages.ERR_CRED_WRONG);
                     return r;
                 }
 
                 // Get the ID
                 if (!int.TryParse(r.message.Trim(), out ID))
                 {
-                    r.error = true;
-                    r.message = "Exception in ChangeEmail: Unable to parse ID from DB!";
-                    return r;
+                    r.setErMsgStk(true, "Exception in ChangeEmail: Unable to parse ID from DB!", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 }
 
                 return r;
@@ -289,12 +296,11 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response ChangePassword(int ID, string role, string newPassword)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             if (!role.Equals("DJ") && !role.Equals("Mobile"))
             {
-                r.error = true;
-                r.message = "Bad role";
-                return r;
+                r.setErMsgStk(true, "Bad Role Given", Environment.StackTrace);
+                return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
             }
 
             using (DatabaseConnectivity db = new DatabaseConnectivity())
@@ -302,7 +308,7 @@ namespace KServer
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 // Get the salt from the database and salt/hash the password.
                 string salt = Common.CreateSalt(16);
@@ -313,7 +319,7 @@ namespace KServer
                     r = db.MobileSetSalt(ID, salt);
 
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_CRED_WRONG, Common.LogFile.Web);
 
                 string saltHashPassword = Common.CreatePasswordHash(newPassword, salt);
 
@@ -323,7 +329,7 @@ namespace KServer
                     r = db.MobileSetPassword(ID, saltHashPassword);
 
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 return r;
             }
@@ -338,12 +344,11 @@ namespace KServer
         /// <returns>The outcome of the operation.</returns>
         public Response ChangeEmail(int ID, string role, string newEmail)
         {
-            Response r = new Response();
+            ExpResponse r = new ExpResponse();
             if (!role.Equals("DJ") && !role.Equals("Mobile"))
             {
-                r.error = true;
-                r.message = "Bad role";
-                return r;
+                r.setErMsgStk(true, "Bad Role Given", Environment.StackTrace);
+                return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
             }
 
             // Validate the email address.
@@ -353,8 +358,7 @@ namespace KServer
             }
             catch
             {
-                r.error = true;
-                r.message = "Email address is not valid";
+                r.setErMsg(true, Messages.ERR_BAD_EMAIL);
                 return r;
             }
 
@@ -363,7 +367,7 @@ namespace KServer
                 // Try to establish a database connection
                 r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 if (role == "DJ")
                     r = db.DJSetEmail(ID, newEmail);
@@ -371,7 +375,7 @@ namespace KServer
                     r = db.MobileSetEmail(ID, newEmail);
 
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 return r;
             }
@@ -390,46 +394,31 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return r;
-
-                // Escape to allow the DJTestClient to list all DJ information
-                // WILL BE REMOVED FOR RELEASE!
-                if (username.Equals("list", StringComparison.OrdinalIgnoreCase))
-                {
-                    Response listResponse = db.DJListMembers();
-                    if (listResponse.error)
-                        return listResponse;
-                    if (r.error)
-                        return r;
-                    return listResponse;
-                }
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 // Validate that username and password are not blank.
                 if (username.Length == 0 || password.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Username or password is blank.";
+                    r.setErMsg(true, Messages.ERR_CRED_BLANK);
                     return r;
                 }
 
                 // Validate that username and password are not too long.
                 if (username.Length > 20 || password.Length > 20)
                 {
-                    r.error = true;
-                    r.message = "Username or password is longer than 20 characters.";
+                    r.setErMsg(true, Messages.ERR_CRED_LONG);
                     return r;
                 }
 
                 // Try to see if the username already exists. If it does, inform the client.
                 r = db.DJValidateUsername(username);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 if (r.message.Trim() != string.Empty)
                 {
-                    r.error = true;
-                    r.message = "That username already exists.";
+                    r.setErMsg(true, Messages.ERR_CRED_TAKEN);
                     return r;
                 }
 
@@ -440,43 +429,37 @@ namespace KServer
                 }
                 catch
                 {
-                    r.error = true;
-                    r.message = "Email address is not valid";
+                    r.setErMsg(true, Messages.ERR_BAD_EMAIL);
                     return r;
                 }
 
                 if (venue == null)
                 {
-                    r.error = true;
-                    r.message = "Venue information must be passed in.";
+                    r.setErMsg(true, Messages.ERR_VEN_INFO_MISSING);
                     return r;
                 }
 
                 if (venue.venueName == null || venue.venueName.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Venue name must be set";
+                    r.setErMsg(true, Messages.ERR_VEN_INFO_MISSING);
                     return r;
                 }
 
                 if (venue.venueName.Length > 20)
                 {
-                    r.error = true;
-                    r.message = "Venue name is longer than 20 characters.";
-                    return r;
-                }
-
-                if (venue.venueAddress.Length > 100)
-                {
-                    r.error = true;
-                    r.message = "Venue address is longer than 100 characters";
+                    r.setErMsg(true, Messages.ERR_VEN_INFO_LONG);
                     return r;
                 }
 
                 if (venue.venueAddress == null || venue.venueAddress.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Venue address must be set";
+                    r.setErMsg(true, Messages.ERR_VEN_INFO_MISSING);
+                    return r;
+                }
+
+                if (venue.venueAddress.Length > 100)
+                {
+                    r.setErMsg(true, Messages.ERR_VEN_INFO_LONG);
                     return r;
                 }
 
@@ -487,7 +470,7 @@ namespace KServer
                 // Sign up the user.
                 r = db.DJSignUp(username, hashSaltPassword, email, venue.venueName, venue.venueAddress, salt);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 return r;
             }
@@ -504,33 +487,21 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
-
-                // Escape to allow the MobileTestClient to list all Mobile information
-                // WILL BE REMOVED FOR RELEASE!
-                if (username.Equals("list", StringComparison.OrdinalIgnoreCase))
-                {
-                    Response listResponse = db.MobileListMembers();
-                    if (listResponse.error)
-                        return (Response)Common.LogError(listResponse.message, Environment.StackTrace, listResponse, 0);
-                    return listResponse;
-                }
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 // Validate that username and password are not blank.
                 if (username.Length == 0 || password.Length == 0)
                 {
-                    r.error = true;
-                    r.message = "Username or password is blank.";
+                    r.setErMsg(true, Messages.ERR_CRED_BLANK);
                     return r;
                 }
 
                 // Validate that username and password are not too long.
                 if (username.Length > 20 || password.Length > 20)
                 {
-                    r.error = true;
-                    r.message = "Username or password is longer than 20 characters.";
+                    r.setErMsg(true, Messages.ERR_CRED_LONG);
                     return r;
                 }
 
@@ -541,19 +512,17 @@ namespace KServer
                 }
                 catch
                 {
-                    r.error = true;
-                    r.message = "Email address is not valid";
+                    r.setErMsg(true, Messages.ERR_BAD_EMAIL);
                     return r;
                 }
 
                 // Try to see if the username already exists. If it does, inform the client.
                 r = db.MobileValidateUsername(username);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 if (r.message.Trim() != string.Empty)
                 {
-                    r.error = true;
-                    r.message = "That username already exists.";
+                    r.setErMsg(true, Messages.ERR_CRED_TAKEN);
                     return r;
                 }
 
@@ -564,7 +533,7 @@ namespace KServer
                 // Information seems valid, sign up client and return successfulness.
                 r = db.MobileSignUp(username, hashSaltPassword, email, salt);
                 if (r.error)
-                    return (Response)Common.LogError(r.message, Environment.StackTrace, r, 0);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 return r;
             }
         }
@@ -578,13 +547,13 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 r = db.SetSetting("webRegistration", enableRegistration.ToString());
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 return r;
             }
         }
@@ -599,20 +568,19 @@ namespace KServer
             using (DatabaseConnectivity db = new DatabaseConnectivity())
             {
                 // Try to establish a database connection
-                Response r = db.OpenConnection();
+                ExpResponse r = db.OpenConnection();
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 string registrationAllowedString;
                 r = db.GetSetting("webRegistration", out registrationAllowedString);
                 if (r.error)
-                    return r;
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
 
                 if (!bool.TryParse(registrationAllowedString, out registrationAllowed))
                 {
-                    r.error = true;
-                    r.message = "Could not read setting";
-                    return r;
+                    r.setErMsgStk(true, "Could not read setting", Environment.StackTrace);
+                    return Common.LogErrorRetNewMsg(r, Messages.ERR_SERVER, Common.LogFile.Web);
                 }
                 return r;
             }

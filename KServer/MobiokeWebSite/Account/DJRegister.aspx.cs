@@ -18,7 +18,7 @@ namespace MobiokeWebSite.Account
             Response r = proxy.IsRegistrationAllowed(out registrationAllowed);
             if (r.error)
             {
-                RegistrationLockedMessage.Text = "Registration is currently locked, please try back later.";
+                RegistrationLockedMessage.Text = r.message;
                 RegisterSubmit.Enabled = false;
                 return;
             }
@@ -41,7 +41,7 @@ namespace MobiokeWebSite.Account
             Response r = proxy.IsRegistrationAllowed(out registrationAllowed);
             if (r.error)
             {
-                ResultLabel.Text = "Could not contact server to determine registration status, Please try back later.";
+                ResultLabel.Text = r.message;
                 return;
             }
             if (!registrationAllowed)
