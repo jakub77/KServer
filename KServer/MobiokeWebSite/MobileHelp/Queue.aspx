@@ -6,8 +6,7 @@
 
     <article>
         <p>
-            This section describes the singer queue feature of the app. The queue allows you to see the order for
-            singers and which songs they are singing.
+            This section describes the singer queue which allows you to see the order for sings and which songs the singers will sing.
         </p>
         <asp:Table ID="Table1" runat="server">
             <asp:TableRow>
@@ -16,11 +15,10 @@
                         <img src="../mhi/queue.jpg" width="256" height="427" /></a>
                 </asp:TableCell>
                 <asp:TableCell>
-                    In the queue page we see all the users who are in line to sing a song. We see the username
-                    of the user and the song they wish to sing. In the top right hand corner of the screen, we also
-                    see the estimated wait time until our turn. In the image it is 17 minutes. The queue is
-                    automatically refreshed each time it changes, but you can hit "Refresh" to manually refresh it.
-                    If you click on your song, you will be offered the ability to change the song request.
+                    In the queue page we see all the users who are in line to sing and their songs.
+                    In the top right hand corner of the screen, we also
+                    see the estimated wait time until our turn. We strive to automatically refresh the queue
+                    when changes are made, but you can always click on the "Refresh" button to do it manually.
                 </asp:TableCell>
             </asp:TableRow>
             <asp:TableRow>
@@ -29,9 +27,8 @@
                         <img src="../mhi/edit_song_queue.jpg" width="256" height="427" /></a>
                 </asp:TableCell>
                 <asp:TableCell>
-                    If you elected to change a song request, you will be shown a screen similar to this one. By clicking
-                    on any of the songs in that screen, you are able to remove the song from your requests, or set it to
-                    be the next song you wish to sing.
+                    By clicking on our song in the queue, we can change a song request. We can then select a song
+                    and either remove it from our requests or set it to be the next song we will sing.
                 </asp:TableCell>
             </asp:TableRow>
         </asp:Table>

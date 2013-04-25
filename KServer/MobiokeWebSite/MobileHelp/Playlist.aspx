@@ -7,7 +7,7 @@
     <article>
         <p>
             This section describes how to create and manage playlists. Playlists allow
-            you to easily access the songs you wish to.
+            you to easily access the songs you love most.
         </p>
         <asp:Table ID="Table1" runat="server">
             <asp:TableRow>
@@ -16,10 +16,10 @@
                         <img src="../mhi/playlist_list.jpg" width="256" height="427" /></a>
                 </asp:TableCell>
                 <asp:TableCell>
-                    Here we see the list of playlists we have. In this case it is a single playlist
+                    Here we see a list of all the playlists we have and the date they were created.
+                    In this case it is a single playlist
                     called "favorite." We can create a new play list by pressing "Create a Play List"
-                    and typing in a name for the playlist. The "Refresh" button refreshes our playlists
-                    from the Mobioke server. Under the playlist name is the date the playlist was created.
+                    and typing in a name for the playlist. The "Refresh" button refreshes our playlists.
                     To view or edit a playlist, click on a playlist name.
                 </asp:TableCell>
             </asp:TableRow>

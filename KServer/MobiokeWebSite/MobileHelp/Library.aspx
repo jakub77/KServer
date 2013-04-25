@@ -6,10 +6,7 @@
 
     <article>
         <p>
-            This section describes the library tab found in the Mobioke mobile app. The library tab allows you to
-            find songs, send song requests, and rate songs. The library tab allows you to find songs by browsing by
-            title, searching by title or artist, browsing most popular songs, and browsing songs suggested to you
-            by our Mobioke system.
+            This section describes the library tab. The library allows you to find songs and get information about songs
         </p>
         <asp:Table ID="Table1" runat="server">
             <asp:TableRow>
@@ -18,12 +15,10 @@
                         <img src="../mhi/browse.jpg" width="256" height="427" /></a>
                 </asp:TableCell>
                 <asp:TableCell>
-                    The first way to find songs is to browse. Click the "Browse" button in the lower left hand corner; 
-                    you are now viewing songs based on title sorted in alphabetical order. In this image, songs are being
-                    viewed from the letter A. To view more songs by the letter A, drag your finger up while touching the song
-                    list to see more songs. If you get to the bottom of the list, press "Load More Songs" to get the next set
-                    of matchin songs. If you wish to see songs from a different letter, simply select a different
-                    letter from the drop down box at the top of the screen. 
+                    The first way to find songs is to browse songs by the first letter in their name. In this image songs
+                    are being viewed from the letter A. To view more songs, swipe down. If you are at the bottom of the screen,
+                    press "Load More Songs" to see more songs. To change the letter, select a new letter from the drop-down menu
+                    at the top of the screen.
                 </asp:TableCell>
             </asp:TableRow>
             <asp:TableRow>
@@ -35,8 +30,8 @@
                     The second way to find songs is to search for them. To search for a song, click the "Search" button at
                     the bottom of the screen. Next, type the song title or artist you wish to search for in the textbox at 
                     the top of the screen. Before you hit "Search" make sure you have "By Artist" or "By Title" properly
-                    selected. After hitting search, you will see your results. To scroll through them, drag your finger up while
-                    touching the list of songs. If you reach the bottom, press "Load More Songs" to see more songs.
+                    selected. After hitting search, you will see your results. Navigate through the results as you did when
+                    browsing songs.
                 </asp:TableCell>
             </asp:TableRow>
             <asp:TableRow>
@@ -45,8 +40,8 @@
                         <img src="../mhi/top_songs.jpg" width="256" height="427" /></a>
                 </asp:TableCell>
                 <asp:TableCell>
-                    The third way to find songs is to see what songs others have been singing. After clicking the "Top Songs" button
-                    at the bottom of the screen, you will see the songs that were sung most often at your venue.
+                    The third way to find songs is to see what songs others have been singing. The songs displayed here are
+                    the most popular songs at your current venue.
                 </asp:TableCell>
             </asp:TableRow>
             <asp:TableRow>
@@ -55,8 +50,7 @@
                         <img src="../mhi/suggestions.jpg" width="256" height="427" /></a>
                 </asp:TableCell>
                 <asp:TableCell>
-                    The fourth way to find songs is to see what songs the Mobioke system suggests you sing. After clicking the "Suggestions"
-                    button at the lower right hand corner of the screen, you will see what songs Mobioke things you would like to sing.
+                    The fourth way to find songs is to see what songs the Mobioke system suggests you sing.
                     These suggestions are based primarily on your past history of song choices.
                 </asp:TableCell>
             </asp:TableRow>
@@ -67,8 +61,8 @@
                 </asp:TableCell>
                 <asp:TableCell>
                     If you click on a song from any of the previous four methods, you will see a screen similar to this one.
-                    This screen allows you to send a song request to the queue, save a song request to a playlist, search  for
-                    the lyrics to this song, or find the video of this song on YouTube.
+                    This screen allows you to send a song request to the queue, save the song request to a playlist, search for
+                    the lyrics to the song, or find the video of the song on YouTube.
                     If you click on "Send to the Queue," your song will be received by the DJ and you will be in line to sing!
                 </asp:TableCell>
             </asp:TableRow>
@@ -79,8 +73,7 @@
                 </asp:TableCell>
                 <asp:TableCell>
                     The song screen also allows you to rate a song for personal reference. Your song ratings will only be seen by you.
-                    To rate a song, simply drag your finger over the number of stars you wish to rate the song. Your song ratings are
-                    persistent over logging in and out.
+                    To rate a song, simply drag your finger over the number of stars you wish to rate the song.
                 </asp:TableCell>
             </asp:TableRow>
         </asp:Table>

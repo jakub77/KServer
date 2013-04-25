@@ -27,9 +27,7 @@
                         After launching the app, you will be prompted to log in. If you have an account,
                         you simply enter your username and password into the provided fields. If you wish
                         for the app to remember your username and password, check the "Remember me" checkbox.
-                        Please remember that if "Remember me" is checked, everyone with access to your phone
-                        will be able to log in to your Mobioke account! Once you have entered your information,
-                        press the "Login" button to log in to the Mobioke system.
+                        Once you have entered your information, press the "Login" button to log in.
                         <br /><br />
                         If you do not already have a Mobioke mobile account, press the "New User" button to
                         be taken to a registration page. If you have a Mobioke mobile account but forgot your
@@ -44,12 +42,9 @@
                     </asp:TableCell>
                     <asp:TableCell>
                         If you did not need to register, skip this step. To register, simply fill in the
-                        form with your information. The Username field is what you will log in to the 
-                        Mobioke system with. Your selected username cannot be changed once created and
-                        will be visible to other Mobioke users. The email you enter will be used to send
-                        your account information to if you forget it in the future. You email information will be kept
-                        private. Once you press "Sign Up" you will be returned to the login screen
-                        where you can enter your new username and password to log in.
+                        form with your information. Note that your username will be visible to other Mobioke users
+                        and your email address will be kept private and only used to allow you to reset your password
+                        or recover your username. Once done, press "Sign Up" and login as described before.
                     </asp:TableCell>
                 </asp:TableRow>
             </asp:Table>
@@ -66,9 +61,8 @@
                         venue that you wish to sing at. If you do not have <a id="A8" runat="server" href="https://play.google.com/store/apps/details?id=com.google.zxing.client.android">Barcode Scanner</a>
                         installed, the app will direct you to install it. A QR code helps the app figure out what venue you are in
                         and pair you with the DJ at that venue. If you are not at a venue, you will be unable to get
-                        past this step. If you are at a venue and you don't see a QR code, ask the DJ to provide one.
-                        Once you spot the QR code, simply point your camera at the code and the app will automatically
-                        scan it. Once it is scanned, you have joined the venue and can start finding songs and singing!
+                        past this step. Simply point the camera at the QR code and the app will take care of the rest.
+                        You have now joined a venue, let's start singing!
                     </asp:TableCell>
                 </asp:TableRow>
             </asp:Table>

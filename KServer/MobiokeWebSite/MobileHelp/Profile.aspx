@@ -31,11 +31,9 @@
                 </asp:TableCell>
                 <asp:TableCell>
                     Here we see the achievements we have earned. Achievements are defined by the DJ
-                    at each venue and are different at each venue. In this image we have earned 3 achievements.
-                    Earning achievements means we completed the requirements to get the achievement. At the top
-                    we see we can switch table to the Not Achieved section. This allows us to see the achievements
-                    we have not earned yet. However, the DJ can set up secret achievements that are not seen
-                    in the "Not achieved" section. You'll just have to find out what they are when you earn them!
+                    of each venue. In this image we have earned 3 achievements. At the top we can switch between
+                    viewing earned and unearned achievements. Note that DJs can create hidden achievements that 
+                    you cannot see in the "Not Achieved" section.
                 </asp:TableCell>
             </asp:TableRow>
         </asp:Table>

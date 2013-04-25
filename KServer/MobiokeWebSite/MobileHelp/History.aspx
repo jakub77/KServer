@@ -6,7 +6,7 @@
 
     <article>
         <p>
-            This secion describes your song history.
+            This section describes your song history.
         </p>
         <asp:Table ID="Table1" runat="server">
             <asp:TableRow>
@@ -16,8 +16,8 @@
                 </asp:TableCell>
                 <asp:TableCell>
                     Here you can see all the songs you have sung across various venues.
-                    The songs are ordered from the most recent song, to the least recent.
-                    This is a good place to find that one song your forgot about.
+                    The songs are ordered from the most recent song to the least recent song.
+                    This is a good place to find that one song you forgot about.
                 </asp:TableCell>
             </asp:TableRow>
         </asp:Table>
